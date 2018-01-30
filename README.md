@@ -1,4 +1,4 @@
-# Synthetic data simulation package for VLBI arrays 
+# Synthetic data simulation package for the Event Horizon Telescope 
 
 ## Requirements
 
@@ -38,31 +38,31 @@ Add the following to the PATH enviroment variable:
 - /path/to/CASA/bin
 
 And the following to your PYTHONPATH:
-- /path/to/vlbi-sim/genframework
+- /path/to/MeqSilhouette/framework
 
 
-Add the following environment variable to point to your vlbi-sim directory:
+Add the following environment variable to point to your MeqSilhouette directory:
 
-export CODE_DIR=/path/to/vlbi-sim
+export MEQS_DIR=/path/to/MeqSilhouette
 
 Finally, add the symbolic link:
 
-- ln -s /path/to/meqtrees-cattery/Siamese/turbo-sim.py /path/to/vlbi-sim/genframework/genframework/turbo-sim.py
+- ln -s /path/to/meqtrees-cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
 
 
 
 ## Running MeqSilhouette
 To run this synthetic data generator, you need:
 
-1. a driver script (e.g. driver/run_vlbi-sim.py)
-2. a configuration file (input/parameters.json is an example.)
+1. a driver script (e.g. driver/run_meqsilouette.py)
+2. a configuration file (input/eht230.json is an example.)
 
 
 The software can be run in three primary modes:
 
 ### 1. Through the terminal
 
-$python driver/run_vlbi-sim.py input/parameters.json
+$python driver/run_meqsilhouette.py input/eht230.json
 
 ### 2. In a Juypter (ipython) Notebook
 
@@ -82,13 +82,15 @@ one can avoid system dependencies entirely with Docker.
 
 ### Configuration file
 
-All paths a relative to $CODE_DIR defined above
+All paths a relative to $MEQS_DIR defined above
 
 The configuration file is a simple .json file and contains the basic observational setup which are loosely grouped into the following parameter groups:
 
 * general parameters (paths, output options, etc.)
 * measurement set parameters (pre-pended with "ms_")
+* imaging parameters (pre-pended with "im_")
 * tropospheric parameters (pre-pended with a "trop_")
+* antenna pointing error parameters (pre-pended "pointing_")
 
 The following two important paths are specified in the configuration file:
 
@@ -96,11 +98,11 @@ The following two important paths are specified in the configuration file:
 * "station_info" input station-specific information (SEFDs, station names)
 
 ## Commonly encountered problems
-1. If vlbi-sim cannot find aatm, add the following paths to the following environment variables:
+1. If MeqSilhouette cannot find aatm, add the following paths to the following environment variables:
 
-export LD_LIBRARY_PATH=/home/iniyan/software/aatm-0.5/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/path/to/aatm-0.5/lib:$LD_LIBRARY_PATH
 
-export PATH=/home/iniyan/software/aatm-0.5/bin:$PATH
+export PATH=/path/to/aatm-0.5/bin:$PATH
 
 2. aatm will not compile without boost program options. In ubuntu 16.04, the relevant packages are libboost-program-options-dev, libboost-program-options1.58-dev, and libboost-program-options1.58.0
 
