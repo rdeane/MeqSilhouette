@@ -12,7 +12,7 @@
 
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml): v4.3 and above
 
-[AATM v0.5](http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz): mean atmospheric simulator (average opacities, sky brightness temp).
+[AATM v0.5](http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz): mean atmospheric simulator (average opacities, sky brightness temp). (Download mirrored [here](https://tinyurl.com/ycuf32oy))
 
 
 ## List of Python modules used
@@ -60,11 +60,11 @@ To run this synthetic data generator, you need:
 
 The software can be run in three primary modes:
 
-### 1. Through the terminal
+a) Through the terminal
 
 $python driver/run_meqsilhouette.py input/eht230.json
 
-### 2. In a Juypter (ipython) Notebook
+b) In a Juypter (ipython) Notebook
 
 Start up notebook
 
@@ -73,7 +73,7 @@ from run_meqsilhouette import *
 config = '/path/to/config.json'
 sim = run_meqsilhouette(config)
 
-### In a Docker container
+c) In a Docker container
 
 While setting up the required enviroment to run MeqSilhouette is just a few step process (for Ubuntu 14.04, 16.04),
 one can avoid system dependencies entirely with Docker.
@@ -96,6 +96,8 @@ The following two important paths are specified in the configuration file:
 
 * "ms_antenna_table": input ANTENNA table for chosen array (CASA format)
 * "station_info" input station-specific information (SEFDs, station names)
+* imaging parameters (pre-pended with "im_")
+* antenna pointing error parameters (pre-pended "pointing_")
 
 ## Commonly encountered problems
 1. If MeqSilhouette cannot find aatm, add the following paths to the following environment variables:
