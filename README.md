@@ -1,4 +1,18 @@
-# Synthetic data simulation package for the Event Horizon Telescope 
+# Synthetic data generation package for the Event Horizon Telescope 
+
+## Installation
+
+Two options:
+
+1. Use docker if you'd like to be system independent.
+
+2. Build on Ubuntu 16.04 using the following steps:
+
+* Visit [Kern-3](https://launchpad.net/~kernsuite/+archive/ubuntu/kern-3) and follow the few-step instructions
+* sudo apt-get install meqtrees casalite simms pyxis wsclean
+* build aatm
+* see additional, more standard modules below
+* add required paths below
 
 ## Requirements
 
@@ -30,7 +44,7 @@
 - mpltools
 - seaborn
 
-# Usage
+
 
 ## PATHS to set
 Add the following to the PATH enviroment variable:
@@ -51,7 +65,10 @@ Finally, add the symbolic link:
 
 
 
-## Running MeqSilhouette
+
+
+# Running MeqSilhouette
+
 To run this synthetic data generator, you need:
 
 1. a driver script (e.g. driver/run_meqsilouette.py)
@@ -60,11 +77,11 @@ To run this synthetic data generator, you need:
 
 The software can be run in three primary modes:
 
-a) Through the terminal
+###a) Through the terminal
 
 $python driver/run_meqsilhouette.py input/eht230.json
 
-b) In a Juypter (ipython) Notebook
+###b) In a Juypter (ipython) Notebook
 
 Start up notebook
 
@@ -73,7 +90,7 @@ from run_meqsilhouette import *
 config = '/path/to/config.json'
 sim = run_meqsilhouette(config)
 
-c) In a Docker container
+###c) In a Docker container
 
 While setting up the required enviroment to run MeqSilhouette is just a few step process (for Ubuntu 14.04, 16.04),
 one can avoid system dependencies entirely with Docker.
@@ -112,3 +129,4 @@ export PATH=/path/to/aatm-0.5/bin:$PATH
 ## Additional links
 
 * Measurement Set structure and definition [link](https://casa.nrao.edu/Memos/229.html)
+
