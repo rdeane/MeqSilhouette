@@ -2,7 +2,7 @@ from Pyxis.ModSupport import *
 from meqtrees_funcs import run_turbosim
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
-from genframework.comm_functions import *
+from framework.comm_functions import *
 import pickle
 import subprocess
 import glob

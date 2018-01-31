@@ -16,7 +16,7 @@ from framework.meqtrees_funcs import make_dirty_image_lwimager
 from framework.comm_functions import *
 
 
-config = '/home/deane/work/git-repos/vlbi-sim/input/eht230.json' # sys.argv[1]
+config = sys.argv[1]
 #def run_vlbi_sim(config):
 if (1):
     """

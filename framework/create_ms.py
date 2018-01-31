@@ -2,7 +2,7 @@
 from Pyxis.ModSupport import *
 import pyrap.tables as pt
 import os
-from genframework.comm_functions import *
+from framework.comm_functions import *
 
 
 
