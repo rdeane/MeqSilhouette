@@ -97,6 +97,32 @@ one can avoid system dependencies entirely with Docker.
 
 [add instructions here]
 
+###d) In a virtual environment
+
+A number of python packages must be installed before MeqSilhouette could be run in a virtual environment.
+The following can be installed using pip install:
+
+- numpy
+- python-casacore==2.1.2 (to get pyrap to run)
+- pyfits
+- scipy==0.17 (to avoid the "Incorrect qhull library called" error)
+- astLib
+- termcolor
+- matplotlib
+- seaborn
+- pandas
+- mpltools
+
+If an ImportError is thrown by pyfits for the modules gdbm and/or winreg, a quick and dirty fix is to open the file
+
+/path-to-virtualenv/lib/python2.7/site-packages/pyfits/extern/six.py
+
+and comment out the lines:
+
+MovedModule("dbm_gnu", "gdbm", "dbm.gnu")
+MovedModule("winreg", "_winreg")
+
+
 ### Configuration file
 
 All paths a relative to $MEQS_DIR defined above
