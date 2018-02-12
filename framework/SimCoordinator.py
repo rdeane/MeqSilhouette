@@ -10,7 +10,7 @@ from scipy.constants import Boltzmann, speed_of_light
 import pylab as pl
 import seaborn as sns
 sns.set_style("darkgrid")
-cmap = pl.cm.Set1 #viridis
+cmap = pl.cm.tab20 #viridis
 from mpltools import layout
 from mpltools import color
 from matplotlib.patches import Circle
@@ -721,8 +721,9 @@ class SimCoordinator():
         fig, ax = pl.subplots()
         for ant0 in range(self.Nant):
             for ant1 in range(self.Nant):
-                if (ant1 > ant0) and \
-                        not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')):
+                if (ant1 > ant0) \
+                        and not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')) \
+                        and not ((self.station_names[ant0]=='APEX') or (self.station_names[ant1] == 'APEX')):
 
                     temp_mask = np.logical_not(self.flag[self.baseline_dict[(ant0,ant1)],0,0])
                     temp_u = self.uvw[self.baseline_dict[(ant0,ant1)][temp_mask], 0]\
@@ -730,7 +731,7 @@ class SimCoordinator():
                     temp_v = self.uvw[self.baseline_dict[(ant0,ant1)][temp_mask], 1]\
                          / (speed_of_light/self.chan_freq.mean())/1e9
                     #if (np.sqrt((temp_u.max()**2 + temp_v.max()**2)) > 0.1):
-                    pl.plot(np.hstack([temp_u,np.nan, -temp_u]), np.hstack([temp_v,np.nan, -temp_v]), \
+                    pl.plot(np.hstack([np.nan, temp_u,np.nan, -temp_u, np.nan]), np.hstack([np.nan, temp_v,np.nan, -temp_v,np.nan]), \
                             lw=2.5,label='%s-%s'%(self.station_names[ant0],self.station_names[ant1]))
             #pl.plot(-self.uvw[np.logical_not(self.flag[:, 0, 0]), 0], -self.uvw[np.logical_not(self.flag[:, 0, 0]), 1], \
             #        label=self.station_names[i])
@@ -768,9 +769,9 @@ class SimCoordinator():
         # converted from nan and set arbitrarily high
         for ant0 in range(self.Nant):
             for ant1 in range(self.Nant):
-                if (ant1 > ant0) and \
-                        not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')):
-
+                if (ant1 > ant0) \
+                        and not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')) \
+                        and not ((self.station_names[ant0]=='APEX') or (self.station_names[ant1] == 'APEX')):
                     temp_mask = np.logical_not(self.flag[self.baseline_dict[(ant0,ant1)],0,0])
                     self.temp_u = self.uvw[self.baseline_dict[(ant0,ant1)][temp_mask], 0]\
                          / (speed_of_light/self.chan_freq.mean())/1e9
@@ -808,9 +809,9 @@ class SimCoordinator():
         # converted from nan and set arbitrarily high
         for ant0 in range(self.Nant):
             for ant1 in range(self.Nant):
-                if (ant1 > ant0) and \
-                        not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')):
-
+                if (ant1 > ant0) \
+                        and not ((self.station_names[ant0]=='JCMT') or (self.station_names[ant1] == 'JCMT')) \
+                        and not ((self.station_names[ant0]=='APEX') or (self.station_names[ant1] == 'APEX')):
                     temp_mask = np.logical_not(self.flag[self.baseline_dict[(ant0,ant1)],0,0])
                     self.temp_u = self.uvw[self.baseline_dict[(ant0,ant1)][temp_mask], 0]\
                          / (speed_of_light/self.chan_freq.mean())/1e9
@@ -980,13 +981,20 @@ class SimCoordinator():
         ### elevation vs time ###
         pl.figure(figsize=(10,6.8))
         for ant in range(self.Nant):
-            if (self.station_names[ant] == 'JCMT'):
-                ls = 'dashed'
+            if (self.station_names[ant] == 'JCMT') or \
+               (self.station_names[ant] == 'APEX'):
+                ls = ':'
+                lw=3.5
+                alpha = 1
+                zorder = 2
             else:
                 ls = 'solid'
+                alpha = 1
+                lw=2
+                zorder = 1
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),
-                    self.elevation[ant, :]*180./np.pi, alpha=1, lw=2, \
-                    ls=ls,label=self.station_names[ant])
+                    self.elevation[ant, :]*180./np.pi, alpha=alpha, lw=lw, \
+                    ls=ls,zorder=zorder,label=self.station_names[ant])
         pl.xlabel('relative time / hr')
         pl.ylabel('elevation / degrees')
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
