@@ -2,4 +2,5 @@
 *.py~
 *.txt~
 *.json~
+log-simms.txt
 output

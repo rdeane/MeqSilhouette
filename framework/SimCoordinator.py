@@ -853,8 +853,13 @@ class SimCoordinator():
             Nvisperbin[b] = mask.sum()  # total number of visibilities in this uvbin
             ampbins[b] = np.nanmean(abs(self.data[mask, :, :])[:, :, corrs])  # average amplitude in bin "b"
             #stdbins[b] = np.nanstd(abs(self.data[mask, :, :])[:, :, corrs]) / Nvisperbin[b]**0.5  # rms of that bin
-            stdbins[b] = np.nanmean(abs(np.add(self.thermal_noise[mask,:,:][:,:,corrs],\
-                                              self.sky_noise[mask,:,:][:,:,corrs]))) / Nvisperbin[b]**0.5
+
+            if (self.trop_enabled):
+                stdbins[b] = np.nanmean(abs(np.add(self.thermal_noise[mask, :, :][:, :, corrs], \
+                                                   self.sky_noise[mask, :, :][:, :, corrs]))) / Nvisperbin[b] ** 0.5
+            else:
+                stdbins[b] = np.nanmean(abs(self.thermal_noise[mask, :, :][:, :, corrs])) \
+                                        / Nvisperbin[b] ** 0.5
             # next few lines if a comparison array is desired (e.g. EHT minus ALMA)
             #mask_minus1ant = (uvdist > uvbins_edges[b])&(uvdist< uvbins_edges[b+1])&(np.logical_not(flag_col[:,0,0]))& \
             # (ant1 != station_name.index('ALMA'))&(ant2 != station_name.index('ALMA'))
