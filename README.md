@@ -120,6 +120,7 @@ If an ImportError is thrown by pyfits for the modules gdbm and/or winreg, a quic
 and comment out the lines:
 
 MovedModule("dbm_gnu", "gdbm", "dbm.gnu")
+
 MovedModule("winreg", "_winreg")
 
 

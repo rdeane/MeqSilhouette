@@ -6,7 +6,9 @@ from framework.comm_functions import *
 import pickle
 import subprocess
 import glob
+import numpy as np
 from scipy.constants import Boltzmann, speed_of_light
+from scipy.interpolate import InterpolatedUnivariateSpline as ius
 import pylab as pl
 import seaborn as sns
 sns.set_style("darkgrid")
@@ -20,7 +22,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 class SimCoordinator():
 
-    def __init__(self, msname, output_column, input_fitsimage, sefd, \
+    def __init__(self, msname, output_column, input_fitsimage, bandpass_txt, bandpass_freq_interp_order, sefd, \
                  elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time,fixdelay_max_picosec):
         info('Generating MS attributes based on input parameters')
@@ -89,6 +91,10 @@ class SimCoordinator():
             self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
             self.transmission = np.exp(-1*self.opacity)
         
+        ### bandpass information
+        self.bandpass_txt = bandpass_txt
+        self.bandpass_freq_interp_order = bandpass_freq_interp_order
+
 
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
@@ -659,7 +665,7 @@ class SimCoordinator():
                                                                 * self.pointing_amp_errors[a1,mispoint_epoch])
                         #### NOTE: this applies to all pols, all frequency channels (i.e. no primary beam freq dependence)
                         #self.data[indices,0,3] *= (self.point_amp_errors[a0] * self.point_amp_errors[a1])
-
+            self.save_data()
 
 
     def plot_pointing_errors(self):
@@ -706,8 +712,37 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
  
-                  
 
+    ################################
+    # BANDPASS (B-JONES) FUNCTIONS #
+    ################################
+
+    def bandpass_correct(self):
+        """Read in the bandpass info from an ASCII table, interpolate (spline) MS frequencies,
+           and apply to data"""
+        info("Applying scalar B-Jones amplitudes")
+        # Read in the file
+        bjones_inp = np.loadtxt(self.bandpass_txt,dtype=str)
+        input_freq = bjones_inp[0][1:].astype(np.float64)
+        input_freq *= 1e9 # convert from GHz to Hz
+        bjones_ampl = bjones_inp[1:,1:].astype(np.float64)
+
+        # Interpolate between the frequencies given in the bandpass table
+        if input_freq[0] > self.chan_freq[0] or input_freq[-1] < self.chan_freq[-1]:
+            warn("Input frequencies out of range of MS frequencies. Extrapolating in some places.")
+
+        bjones_interpolated=np.zeros((self.Nant,self.chan_freq.shape[0]))
+        for ant in range(self.Nant):
+            spl = ius(input_freq, bjones_ampl[ant],k=self.bandpass_freq_interp_order)
+            bjones_interpolated[ant] = spl(self.chan_freq)
+
+        # apply the B-Jones terms by iterating over baselines
+        for a0 in range(self.Nant):
+            for a1 in range(a0+1,self.Nant):
+                for msfreq_ind in range(self.chan_freq.shape[0]):
+                    bl_ind = self.baseline_dict[(a0,a1)]
+                    self.data[bl_ind,msfreq_ind,:] *= bjones_interpolated[a0,msfreq_ind] * bjones_interpolated[a1,msfreq_ind]
+        self.save_data()
 
     def make_ms_plots(self):
         """uv-coverage, uv-dist sensitivty bins, etc. All by baseline colour"""
