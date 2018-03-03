@@ -123,8 +123,8 @@ if (1):
                 print "%s\t\t%s" % (c1, c2)
             abort('Correct input station_info file and/or antenna table')
 
-        bandpass_txt = os.path.join(v.CODEDIR,parameters['bandpass_txt'])
-        bandpass_freq_interp_order = parameters['bandpass_freq_interp_order'] 
+    bandpass_txt = os.path.join(v.CODEDIR,parameters['bandpass_txt']) 
+    bandpass_freq_interp_order = parameters['bandpass_freq_interp_order']
 
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
@@ -194,7 +194,7 @@ if (1):
             info('Generated troposphere plots')
 
     ### BANDPASS COMPONENTS ###
-    if parameters['bandpass_txt']:
+    if parameters['bandpass_enabled']:
         info('BANDPASS: incorporating bandpass (B-Jones) effects; for now, scalar B-Jones constant in time')
         sim_coord.bandpass_correct()
         info('B-Jones terms applied.')       
