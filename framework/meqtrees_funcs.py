@@ -12,8 +12,13 @@ def run_turbosim(input_fitsimage,output_column,taql_string):
     options = {}
     options['ms_sel.msname'] = II('$MS')
     options['ms_sel.output_column'] = output_column
-    options['fitsimage_sky.image_filename'] = input_fitsimage
-    options['fitsimage_sky.pad_factor'] = 2.4
+    if input_fitsimage.endswith(('.fits','.FITS')):
+        options['me.sky.siamese_oms_fitsimage_sky'] = 1
+        options['fitsimage_sky.image_filename'] = input_fitsimage
+        options['fitsimage_sky.pad_factor'] = 2.4
+    elif input_fitsimage.endswith(('.txt','.html')):
+        options['me.sky.tiggerskymodel'] = 1
+        options['tiggerlsm.filename'] = input_fitsimage
     options['ms_sel.tile_size'] = 1000000
     options['ms_sel.ms_taql_str'] = taql_string
 

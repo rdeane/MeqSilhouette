@@ -66,7 +66,6 @@ class SimCoordinator():
         self.elevation[self.elevation < elevation_limit] = np.nan  # This is to avoid crashing later tropospheric calculation
         self.calc_ant_rise_set_times()
                                                 
-
         self.input_fitsimage = input_fitsimage
         self.output_column = output_column
 
@@ -99,9 +98,9 @@ class SimCoordinator():
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
 
-        ### for static source, single input FITS image ###
-        if self.input_fitsimage.endswith(('.fits','.FITS')):
-            info('Input sky model is assumed static, given single input FITS image')
+        ### for static sky - single input FITS image, ASCII file or Tigger LSM ###
+        if self.input_fitsimage.endswith(('.fits','.FITS','.txt','.html')):
+            info('Input sky model is assumed static, given single input file')
             run_turbosim(self.input_fitsimage,self.output_column,'')
 
         ### if time-variable source, input directory with > 1 fits images ###

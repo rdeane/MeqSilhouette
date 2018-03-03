@@ -1,12 +1,4 @@
 [turbo-sim]
-dipole_model = lba_model
-fitsimage_sky.image_filename = /home/deane/work/git-repos/vlbi-sim/input/sky_models/central_point_src_1.4Jy.fits
+fitsimage_sky.image_filename = ../input/sky_models/central_point_src_1.4Jy.fits
 img_sel.imaging_arcmin = 8.5e-06
 img_sel.imaging_column = CORRECTED_DATA
-me.e_module = Siamese_OMS_analytic_beams
-me.l_module = Rotation
-me.sky.siamese_oms_fitsimage_sky = 1
-me.z_module = Siamese_OMS_oms_ionosphere
-model_type = use_wsrt_cos3
-selname = Lions_PiercePoints_modules_TID_MIM
-
