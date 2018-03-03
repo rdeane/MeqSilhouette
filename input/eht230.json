@@ -8,7 +8,7 @@
 "exportuvfits":0,
 "station_info":"input/station_info/EHT2017_station_info.txt",
 "bandpass_enabled":1,
-"bandpass_txt":"input/jones_info/bandpass_wide.txt",
+"bandpass_txt":"input/jones_info/bandpass.txt",
 "bandpass_freq_interp_order":3,
 "bandpass_makeplots": 1,
 "elevation_limit":0.174,
