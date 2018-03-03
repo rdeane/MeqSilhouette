@@ -106,13 +106,32 @@ if (1):
 
     info('Station info table %s corresponds correctly to antenna table %s'\
          %(parameters['station_info'],ms_dict['antenna_table']))
-    
+
+    if parameters['bandpass_enabled']:
+        if not os.path.isfile(parameters['bandpass_txt']):
+            abort("File '%s' does not exist. Aborting..."%(parameters['bandpass_txt']))
+        station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
+                                    parameters['bandpass_txt']),\
+                                    usecols=[0],dtype=str,skiprows=1).tolist()
+        if (len(station_names_txt) != len(station_names_anttab)):
+            abort('Mis-matched number of antennas in %s and %s'\
+                  %(parameters['bandpass_txt'],ms_dict['antenna_table']))
+        if (station_names_txt != station_names_anttab):
+            warn('Mis-matched station name order in %s versus %s (see comparison):'\
+                 %(parameters['bandpass_txt'],ms_dict['antenna_table']))
+            for c1,c2 in zip(station_names_txt,station_names_anttab):
+                print "%s\t\t%s" % (c1, c2)
+            abort('Correct input station_info file and/or antenna table')
+
+        bandpass_txt = os.path.join(v.CODEDIR,parameters['bandpass_txt'])
+        bandpass_freq_interp_order = parameters['bandpass_freq_interp_order'] 
+
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
-    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, sefd, parameters["elevation_limit"],\
-                               parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
+    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, bandpass_txt, bandpass_freq_interp_order, sefd, \
+                               parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time,parameters['trop_fixdelay_max_picosec'])
 
     sim_coord.interferometric_sim()
@@ -173,7 +192,13 @@ if (1):
         if parameters['trop_makeplots']:
             sim_coord.trop_plots()
             info('Generated troposphere plots')
-        
+
+    ### BANDPASS COMPONENTS ###
+    if parameters['bandpass_txt']:
+        info('BANDPASS: incorporating bandpass (B-Jones) effects; for now, scalar B-Jones constant in time')
+        sim_coord.bandpass_correct()
+        info('B-Jones terms applied.')       
+ 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
         info('Imaging the %s column'%ms_dict['datacolumn'])
