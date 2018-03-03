@@ -10,7 +10,7 @@ from scipy.constants import Boltzmann, speed_of_light
 import pylab as pl
 import seaborn as sns
 sns.set_style("darkgrid")
-cmap = pl.cm.tab20 #viridis
+cmap = pl.cm.Set1 #tab20 #viridis
 from mpltools import layout
 from mpltools import color
 from matplotlib.patches import Circle
@@ -556,8 +556,8 @@ class SimCoordinator():
 
         pl.figure() #figsize=(10,6.8))
         for i in range(self.Nant):
-            pl.imshow(self.turb_phase_errors[:,:,i],origin='lower',aspect='auto',vmin=-180,vmax=180,\
-                      extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.])
+            pl.imshow( (self.turb_phase_errors[:,:,i] * 180. / np.pi) ,origin='lower',aspect='auto',\
+                      extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.]) #vmin=-180,180
             pl.xlabel('frequency / GHz')
             pl.ylabel('relative time / hr')
             cb = pl.colorbar()
@@ -572,10 +572,11 @@ class SimCoordinator():
         color.cycle_cmap(self.Nant, cmap=cmap)
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
-                    self.turb_phase_errors[:,len(self.turb_phase_errors[0,:,0])/2,i],label=self.station_names[i])
+                    (self.turb_phase_errors[:,0,i]*180./np.pi),\
+                    label=self.station_names[i],alpha=1)
         pl.xlabel('relative time / hr')
         pl.ylabel('tubulent phase / degrees')
-        pl.ylim(-180,180)
+        #pl.ylim(-180,180)
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'turbulent_phase_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
