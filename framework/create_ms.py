@@ -15,14 +15,15 @@ def create_ms(msname, input_fits, ms_dict):
     info('Measurement Set %s created '%msname)
 
 
-def return_simms_string(msname, input_fits, RA, DEC, antenna_table, \
+def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table, \
                         obslength, dnu, tint, nu, StartTime, nchan, \
                         nscan, scan_lag,datacolumn, makeplots):
     
     s = "simms -T VLBA -t casa -n %s -ra %.9fdeg -dec %.9fdeg \
--st %f -sl %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
-    " % ( msname, RA, DEC, obslength, obslength/float(nscan), scan_lag,
-         tint, nu - (dnu/2.) + (dnu/(float(nchan))/2.), dnu/float(nchan), nchan, StartTime,os.path.join(II('$CODEDIR'),antenna_table)) #changed from os.path.join(II('$INDIR'),
+-pl '%s' -st %f -sl %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
+    " % ( msname, RA, DEC, polproducts, obslength, obslength/float(nscan), scan_lag,
+         tint, nu - (dnu/2.) + (dnu/(float(nchan))/2.), dnu/float(nchan),
+          nchan, StartTime, os.path.join(II('$CODEDIR'),antenna_table)) 
 
     return s
 

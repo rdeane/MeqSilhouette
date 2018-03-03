@@ -35,9 +35,10 @@ if (1):
     ms_config_string = str(ms_dict['antenna_table'].split('/')[-1]) + '_' \
             + str(parameters['input_fitsimage'].split('/')[-1]\
                                                       .replace('.fits','')) \
-            + '_RA%.0fdeg_DEC%.0fdeg_%.0fGHz-BW%iMHz-%ichan-%is-%.0fhrs'\
-            %(ms_dict['RA'],ms_dict['DEC'],ms_dict['nu'],ms_dict['dnu']*1e3,\
-                         ms_dict['nchan'],ms_dict['tint'],ms_dict['obslength'])
+            + '_RA%.0fdeg_DEC%.0fdeg_pol%s_%.0fGHz-BW%iMHz-%ichan-%is-%.0fhrs'\
+            %(ms_dict['RA'],ms_dict['DEC'],ms_dict['polproducts'].replace(' ','-'),\
+              ms_dict['nu'],ms_dict['dnu']*1e3,ms_dict['nchan'],ms_dict['tint'],\
+              ms_dict['obslength'])
                        # attached to base (output_msname_base ) to name MS
     
     
