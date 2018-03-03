@@ -199,7 +199,10 @@ if (1):
         info('BANDPASS: incorporating bandpass (B-Jones) effects; for now, scalar B-Jones constant in time')
         sim_coord.bandpass_correct()
         info('B-Jones terms applied.')       
- 
+    if parameters['bandpass_makeplots']:
+        info('Generating bandpass plots...')
+        sim_coord.make_bandpass_plots()
+
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
         info('Imaging the %s column'%ms_dict['datacolumn'])
