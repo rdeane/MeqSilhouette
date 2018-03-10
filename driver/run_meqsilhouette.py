@@ -5,6 +5,7 @@ from Pyxis.ModSupport import *
 import ms
 import im.argo as argo
 import glob
+import re
 import os
 import sys
 import pyrap.tables as pt
@@ -33,8 +34,7 @@ if (1):
     trop_dict = setup_keyword_dictionary('trop_', parameters)
     
     ms_config_string = str(ms_dict['antenna_table'].split('/')[-1]) + '_' \
-            + str(parameters['input_fitsimage'].split('/')[-1]\
-                                                      .replace('.fits','')) \
+            + re.sub("\.fits$|\.txt$","",parameters['input_fitsimage'].split('/')[-1])\
             + '_RA%.0fdeg_DEC%.0fdeg_pol%s_%.0fGHz-BW%iMHz-%ichan-%is-%.0fhrs'\
             %(ms_dict['RA'],ms_dict['DEC'],ms_dict['polproducts'].replace(' ','-'),\
               ms_dict['nu'],ms_dict['dnu']*1e3,ms_dict['nchan'],ms_dict['tint'],\
