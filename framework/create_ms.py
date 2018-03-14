@@ -9,9 +9,28 @@ from framework.comm_functions import *
 def create_ms(msname, input_fits, ms_dict):
     """ create empty MS """
     x.sh(return_simms_string(msname, input_fits, **ms_dict))
+
+    # set STATION names to same as NAME col
     antt = pt.table(os.path.join(msname, 'ANTENNA'), readonly=False,ack=False)
     antt.putcol('STATION', antt.getcol('NAME'))
     antt.close()
+
+    # set FIELD name to input filename (minus extension)
+    fieldtab = pt.table(os.path.join(msname,'FIELD'),readonly=False,ack=False)
+    fieldtab.putcol('NAME',input_fits.split('/')[-1].split('.')[0])
+    fieldtab.close()
+
+    # set SOURCE name to input filename (minus extension)
+    srctab = pt.table(os.path.join(msname,'SOURCE'),readonly=False,ack=False)
+    srctab.putcol('NAME',input_fits.split('/')[-1].split('.')[0])
+    srctab.close()
+
+    # set SPW name to input filename (minus extension)
+    spwtab = pt.table(os.path.join(msname,'SPECTRAL_WINDOW'),readonly=False,ack=False)
+    spwtab.putcol('NAME',input_fits.split('/')[-1].split('.')[0])
+    spwtab.close()
+
+
     info('Measurement Set %s created '%msname)
 
 
