@@ -109,29 +109,29 @@ if (1):
          %(parameters['station_info'],ms_dict['antenna_table']))
 
     if parameters['bandpass_enabled']:
-        if not os.path.isfile(parameters['bandpass_txt']):
-            abort("File '%s' does not exist. Aborting..."%(parameters['bandpass_txt']))
+        if not os.path.isfile(parameters['bandpass_table']):
+            abort("File '%s' does not exist. Aborting..."%(parameters['bandpass_table']))
         station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
-                                    parameters['bandpass_txt']),\
+                                    parameters['bandpass_table']),\
                                     usecols=[0],dtype=str,skiprows=1).tolist()
         if (len(station_names_txt) != len(station_names_anttab)):
             abort('Mis-matched number of antennas in %s and %s'\
-                  %(parameters['bandpass_txt'],ms_dict['antenna_table']))
+                  %(parameters['bandpass_table'],ms_dict['antenna_table']))
         if (station_names_txt != station_names_anttab):
             warn('Mis-matched station name order in %s versus %s (see comparison):'\
-                 %(parameters['bandpass_txt'],ms_dict['antenna_table']))
+                 %(parameters['bandpass_table'],ms_dict['antenna_table']))
             for c1,c2 in zip(station_names_txt,station_names_anttab):
                 print "%s\t\t%s" % (c1, c2)
             abort('Correct input station_info file and/or antenna table')
 
-    bandpass_txt = os.path.join(v.CODEDIR,parameters['bandpass_txt']) 
+    bandpass_table = os.path.join(v.CODEDIR,parameters['bandpass_table'])
     bandpass_freq_interp_order = parameters['bandpass_freq_interp_order']
 
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
-    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, bandpass_txt, bandpass_freq_interp_order, sefd, \
+    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, \
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time,parameters['trop_fixdelay_max_picosec'])
 
