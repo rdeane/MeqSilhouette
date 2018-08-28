@@ -31,7 +31,7 @@
 "im_npix":64,
 "im_stokes":"I",
 "im_weight":"uniform",
-"trop_enabled":0,
+"trop_enabled":1,
 "trop_wetonly":0,
 "trop_attenuate":1,
 "trop_noise":1,
@@ -40,7 +40,7 @@
 "trop_percentage_calibration_error":100,
 "trop_fixdelays":0,
 "trop_fixdelay_max_picosec": 0,
-"trop_makeplots": 1,
+"trop_makeplots": 0,
 "pointing_enabled":1,
 "pointing_time_per_mispoint": 10,
 "pointing_makeplots": 0

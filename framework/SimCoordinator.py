@@ -274,8 +274,7 @@ class SimCoordinator():
         for a0 in range(self.Nant):
             for a1 in range(self.Nant):
                 if a1 > a0:
-                    transmission_column[self.baseline_dict[(a0, a1)]] = transmission_matrix[:, :, a0, :] * \
-                                                                        transmission_matrix[:, :, a1, :]
+                    transmission_column[self.baseline_dict[(a0, a1)]] = np.sqrt(transmission_matrix[:, :, a0, :] * transmission_matrix[:, :, a1, :])
 
         self.data = np.multiply(self.data, transmission_column)
         self.save_data()
