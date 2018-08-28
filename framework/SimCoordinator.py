@@ -141,12 +141,28 @@ class SimCoordinator():
         tab.putcol(self.output_column, self.data)
         tab.close()
         
+    def apply_weights(self, rms):
+        """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
+        if rms.shape != self.data.shape:
+            abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
+                  'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
+        
+        tab = pt.table(self.msname, readonly=False,ack=False)
+        tab.putcol("SIGMA", rms[:,0,:])
+        #tab.putcol("SIGMA_SPECTRUM", rms)
+        tab.putcol("WEIGHT", 1/rms[:,0,:]**2)
+        #tab.putcol("WEIGHT_SPECTRUM", 1/rms**2)
+        tab.close()
+        info('SIGMA and WEIGHT columns updated based on thermal noise only; no frequency dependence (eg., tropospheric opacity) yet. '+ \
+             'SIGMA_SPECTRUM and WEIGHT_SPECTRUM not populated yet.') #are populated with frequency independent SIGMA and WEIGHT values.')
+
     def add_receiver_noise(self, load=None):
         """ baseline dependent thermal noise only. Calculated from SEFDs, tint, dnu """
         if load:
             self.thermal_noise = np.load(II('$OUTDIR')+'/receiver_noise.npy')
         else:
             self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
+            receiver_rms = np.zeros(self.data.shape, dtype='float')
             size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
@@ -154,27 +170,17 @@ class SimCoordinator():
                         rms = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
 
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
-                            1 / np.sqrt(2) * (np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms,
-                                                                                                            size=size))
+                            np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
+                        receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
 
             np.save(II('$OUTDIR')+'/receiver_noise', self.thermal_noise)
         self.data = np.add(self.data, self.thermal_noise)
         self.save_data()
         info("Thermal noise added")
 
-        self.weights = 1/abs(self.thermal_noise)**2
+        # INI: Populating noise-related columns and weights in the MS
+        self.apply_weights(receiver_rms)
         
-        tab = pt.table(self.msname, readonly=False,ack=False)
-        tab.putcol("WEIGHT", self.weights[:,0,:])
-        tab.close()
-        info('WEIGHT column updated based on thermal noise only. '+ \
-             'Weights are frequency independent at this stage. '  + \
-             'WEIGHT_SPECTRUM could be written to incorporting '  + \
-             'frequency dependent effects (e.g. tropopheric opacity)')
-
-
-
-
         
     def make_baseline_dictionary(self):
         return dict([((x, y), np.where((self.A0 == x) & (self.A1 == y))[0])
