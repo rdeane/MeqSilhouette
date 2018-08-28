@@ -23,7 +23,7 @@ from matplotlib.ticker import FormatStrFormatter
 class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, \
-                 elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
+                 corr_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time,fixdelay_max_picosec):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
@@ -76,6 +76,7 @@ class SimCoordinator():
             abort("One of the dish diameters in the ANTENNA table is zero. Aborting execution.")
         self.dish_area = np.pi * np.power((self.dish_diameter / 2.), 2)
         self.receiver_temp = (self.SEFD * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
+        self.corr_eff = corr_eff
 
         tab.close() # close main MS table
 
@@ -150,7 +151,7 @@ class SimCoordinator():
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
-                        rms = np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
+                        rms = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
 
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
                             1 / np.sqrt(2) * (np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms,

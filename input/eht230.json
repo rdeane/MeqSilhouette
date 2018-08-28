@@ -12,6 +12,7 @@
 "bandpass_freq_interp_order":3,
 "bandpass_makeplots": 0,
 "elevation_limit":0.174,
+"corr_quantbits":2,
 "ms_antenna_table":"input/antenna_tables/EHT2017",
 "ms_datacolumn":"DATA",
 "ms_RA":266.416837,
@@ -25,7 +26,7 @@
 "ms_StartTime":"UTC,2017/04/01/00:00:00.00",
 "ms_nscan":1,
 "ms_scan_lag":0,
-"ms_makeplots": 1,
+"ms_makeplots": 0,
 "im_cellsize":"3e-6arcsec",
 "im_npix":64,
 "im_stokes":"I",
@@ -42,5 +43,5 @@
 "trop_makeplots": 1,
 "pointing_enabled":1,
 "pointing_time_per_mispoint": 10,
-"pointing_makeplots": 1
+"pointing_makeplots": 0
 }

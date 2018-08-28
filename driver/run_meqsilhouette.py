@@ -127,11 +127,16 @@ if (1):
     bandpass_table = os.path.join(v.CODEDIR,parameters['bandpass_table'])
     bandpass_freq_interp_order = parameters['bandpass_freq_interp_order']
 
+    # INI: Determine correlator efficiency based on the number of bits used for quantization (refer TMS (2017) sec 8.3)
+    if parameters['corr_quantbits'] == 1: corr_eff = 0.636
+    elif parameters['corr_quantbits'] == 2: corr_eff = 0.88
+    else: abort('Invalid number of bits used for quantization. Value of "corr_quantbits" in input json file must be 1 or 2')
+
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
-    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, \
+    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time,parameters['trop_fixdelay_max_picosec'])
 
