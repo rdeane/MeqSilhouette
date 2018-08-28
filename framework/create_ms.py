@@ -30,6 +30,12 @@ def create_ms(msname, input_fits, ms_dict):
     spwtab.putcol('NAME',input_fits.split('/')[-1].split('.')[0])
     spwtab.close()
 
+    # INI: Add WEIGHT_SPECTRUM and SIGMA_SPECTRUM columns to the MS
+    tab = pt.table(msname,readonly=False)
+    data = tab.getcol('DATA')
+    tab.addcols(pt.makearrcoldesc('SIGMA_SPECTRUM',value=1.0,shape=[data.shape[1],data.shape[2]],valuetype='float'))
+    tab.addcols(pt.makearrcoldesc('WEIGHT_SPECTRUM',value=1.0,shape=[data.shape[1],data.shape[2]],valuetype='float'))
+    tab.close()
 
     info('Measurement Set %s created '%msname)
 

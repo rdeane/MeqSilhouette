@@ -149,12 +149,12 @@ class SimCoordinator():
         
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol("SIGMA", rms[:,0,:])
-        #tab.putcol("SIGMA_SPECTRUM", rms)
+        tab.putcol("SIGMA_SPECTRUM", rms)
         tab.putcol("WEIGHT", 1/rms[:,0,:]**2)
-        #tab.putcol("WEIGHT_SPECTRUM", 1/rms**2)
+        tab.putcol("WEIGHT_SPECTRUM", 1/rms**2)
         tab.close()
         info('SIGMA and WEIGHT columns updated based on thermal noise only; no frequency dependence (eg., tropospheric opacity) yet. '+ \
-             'SIGMA_SPECTRUM and WEIGHT_SPECTRUM not populated yet.') #are populated with frequency independent SIGMA and WEIGHT values.')
+             'SIGMA_SPECTRUM and WEIGHT_SPECTRUM are populated with frequency independent SIGMA and WEIGHT values.')
 
     def add_receiver_noise(self, load=None):
         """ baseline dependent thermal noise only. Calculated from SEFDs, tint, dnu """
