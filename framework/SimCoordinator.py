@@ -1,10 +1,11 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim
+from meqtrees_funcs import run_turbosim,run_wsclean
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
 import pickle
 import subprocess
+import os
 import glob
 import numpy as np
 from scipy.constants import Boltzmann, speed_of_light
@@ -102,9 +103,16 @@ class SimCoordinator():
         """FFT + UV sampling via the MeqTrees run function"""
 
         ### for static sky - single input FITS image, ASCII file or Tigger LSM ###
-        if self.input_fitsimage.endswith(('.fits','.FITS','.txt','.html')):
-            info('Input sky model is assumed static, given single input file')
+        #if self.input_fitsimage.endswith(('.txt','.html')):
+        if os.path.exists(self.input_fitsimage+'.txt') == True:
+            self.input_fitsimage = self.input_fitsimage+'.txt'
+            info('Input sky model is assumed static, given single input ASCII LSM file. Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
+
+        #elif self.input_fitsimage.endswith(('.fits','.FITS')):
+        elif os.path.exists(self.input_fitsimage+'-model.fits') == True:
+            info('Input sky model is assumed static, given single input FITS file. Using wsclean for predicting visibilities.')
+            run_wsclean(self.input_fitsimage,self.output_column)
 
         ### if time-variable source, input directory with > 1 fits images ###
         elif os.path.isdir(self.input_fitsimage):
@@ -126,7 +134,7 @@ class SimCoordinator():
                 run_turbosim(self.input_fitsimage_list[epoch],self.output_column,taql_string)
             
         else:
-            abort('Problem with input fits image(s)')
+            abort('Problem with input sky models. Aborting execution.')
                 
         tab = pt.table(self.msname, readonly=True,ack=False)
         self.data = tab.getcol(self.output_column) 

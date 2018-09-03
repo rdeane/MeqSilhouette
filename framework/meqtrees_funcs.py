@@ -6,7 +6,21 @@ import mqt
 import numpy as np
 import pyrap.tables as pt
 from im import lwimager 
+import subprocess
 
+def run_wsclean(input_fitsimage,output_column):
+    msname = II('$MS')
+    subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,msname])
+
+    if output_column != 'MODEL_DATA':
+        tab=pt.table(msname,readonly=False)
+        model_data = tab.getcol('MODEL_DATA')
+        tab.putcol(output_column,model_data)
+        # Set MODEL_DATA to unity
+        model_data[:] = 1.0
+        tab.putcol('MODEL_DATA',model_data)
+        tab.close()
+        
 def run_turbosim(input_fitsimage,output_column,taql_string):
 
     options = {}

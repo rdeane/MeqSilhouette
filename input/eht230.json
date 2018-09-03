@@ -1,9 +1,9 @@
 {
 "outdirname":"output/EHT230_TEST",
-"input_fitsimage":"input/sky_models/singlept.txt",
+"input_fitsimage":"input/sky_models/central_point_src_1.4Jy",
 "input_fitsimage_cellsize": "0.1e-6arcsec",    
 "output_to_logfile":0,
-"add_thermal_noise":0,
+"add_thermal_noise":1,
 "make_image":0,
 "exportuvfits":0,
 "station_info":"input/station_info/EHT2017_station_info.txt",

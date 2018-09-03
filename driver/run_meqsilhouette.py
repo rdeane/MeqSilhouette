@@ -67,11 +67,15 @@ if (1):
 #        abort('Selected output directory exists! \n\t[%s]'%OUTDIR + \
 #              '\n\tChange parameter <outdirname> in input configuration file:'+\
 #              '\n\t[%s]'%config_abspath)
-        
-    if os.path.exists(input_fitsimage) == False:
+
+    if os.path.exists(input_fitsimage+'.txt') == False and os.path.exists(input_fitsimage+'.html') == False and os.path.exists(input_fitsimage+'-model.fits') == False and os.path.isdir(input_fitsimage) == False:
+        abort('NO INPUT LSM FOUND. CHECK "input_fitsimage" in input .json configuration file.\n\t'+
+              'Note that this parameter must be the prefix of a sky model that ends with ".txt" or ".html" or "-model.fits" in lower case')
+    
+    '''if os.path.exists(input_fitsimage) == False:
         abort('NO INPUT FITS IMAGE FOUND')
         abort('CHECK "input_fitsimage" in input .json configuration file.\n\t'+
-              'Note input fits images must have suffix ".fits" in lower case')
+              'Note input fits images must have suffix ".fits" in lower case')'''
 
     info('Input sky model fits image: \n %s'%input_fitsimage)
     
