@@ -7,10 +7,18 @@ import numpy as np
 import pyrap.tables as pt
 from im import lwimager 
 import subprocess
+import glob
+from framework.comm_functions import *
 
 def run_wsclean(input_fitsimage,output_column):
     msname = II('$MS')
-    subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,msname])
+    # check for I,Q,U,V fits files. If any one is missing
+    if len(glob.glob(input_fitsimage+'-[I,Q,U,V]-model.fits')) != 4:
+        info('Only one FITS file found. Predicting Stokes I visibilities using wsclean.')
+        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,msname])
+    else:
+        info('FITS files for I,Q,U,V found. Predicting full polarisation visibilities using wsclean.')
+        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-pol","I,Q,U,V",msname])
 
     if output_column != 'MODEL_DATA':
         tab=pt.table(msname,readonly=False)

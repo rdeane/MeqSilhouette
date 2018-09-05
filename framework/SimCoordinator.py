@@ -111,7 +111,7 @@ class SimCoordinator():
 
         #elif self.input_fitsimage.endswith(('.fits','.FITS')):
         elif os.path.exists(self.input_fitsimage+'-model.fits') == True:
-            info('Input sky model is assumed static, given single input FITS file. Using wsclean for predicting visibilities.')
+            info('Input sky model is assumed static, given single input FITS file (possibly per polarisation). Using wsclean for predicting visibilities.')
             run_wsclean(self.input_fitsimage,self.output_column)
 
         ### if time-variable source, input directory with > 1 fits images ###
@@ -134,7 +134,7 @@ class SimCoordinator():
                 run_turbosim(self.input_fitsimage_list[epoch],self.output_column,taql_string)
             
         else:
-            abort('Problem with input sky models. Aborting execution.')
+            abort('Problem with input sky models.')
                 
         tab = pt.table(self.msname, readonly=True,ack=False)
         self.data = tab.getcol(self.output_column) 
