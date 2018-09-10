@@ -24,7 +24,7 @@ from matplotlib.ticker import FormatStrFormatter
 class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, \
-                 corr_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
+                 corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time,fixdelay_max_picosec):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
@@ -75,7 +75,7 @@ class SimCoordinator():
         self.dish_diameter = pt.table(pt.table(msname).getkeyword('ANTENNA'),ack=False).getcol('DISH_DIAMETER')
         if np.any(self.dish_diameter == 0):
             abort("One of the dish diameters in the ANTENNA table is zero. Aborting execution.")
-        self.dish_area = np.pi * np.power((self.dish_diameter / 2.), 2)
+        self.dish_area = aperture_eff * np.pi * np.power((self.dish_diameter / 2.), 2)
         self.receiver_temp = (self.SEFD * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
         self.corr_eff = corr_eff
 
@@ -368,7 +368,7 @@ class SimCoordinator():
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
-                        self.sky_noise[self.baseline_dict[(a0, a1)]] = 1 / np.sqrt(2) * (np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms))
+                        self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
             np.save(II('$OUTDIR')+'/atm_output/sky_noise', self.sky_noise)
         self.data = np.add(self.data, self.sky_noise)
         self.save_data()
