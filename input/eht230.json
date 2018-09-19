@@ -1,6 +1,7 @@
 {
 "outdirname":"output/EHT230_TEST",
 "input_fitsimage":"input/sky_models/central_point_src_1.4Jy",
+"input_fitspol":1,
 "output_to_logfile":0,
 "add_thermal_noise":1,
 "make_image":0,

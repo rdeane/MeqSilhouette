@@ -10,24 +10,21 @@ import subprocess
 import glob
 from framework.comm_functions import *
 
-def run_wsclean(input_fitsimage,output_column):
+def run_wsclean(input_fitsimage,input_fitspol,startvis,endvis):
     msname = II('$MS')
-    # check for I,Q,U,V fits files. If any one is missing
-    if len(glob.glob(input_fitsimage+'-[I,Q,U,V]-model.fits')) != 4:
-        info('Only one FITS file found. Predicting Stokes I visibilities using wsclean.')
-        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,msname])
-    else:
-        info('FITS files for I,Q,U,V found. Predicting full polarisation visibilities using wsclean.')
-        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-pol","I,Q,U,V",msname])
 
-    if output_column != 'MODEL_DATA':
-        tab=pt.table(msname,readonly=False)
-        model_data = tab.getcol('MODEL_DATA')
-        tab.putcol(output_column,model_data)
-        # Set MODEL_DATA to unity
-        model_data[:] = 1.0
-        tab.putcol('MODEL_DATA',model_data)
-        tab.close()
+    if input_fitspol == 0:
+        subprocess.check_call(['wsclean','-predict','-name',input_fitsimage,'-interval',str(int(startvis)),str(int(endvis)),msname])
+    else:
+        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-interval",str(int(startvis)),str(int(endvis)),"-pol","I,Q,U,V",msname])
+
+def copy_to_outcol(output_column):
+    msname = II('$MS')
+
+    tab=pt.table(msname,readonly=False)
+    model_data = tab.getcol('MODEL_DATA')
+    tab.putcol(output_column,model_data)
+    tab.close()
         
 def run_turbosim(input_fitsimage,output_column,taql_string):
 

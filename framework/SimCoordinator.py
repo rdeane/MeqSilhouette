@@ -1,5 +1,5 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim,run_wsclean
+from meqtrees_funcs import run_turbosim,run_wsclean,copy_to_outcol
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
@@ -23,7 +23,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 class SimCoordinator():
 
-    def __init__(self, msname, output_column, input_fitsimage, bandpass_table, bandpass_freq_interp_order, sefd, \
+    def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time,fixdelay_max_picosec):
         info('Generating MS attributes based on input parameters')
@@ -68,6 +68,7 @@ class SimCoordinator():
         self.calc_ant_rise_set_times()
                                                 
         self.input_fitsimage = input_fitsimage
+        self.input_fitspol = input_fitspol
         self.output_column = output_column
 
         ### thermal noise relevant calculations ###
@@ -103,40 +104,48 @@ class SimCoordinator():
         """FFT + UV sampling via the MeqTrees run function"""
 
         ### for static sky - single input FITS image, ASCII file or Tigger LSM ###
-        #if self.input_fitsimage.endswith(('.txt','.html')):
         if os.path.exists(self.input_fitsimage+'.txt') == True:
             self.input_fitsimage = self.input_fitsimage+'.txt'
             info('Input sky model is assumed static, given single input ASCII LSM file. Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
 
-        #elif self.input_fitsimage.endswith(('.fits','.FITS')):
-        elif os.path.exists(self.input_fitsimage+'-model.fits') == True:
-            info('Input sky model is assumed static, given single input FITS file (possibly per polarisation). Using wsclean for predicting visibilities.')
-            run_wsclean(self.input_fitsimage,self.output_column)
+        elif os.path.exists(self.input_fitsimage+'.html') == True:
+            self.input_fitsimage = self.input_fitsimage+'.html'
+            info('Input sky model is assumed static, given single input Tigger LSM file (MeqTrees-specific). Using MeqTrees for predicting visibilities.')
+            run_turbosim(self.input_fitsimage,self.output_column,'')
 
-        ### if time-variable source, input directory with > 1 fits images ###
+        ### INI: if fits image(s), input a directory. Follow conventions for time and polarisation variability.
         elif os.path.isdir(self.input_fitsimage):
             self.input_fitsimage_list = np.sort(glob.glob(os.path.join(self.input_fitsimage,'./*')))
-            self.num_epochs = len(self.input_fitsimage_list)
-            self.minutes_per_epoch = self.obslength/float(self.num_epochs) * 60
-            self.mjd_per_epoch = (self.time_unique[-1] - self.time_unique[0]) / self.num_epochs
+            if self.input_fitspol == 0:
+                self.num_images = len(self.input_fitsimage_list)
+            elif len(self.input_fitsimage_list)%4 != 0:
+                abort("Not all polarisation images are present but 'input_fitspol' is set to True!!!")
+            else:
+                self.num_images = len(self.input_fitsimage_list)/4
+            self.vis_per_image = np.floor(self.time_unique.shape[0]/self.num_images)
 
-            info('Assuming time-variable source with %i epochs (%.1f minutes per epoch)'\
-                 %(self.num_epochs,self.minutes_per_epoch))
-            info('Using the following input fits images:\n' + '\n\t'.join(\
-                [fitsim.split('/')[-1] for fitsim in self.input_fitsimage_list]))
-            for epoch in range(self.num_epochs):
-                taql_string = '"TIME IN {%.7f, %.7f}"'\
-                              %(( self.mjd_obs_start + (epoch*self.mjd_per_epoch)),\
-                                ( self.mjd_obs_start + ((epoch+1)*self.mjd_per_epoch)))
-                info('Now simulating epoch #%i, taql_string = %s, fits image: %s'\
-                     %(epoch,taql_string,self.input_fitsimage_list[epoch]))
-                run_turbosim(self.input_fitsimage_list[epoch],self.output_column,taql_string)
-            
+            startvis = 0
+            endvis = self.vis_per_image
+            # INI: cycle through images and simulate including polarisation info, if present.
+            for img_ind in range(self.num_images):
+                temp_input_fits = '%s/t%04d'%(self.input_fitsimage,img_ind)
+                info('Simulating visibilities (corr dumps) from %d to %d using input sky model %s'%(startvis,endvis,temp_input_fits))
+                run_wsclean(temp_input_fits, self.input_fitspol, startvis, endvis)
+                startvis = endvis
+                if img_ind != self.num_images-2:
+                    endvis = endvis + self.vis_per_image
+                else:
+                    endvis = endvis + 2*self.vis_per_image # INI: ensure all vis at the end are accounted for in the next (last) iteration.
+
+            # INI: Copy over data from MODEL_DATA to output_column if output_column!=MODEL_DATA
+            if self.output_column != 'MODEL_DATA':
+                copy_to_outcol(self.output_column)
+
         else:
             abort('Problem with input sky models.')
                 
-        tab = pt.table(self.msname, readonly=True,ack=False)
+        tab = pt.table(self.msname, readonly=True, ack=False)
         self.data = tab.getcol(self.output_column) 
         tab.close()
 
