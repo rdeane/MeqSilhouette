@@ -647,7 +647,7 @@ class SimCoordinator():
             """this will change the pointing error for each antenna every pointing_timescale
             which one of could essentially think of as a scan length (e.g. 10 minutes)"""
             self.PB_FWHM = PB_FWHM230 / (self.chan_freq.mean() / 230e9) # convert 230 GHz PB to current obs frequency
-            self.num_mispoint_epochs = int(np.floor(self.obslength / (pointing_timescale * 60.))) # could be number of scans, for example
+            self.num_mispoint_epochs = max(1, int(np.floor(self.obslength / (pointing_timescale * 60.)))) # could be number of scans, for example
             self.mjd_per_ptg_epoch = (self.mjd_obs_end - self.mjd_obs_start) / self.num_mispoint_epochs
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
