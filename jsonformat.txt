@@ -9,9 +9,9 @@ outdirname:	Name of the output directory in which to write all the products of M
 
 input_fitsimage:	Name of the directory containing input fits images named using the following convention (samples can be found in input/sky_models):
 			Format: string
-			e.g.: No time-variability or polarisation -- 't0000-model.fits'.
+			e.g.: No time-variability or polarisation -- 't0000-model.fits'
 			      Time-variable sky -- 'txxxx-model.fits', where, xxxx = 0000, 0001, 0002...
-			      Time-variable polarised sky -- 'txxxx-I-model.fits', 'txxxx-Q-model.fits', 'txxxx-U-model.fits', and 'txxxx-V-model.fits'.
+			      Time-variable polarised sky -- 'txxxx-I-model.fits', 'txxxx-Q-model.fits', 'txxxx-U-model.fits', and 'txxxx-V-model.fits'
 			      Non-FITS ASCII/Tigger LSM file -- <filename-without-extension>. A valid ASCII input LSM has extensions '.txt' or '.lsm.html'
 								for MeqTrees compatible Tigger LSMs.
 
@@ -45,10 +45,10 @@ station_info:	Name of the file containing individual station info such as SEFD, 
 bandpass_enabled:	Toggle 0 or 1 -- add bandpass corruptions.
 			Format: integer or boolean
 
-bandpass_table:	ASCII file to read bandpass info from. The input file must contain bandpass gain amplitudes for each station for a set of frequencies.
-		Samples can be found in input/jones_info.
-		Format: integer or boolean
-		e.g.: 'input/jones_info/bandpass.txt'
+bandpass_table:		ASCII file to read bandpass info from. The input file must contain bandpass gain amplitudes for each station for a set of frequencies.
+			Samples can be found in input/jones_info.
+			Format: integer or boolean
+			e.g.: 'input/jones_info/bandpass.txt'
 
 bandpass_freq_interp_order:	Order of spline interpolation.
 				Format: integer
@@ -62,10 +62,10 @@ elevation_limit:	Flag visibilities below this elevation limit.
 			Units: radians
 			e.g.: 0.174
 
-corr_quantbits:	Number of bits used for quantization by the correlator -- for instance, 2 bits for 4 level quantization.
-		Format: integer
-		Units: bits
-		e.g.: 2
+corr_quantbits:		Number of bits used for quantization by the correlator -- for instance, 2 bits for 4 level quantization.
+			Format: integer
+			Units: bits
+			e.g.: 2
 
 ms_antenna_table:	Input CASA antenna table to use for creating the Measurement Set. Samples can be found in input/antenna_tables
 			Format: string
@@ -80,25 +80,25 @@ ms_RA:	Right Ascension of the pointing centre of the observation.
 	Units: Degrees
 	e.g.: 266.416837
 
-ms_DEC:	Declination of the pointing centre of the observation.
-	Format: float
-	Units: Degrees
-	e.g.: -29.000781
+ms_DEC:		Declination of the pointing centre of the observation.
+		Format: float
+		Units: Degrees
+		e.g.: -29.000781
 
-ms_polproducts:	Indicate how to interpret the polarization information of the 2 x 2 complex visibilities, based on whether the polarization feeds
-		are circular or linear.
-		Format: string
-		e.g.: 'RR RL LR LL' or 'XX XY YX YY'
+ms_polproducts:		Indicate how to interpret the polarization information of the 2 x 2 complex visibilities, based on whether the polarization feeds
+			are circular or linear.
+			Format: string
+			e.g.: 'RR RL LR LL' or 'XX XY YX YY'
 
 ms_nu:	Specify the centre frequency of the bandpass.
 	Format: float
 	Units: GHz
 	e.g.: 230.0
 
-ms_dnu:	Specify the bandwidth of the spectral window.
-	Format: float
-	Units: GHz
-	e.g.: 2.56
+ms_dnu:		Specify the bandwidth of the spectral window.
+		Format: float
+		Units: GHz
+		e.g.: 2.56
 
 ms_nchan:	Specify the number of channels into which the bandwidth <ms_dnu> is divided.
 		Format: integer
@@ -152,8 +152,8 @@ trop_enabled:	Toggle 0 or 1 -- enable tropospheric corruptions.
 trop_wetonly:	Toggle 0 or 1 -- simulate wet component only (from the output obtained from AATM). Used only if trop_enabled=1.
 		Format: integer or boolean
 
-trop_attenuate:	Toggle 0 or 1 -- enable tropospheric attenuation. Used only if trop_enabled=1.
-		Format: integer or boolean
+trop_attenuate:		Toggle 0 or 1 -- enable tropospheric attenuation. Used only if trop_enabled=1.
+			Format: integer or boolean
 
 trop_noise:	Toggle 0 or 1 -- include tropospheric (i.e. sky) noise. Used only if trop_enabled=1.
 		Format: integer or boolean
@@ -166,17 +166,17 @@ trop_mean_delay:	Toggle 0 or 1 -- add mean (i.e. non-turbulent) delay errors due
 
 trop_percentage_calibration_error:	Unused.
 
-trop_fixdelays:	Toggle 0 or 1 -- Insert time-invariant delay errors for testing purposes. Used only if trop_enabled=1.
-		Format: integer or boolean
+trop_fixdelays:		Toggle 0 or 1 -- Insert time-invariant delay errors for testing purposes. Used only if trop_enabled=1.
+			Format: integer or boolean
 
 trop_fixdelay_max_picosec:	Specify the maximum absolute value of the constant delay errors. Used only if trop_enabled=1 and trop_fixdelays=1.
 				Format: float
 				Units: picoseconds
 				e.g.: 200
 
-trop_makeplots:	Toggle 0 or 1. Plot troposphere-related quantities such as zenith opacity, elevation-dependent transmission, zenith sky temperature against frequency
-		and turbulent phase errors and delays against time.
-		Format: integer or boolean
+trop_makeplots:		Toggle 0 or 1. Plot troposphere-related quantities such as zenith opacity, elevation-dependent transmission, zenith sky temperature against frequency
+			and turbulent phase errors and delays against time.
+			Format: integer or boolean
 
 pointing_enabled:	Toggle 0 or 1 -- enable pointing error simulation. Station-based pointing error info must be present in <station_info>.
 			Format: integer or boolean
@@ -188,6 +188,3 @@ pointing_time_per_mispoint:	Specify the number of minutes per mispointing.
 
 pointing_makeplots:	Toggle 0 or 1 -- plot pointing offset against time.
 			Format: integer or boolean
-
- 
-

@@ -74,7 +74,7 @@ Finally, add the symbolic link:
 To run this synthetic data generator, you need:
 
 1. a driver script (e.g. driver/run_meqsilouette.py)
-2. a configuration file (input/eht230.json is an example.)
+2. a configuration file (input/eht230.json is an example. The file 'jsonformat.txt' explains each parameter.)
 
 
 The software can be run in three primary modes:
