@@ -3,7 +3,7 @@ Due to the nature of linking a number of different packages together, there are
 a number of errors/warnings that may appear but don't necessarily have any adverse
 effect. Furthermore, there are several types of errors that may not be easy to catch
 directly. As such, we include a list below of commonly-encountered errors/warnings
-and offer suggesgtions on what they might mean.
+and offer suggestions on what they might mean.
 
 
 ## Common errors/warnings

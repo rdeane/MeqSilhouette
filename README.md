@@ -18,7 +18,9 @@ Two options:
 
 [simms](https://github.com/radio-astro/simms):  python wrapper for creating empty Measurement Sets using the CASA simulate tool
 
-[MeqTrees](http://meqtrees.net): implements the Radio Interferometry Measurement Equation
+[WSClean](https://sourceforge.net/p/wsclean/wiki/Home/): predicts visibilities using the Radio Interferometry Measurement Equation
+
+[MeqTrees](http://meqtrees.net): predicts visibilities using the Radio Interferometry Measurement Equation (for ASCII sky models)
 
 [Pyxis](https://github.com/ska-sa/pyxis/): python-esque scripting language for MeqTrees 
 
@@ -126,7 +128,7 @@ MovedModule("winreg", "_winreg")
 
 ### Configuration file
 
-All paths a relative to $MEQS_DIR defined above
+All paths are relative to $MEQS_DIR defined above
 
 The configuration file is a simple .json file and contains the basic observational setup which are loosely grouped into the following parameter groups:
 

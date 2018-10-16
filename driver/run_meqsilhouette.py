@@ -214,7 +214,7 @@ if (1):
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
         info('Imaging the %s column'%ms_dict['datacolumn'])
-        make_dirty_image(im_dict,ms_dict) #, v.OUTDIR)
+        make_dirty_image_lwimager(im_dict,ms_dict) #, v.OUTDIR)
         if not os.path.exists(II('${OUTDIR>/}${MS:BASE}')+'-dirty_map.fits'):
             abort('OUTPUT IMAGE NOT FOUND')
             abort('Looks like imaging, or something upstream of that failed.')
