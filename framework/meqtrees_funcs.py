@@ -16,7 +16,7 @@ def run_wsclean(input_fitsimage,input_fitspol,startvis,endvis):
     if input_fitspol == 0:
         subprocess.check_call(['wsclean','-predict','-name',input_fitsimage,'-interval',str(int(startvis)),str(int(endvis)),msname])
     else:
-        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-interval",str(int(startvis)),str(int(endvis)),"-pol","I,Q,U,V",msname])
+        subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-interval",str(int(startvis)),str(int(endvis)),"-pol","I,Q,U,V","-no-reorder",msname])
 
 def copy_to_outcol(output_column):
     msname = II('$MS')
