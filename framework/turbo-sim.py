@@ -121,8 +121,10 @@ meqmaker.add_uv_jones('P','feed orientation',[feed_angle]);
 # meqmaker.add_uv_jones('P','feed angle',Rotation('P'));
 
 # D - direction-independent leakage
-from Siamese.OMS.leakage import Leakage
-meqmaker.add_uv_jones('D','leakage',Leakage('D'));
+##from Siamese.OMS.leakage import Leakage
+##meqmaker.add_uv_jones('D','leakage',Leakage('D'));
+from Siamese.OMS import leakage
+meqmaker.add_uv_jones('D','leakage (ampl/phases)',leakage);
 
 # G - gains
 from Siamese.OMS import oms_gain_models

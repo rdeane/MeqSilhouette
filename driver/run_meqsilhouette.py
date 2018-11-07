@@ -2,7 +2,7 @@
 import time
 import Pyxis
 from Pyxis.ModSupport import *
-import ms
+#import ms # INI: 29-oct-2018: not used anywhere!
 import im.argo as argo
 import glob
 import re
@@ -62,7 +62,8 @@ if (1):
 ### catch input parameter user errors 
     if not os.path.exists(v.PLOTDIR):
         os.makedirs(v.PLOTDIR)
-
+    else:
+        info('%s exists; overwriting contents.'%(v.OUTDIR))
 
 #    else:
 #        abort('Selected output directory exists! \n\t[%s]'%OUTDIR + \
@@ -82,9 +83,9 @@ if (1):
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
 
     info('Loading station info table %s'%parameters['station_info'])
-    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff = \
+    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag = \
         np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
-        skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9]), 0, 1)
+        skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15]), 0, 1)
     
     #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
@@ -141,10 +142,14 @@ if (1):
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
     sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
-                               coherence_time,parameters['trop_fixdelay_max_picosec'])
+                               coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], \
+                               gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag)
 
     sim_coord.interferometric_sim()
 
+    info('Start corrupting the perfect visibilities. The corruptions (if enabled) are applied in the following order:\n'+
+	 '1. Pointing errors\n2. Thermal noise\n3. Tropospheric effects\n4. UV-Jones effects (parallactic angle, polarization leakage, receiver gains) \n5. Bandpass effects\n')
+    
     if parameters['pointing_enabled']:
         info('Pointing errors are enabled, applying antenna-based amplitudes errors')
         info('Current pointing error model is a constant offset that changes on a user-specified time interval, current setting = %.1f minutes'%\
@@ -201,6 +206,11 @@ if (1):
         if parameters['trop_makeplots']:
             sim_coord.trop_plots()
             info('Generated troposphere plots')
+
+    if parameters['uvjones_g_on'] or parameters['uvjones_d_on']:
+        info('Introducing UV-Jones effects: (polarization leakage + parallactic angle) and/or complex gains')
+        sim_coord.add_uvjones_mqt()
+        info('UV-Jones effects added successfully.')
 
     ### BANDPASS COMPONENTS ###
     if parameters['bandpass_enabled']:

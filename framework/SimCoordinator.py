@@ -1,5 +1,5 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim,run_wsclean,copy_to_outcol
+from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_uvjones
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
@@ -7,6 +7,8 @@ import pickle
 import subprocess
 import os
 import glob
+import shlex
+import tempfile
 import numpy as np
 from scipy.constants import Boltzmann, speed_of_light
 from scipy.interpolate import InterpolatedUnivariateSpline as ius
@@ -25,7 +27,7 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time,fixdelay_max_picosec):
+                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -99,6 +101,16 @@ class SimCoordinator():
         self.bandpass_table = bandpass_table
         self.bandpass_freq_interp_order = bandpass_freq_interp_order
 
+        ### uv_jones information - G, D, and P-Jones (automatically enabled if D is enabled) matrices
+        self.uvjones_g_on = uvjones_g_on
+        self.uvjones_d_on = uvjones_d_on
+        # self.pol_leak_mag = pol_leak_mag
+        self.gainR = gainR
+        self.gainL = gainL
+        self.leakR_real = leakR_real
+        self.leakR_imag = leakR_imag
+        self.leakL_real = leakL_real
+        self.leakL_imag = leakL_imag
 
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
@@ -108,11 +120,15 @@ class SimCoordinator():
             self.input_fitsimage = self.input_fitsimage+'.txt'
             info('Input sky model is assumed static, given single input ASCII LSM file. Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
+            if self.output_column != 'MODEL_DATA':
+                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
 
         elif os.path.exists(self.input_fitsimage+'.html') == True:
             self.input_fitsimage = self.input_fitsimage+'.html'
             info('Input sky model is assumed static, given single input Tigger LSM file (MeqTrees-specific). Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
+            if self.output_column != 'MODEL_DATA':
+                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
 
         ### INI: if fits image(s), input a directory. Follow conventions for time and polarisation variability.
         elif os.path.isdir(self.input_fitsimage):
@@ -138,13 +154,13 @@ class SimCoordinator():
                 else:
                     endvis = endvis + 2*self.vis_per_image # INI: ensure all vis at the end are accounted for in the next (last) iteration.
 
-            # INI: Copy over data from MODEL_DATA to output_column if output_column!=MODEL_DATA
+            # INI: Copy over data from MODEL_DATA to output_column if output_column is not MODEL_DATA
             if self.output_column != 'MODEL_DATA':
-                copy_to_outcol(self.output_column)
+                copy_between_cols(self.output_column, 'MODEL_DATA')
 
         else:
             abort('Problem with input sky models.')
-                
+
         tab = pt.table(self.msname, readonly=True, ack=False)
         self.data = tab.getcol(self.output_column) 
         tab.close()
@@ -157,6 +173,11 @@ class SimCoordinator():
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol(self.output_column, self.data)
         tab.close()
+
+        # INI: After every corruption, copy from output_column to MODEL_DATA. This is to ensure that the CASA simulator,
+        # which always looks for the data to corrupt in MODEL_DATA, can apply corruptions to the right visibilities.
+        if self.output_column != 'MODEL_DATA':
+            copy_between_cols('MODEL_DATA', self.output_column)
         
     def apply_weights(self, rms):
         """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
@@ -792,6 +813,81 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
 
+
+    ##################################
+    # POLARIZATION LEAKAGE FUNCTIONS #
+    ##################################
+    def add_pol_leakage(self):
+        """ Add constant polarization leakage using the casa simulator """
+        casa_log = II('$OUTDIR')+'/casa_pol_leakage_corrupt.log'
+        pl_tab = II('$OUTDIR')+'/POL_LEAKAGE'
+        with tempfile.NamedTemporaryFile(prefix='pol_leakage_', suffix='.py', dir=II('$OUTDIR'), delete=False) as run_in_casa:
+            run_in_casa.write("""
+sm.openfromms('%s')
+sm.setleakage(mode='constant', table='%s', amplitude=%f, offset=%f)
+sm.corrupt()
+sm.done()
+"""%(self.msname, pl_tab, self.pol_leak_ampl, self.pol_leak_offset))
+
+            run_in_casa.flush()
+
+            cmd = 'casa --nologger --log2term --logfile %s -c %s'%(casa_log, run_in_casa.name)
+
+            proc = subprocess.Popen(shlex.split(cmd))
+            out,err = proc.communicate()
+
+        if proc.returncode != 0:
+            abort('Error adding polarization leakage. Process returned error code %d. Check the file %s.'%(proc.returncode, casa_log))
+
+        # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that CASA sm can always read
+        # from MODEL_DATA when necessary.
+        copy_between_cols('MODEL_DATA', 'DATA') # sm.corrupt() writes corrupted data to both DATA and CORRECTED_DATA.
+
+
+    def add_pol_leakage_manual(self):
+        """ Add constant polarization leakage (D-Jones term) using the casa simulator """
+        leak_real = self.pol_leak_ampl_frac * np.cos(self.pol_leak_phase_frac)
+        leak_imag = self.pol_leak_ampl_frac * np.sin(self.pol_leak_phase_frac)
+
+        self.pol_leak_mat = np.zeros(self.data.shape,dtype=complex)
+        self.pol_leak_mat[:,:,0] = 1
+        self.pol_leak_mat[:,:,1] = leak_real+1j*leak_imag
+        self.pol_leak_mat[:,:,2] = leak_real+1j*leak_imag
+        self.pol_leak_mat[:,:,3] = 1
+
+        np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
+
+        pol_leak_mat_reshaped = self.pol_leak_mat.reshape((self.data.shape[0],self.data.shape[1],2,2))
+        data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
+
+        data_leakage_corrupted = np.matmul(np.matmul(pol_leak_mat_reshaped, data_reshaped), np.conjugate(pol_leak_mat_reshaped))
+        self.data = data_leakage_corrupted.reshape(self.data.shape) 
+        
+        self.save_data()
+
+
+    def add_uvjones_mqt(self):
+        """ Add uv-jones corruptions; currently P, D, and G-Jones matrices implemented """
+
+        # reformat the input reals and imags for the R and L components of each station
+        leakR_cplx = self.leakR_real + 1j*self.leakR_imag
+        leakL_cplx = self.leakL_real + 1j*self.leakL_imag
+
+        leak_ampl_string=''
+        leak_phas_string=''
+        for ind in range(leakR_cplx.shape[0]):
+            leak_ampl_string += '%f %f '%(np.absolute(leakR_cplx[ind]), np.absolute(leakL_cplx[ind]))
+            leak_phas_string += '%f %f '%(np.rad2deg(np.angle(leakR_cplx[ind])), np.rad2deg(np.angle(leakL_cplx[ind])))
+
+        leak_ampl_string = leak_ampl_string.strip()
+        leak_phas_string = leak_phas_string.strip()
+
+        add_uvjones(self.output_column, self.uvjones_g_on, self.uvjones_d_on, self.gainR, self.gainL, leak_ampl_string, leak_phas_string)
+ 
+        # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that if CASA sm is ever used 
+        # at any point in the Jones chain, it can always read the right visibilities from MODEL_DATA when necessary.
+        if self.output_column != 'MODEL_DATA':
+            copy_between_cols('MODEL_DATA', self.output_column)
 
     #############################
     ##### General MS plots  #####

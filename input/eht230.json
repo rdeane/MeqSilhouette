@@ -1,7 +1,7 @@
 {
-"outdirname":"output/EHT_pol",
-"input_fitsimage":"input/sky_models/monika_polfits",
-"input_fitspol":1,
+"outdirname":"output/EHT_stokesI",
+"input_fitsimage":"input/sky_models/monika_stokesI",
+"input_fitspol":0,
 "output_to_logfile":0,
 "add_thermal_noise":1,
 "make_image":0,
@@ -31,7 +31,7 @@
 "im_npix":64,
 "im_stokes":"I",
 "im_weight":"uniform",
-"trop_enabled":1,
+"trop_enabled":0,
 "trop_wetonly":0,
 "trop_attenuate":1,
 "trop_noise":1,
@@ -41,7 +41,9 @@
 "trop_fixdelays":0,
 "trop_fixdelay_max_picosec": 0,
 "trop_makeplots": 0,
-"pointing_enabled":1,
+"pointing_enabled":0,
 "pointing_time_per_mispoint": 10,
-"pointing_makeplots": 0
+"pointing_makeplots": 0,
+"uvjones_g_on": 0,
+"uvjones_d_on": 0
 }
