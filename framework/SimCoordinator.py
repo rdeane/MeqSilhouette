@@ -703,8 +703,8 @@ class SimCoordinator():
                     if a1 > a0:
                         bl_indices = self.baseline_dict[(a0,a1)] # baseline indices only, all times
                         for mispoint_epoch in range(self.num_mispoint_epochs):
-                            epoch_ind_mask = (self.time[bl_indices] > ( self.mjd_obs_start + (mispoint_epoch*self.mjd_per_ptg_epoch))) &\
-                                       (self.time[bl_indices] < ( self.mjd_obs_start + (mispoint_epoch+1)*self.mjd_per_ptg_epoch))
+                            epoch_ind_mask = (self.time[bl_indices] >= ( self.mjd_obs_start + (mispoint_epoch*self.mjd_per_ptg_epoch))) &\
+                                       (self.time[bl_indices] <= ( self.mjd_obs_start + (mispoint_epoch+1)*self.mjd_per_ptg_epoch))
                                         
                                          # need to add a elevation mask 
                             bl_epoch_indices = bl_indices[epoch_ind_mask]

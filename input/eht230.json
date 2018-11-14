@@ -1,7 +1,7 @@
 {
 "outdirname":"output/EHT_stokesI",
-"input_fitsimage":"input/sky_models/monika_stokesI",
-"input_fitspol":0,
+"input_fitsimage":"input/sky_models/monika_polfits",
+"input_fitspol":1,
 "output_to_logfile":0,
 "add_thermal_noise":1,
 "make_image":0,
@@ -45,5 +45,5 @@
 "pointing_time_per_mispoint": 10,
 "pointing_makeplots": 0,
 "uvjones_g_on": 0,
-"uvjones_d_on": 0
+"uvjones_d_on": 1
 }
