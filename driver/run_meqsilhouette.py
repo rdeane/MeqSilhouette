@@ -83,9 +83,10 @@ if (1):
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
 
     info('Loading station info table %s'%parameters['station_info'])
-    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag = \
-        np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
-        skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15]), 0, 1)
+    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR_real, gainR_imag,\
+    gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag = \
+    np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
+    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17]), 0, 1)
     
     #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
@@ -143,7 +144,7 @@ if (1):
     sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], \
-                               gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag)
+                               gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag)
 
     sim_coord.interferometric_sim()
 
@@ -207,10 +208,16 @@ if (1):
             sim_coord.trop_plots()
             info('Generated troposphere plots')
 
-    if parameters['uvjones_g_on'] or parameters['uvjones_d_on']:
-        info('Introducing UV-Jones effects: (polarization leakage + parallactic angle) and/or complex gains')
-        sim_coord.add_uvjones_mqt()
-        info('UV-Jones effects added successfully.')
+    if parameters['uvjones_d_on']:
+        info('Introducing polarization leakage (+ parallactic angle) effects')
+        sim_coord.add_pol_leakage_manual()
+        info('Polarization leakage and parallactic angle effects added successfully.')
+    
+    if parameters['uvjones_g_on']:
+        info('Introducing complex (direction-independent) gain effects')
+        sim_coord.add_gjones_manual()
+        info('Complex gains added successfully.')
+
 
     ### BANDPASS COMPONENTS ###
     if parameters['bandpass_enabled']:

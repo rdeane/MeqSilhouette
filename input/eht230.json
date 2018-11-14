@@ -1,7 +1,7 @@
 {
-"outdirname":"output/EHT_stokesI",
-"input_fitsimage":"input/sky_models/monika_stokesI",
-"input_fitspol":0,
+"outdirname":"output/EHT_test_manual_leakage",
+"input_fitsimage":"input/sky_models/monika_polfits",
+"input_fitspol":1,
 "output_to_logfile":0,
 "add_thermal_noise":1,
 "make_image":0,
@@ -15,8 +15,8 @@
 "corr_quantbits":2,
 "ms_antenna_table":"input/antenna_tables/EHT2017",
 "ms_datacolumn":"DATA",
-"ms_RA":266.416816625,
-"ms_DEC":-29.00782497222222,
+"ms_RA":266.416837,
+"ms_DEC":-29.00781,
 "ms_polproducts":"RR RL LR LL",
 "ms_nu":230,
 "ms_dnu":2.56,
@@ -45,5 +45,5 @@
 "pointing_time_per_mispoint": 10,
 "pointing_makeplots": 0,
 "uvjones_g_on": 0,
-"uvjones_d_on": 0
+"uvjones_d_on": 1
 }

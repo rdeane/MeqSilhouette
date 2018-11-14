@@ -1,5 +1,5 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_uvjones
+from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_pjones
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
@@ -27,7 +27,7 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR, gainL, leakR_real, leakR_imag, leakL_real, leakL_imag):
+                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -104,13 +104,16 @@ class SimCoordinator():
         ### uv_jones information - G, D, and P-Jones (automatically enabled if D is enabled) matrices
         self.uvjones_g_on = uvjones_g_on
         self.uvjones_d_on = uvjones_d_on
-        # self.pol_leak_mag = pol_leak_mag
-        self.gainR = gainR
-        self.gainL = gainL
+
         self.leakR_real = leakR_real
         self.leakR_imag = leakR_imag
         self.leakL_real = leakL_real
         self.leakL_imag = leakL_imag
+
+        self.gainR_real = gainR_real
+        self.gainR_imag = gainR_imag
+        self.gainL_real = gainL_real
+        self.gainL_imag = gainL_imag
 
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
@@ -817,7 +820,7 @@ class SimCoordinator():
     ##################################
     # POLARIZATION LEAKAGE FUNCTIONS #
     ##################################
-    def add_pol_leakage(self):
+    '''def add_pol_leakage(self):
         """ Add constant polarization leakage using the casa simulator """
         casa_log = II('$OUTDIR')+'/casa_pol_leakage_corrupt.log'
         pl_tab = II('$OUTDIR')+'/POL_LEAKAGE'
@@ -841,32 +844,66 @@ sm.done()
 
         # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that CASA sm can always read
         # from MODEL_DATA when necessary.
-        copy_between_cols('MODEL_DATA', 'DATA') # sm.corrupt() writes corrupted data to both DATA and CORRECTED_DATA.
+        copy_between_cols('MODEL_DATA', 'DATA') # sm.corrupt() writes corrupted data to both DATA and CORRECTED_DATA'''
 
 
     def add_pol_leakage_manual(self):
-        """ Add constant polarization leakage (D-Jones term) using the casa simulator """
-        leak_real = self.pol_leak_ampl_frac * np.cos(self.pol_leak_phase_frac)
-        leak_imag = self.pol_leak_ampl_frac * np.sin(self.pol_leak_phase_frac)
+        """ Add constant station-based polarization leakage (D-Jones term) """
 
-        self.pol_leak_mat = np.zeros(self.data.shape,dtype=complex)
-        self.pol_leak_mat[:,:,0] = 1
-        self.pol_leak_mat[:,:,1] = leak_real+1j*leak_imag
-        self.pol_leak_mat[:,:,2] = leak_real+1j*leak_imag
-        self.pol_leak_mat[:,:,3] = 1
+        # Add P-Jones corruptions (to account for parallactic angle rotation) using meqtrees
+        add_pjones(self.output_column)
+
+        # Construct station-based leakage matrices (D-Jones)
+        self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex)
+        for ant in range(self.Nant):
+            self.pol_leak_mat[ant,0,0] = 1
+            self.pol_leak_mat[ant,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
+            self.pol_leak_mat[ant,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
+            self.pol_leak_mat[ant,1,1] = 1
 
         np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
 
-        pol_leak_mat_reshaped = self.pol_leak_mat.reshape((self.data.shape[0],self.data.shape[1],2,2))
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
-        data_leakage_corrupted = np.matmul(np.matmul(pol_leak_mat_reshaped, data_reshaped), np.conjugate(pol_leak_mat_reshaped))
-        self.data = data_leakage_corrupted.reshape(self.data.shape) 
+        for a0 in range(self.Nant):
+            for a1 in range(a0+1,self.Nant):
+                bl_ind = self.baseline_dict[(a0,a1)]
+                data_reshaped[bl_ind] = np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.pol_leak_mat[a1]))
+
+        self.data = data_reshaped.reshape(self.data.shape) 
         
         self.save_data()
 
 
-    def add_uvjones_mqt(self):
+    ##################################
+    # COMPLEX G-JONES FUNCTIONS #
+    ##################################
+
+    def add_gjones_manual(self):
+        """ Add station-based complex gains """
+
+        self.gain_mat = np.zeros((self.Nant,2,2),dtype=complex)
+        for ant in range(self.Nant):
+            self.gain_mat[ant,0,0] = self.gainR_real[ant]+1j*self.gainR_imag[ant]
+            self.gain_mat[ant,0,1] = 0
+            self.gain_mat[ant,1,0] = 0
+            self.gain_mat[ant,1,1] = self.gainL_real[ant]+1j*self.gainL_imag[ant]
+
+        np.save(II('$OUTDIR')+'/gains', self.gain_mat)
+
+        data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
+
+        for a0 in range(self.Nant):
+            for a1 in range(a0+1,self.Nant):
+                bl_ind = self.baseline_dict[(a0,a1)]
+                data_reshaped[bl_ind] = np.matmul(np.matmul(self.gain_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.gain_mat[a1]))
+
+        self.data = data_reshaped.reshape(self.data.shape)
+
+        self.save_data()
+
+
+    '''def add_uvjones_mqt(self):
         """ Add uv-jones corruptions; currently P, D, and G-Jones matrices implemented """
 
         # reformat the input reals and imags for the R and L components of each station
@@ -887,7 +924,7 @@ sm.done()
         # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that if CASA sm is ever used 
         # at any point in the Jones chain, it can always read the right visibilities from MODEL_DATA when necessary.
         if self.output_column != 'MODEL_DATA':
-            copy_between_cols('MODEL_DATA', self.output_column)
+            copy_between_cols('MODEL_DATA', self.output_column)'''
 
     #############################
     ##### General MS plots  #####
