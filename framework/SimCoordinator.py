@@ -1,5 +1,5 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_parang_rot
+from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_pjones
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
@@ -850,8 +850,8 @@ sm.done()
     def add_pol_leakage_manual(self):
         """ Add constant station-based polarization leakage (D-Jones term) """
 
-        # Add P-Jones and iP-Jones corruptions (to account for parallactic angle rotation) using meqtrees
-        add_parang_rot(self.output_column)
+        # Add P-Jones corruptions (parallactic angle rotation) using meqtrees
+        add_pjones(self.output_column)
 
         # Construct station-based leakage matrices (D-Jones)
         self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex)

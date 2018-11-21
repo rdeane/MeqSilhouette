@@ -52,7 +52,7 @@ def run_turbosim(input_fitsimage,output_column,taql_string):
             options=options)
 # removed:                 
 
-def add_parang_rot(output_column):
+def add_pjones(output_column):
     options = {}
     options['ms_sel.msname'] = II('$MS')
     options['ms_sel.output_column'] = output_column
@@ -62,11 +62,8 @@ def add_parang_rot(output_column):
     options['sim_mode'] = 'sim only'
 
     options['me.p_enable'] = 1
-    options['feed_angle.enable_pa'] = 1 # enable parallactic angle
+    options['feed_angle.enable_pa'] = 1 # enable parallactic angle rotation
     options['feed_angle.read_ms'] = 1 # enable reading feed angle from FEED subtable in MS
-    options['me.ip_enable'] = 1
-    options['rot_ip.enable_pa'] = 'enabled' # enable parang rotation
-    options['rot_ip.read_ms'] = 1
 
     mqt.MULTITHREAD = 32 #max number of meqserver threads
     mqt.run(script=II('$FRAMEWORKDIR')+'/turbo-sim.py',
