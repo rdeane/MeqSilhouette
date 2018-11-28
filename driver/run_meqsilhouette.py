@@ -92,9 +92,9 @@ if (1):
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
                                 parameters['station_info']),\
                                 usecols=[0],dtype=str,skiprows=1).tolist()
-    anttab = tab=pt.table(os.path.join(v.CODEDIR,ms_dict['antenna_table'])\
-                          ,ack=False)
+    anttab = pt.table(os.path.join(v.CODEDIR,ms_dict['antenna_table']),ack=False)
     station_names_anttab = anttab.getcol('STATION')
+    anttab.close()
     if (len(station_names_txt) != len(station_names_anttab)):
         abort('Mis-matched number of antennas in %s and %s'\
               %(parameters['station_info'],ms_dict['antenna_table']))
@@ -103,7 +103,6 @@ if (1):
              %(parameters['station_info'],ms_dict['antenna_table']))
         for c1,c2 in zip(station_names_txt,station_names_anttab):
             print "%s\t\t%s" % (c1, c2)
-        anttab.close()
         abort('Correct input station_info file and/or antenna table')
  
 
@@ -124,10 +123,7 @@ if (1):
                  %(parameters['bandpass_table'],ms_dict['antenna_table']))
             for c1,c2 in zip(station_names_txt,station_names_anttab):
                 print "%s\t\t%s" % (c1, c2)
-            anttab.close()
             abort('Correct input station_info file and/or antenna table')
-
-    anttab.close() # INI: Close the table cleanly.
 
     bandpass_table = os.path.join(v.CODEDIR,parameters['bandpass_table'])
     bandpass_freq_interp_order = parameters['bandpass_freq_interp_order']
@@ -139,6 +135,14 @@ if (1):
 
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
+
+    # INI: Write mount types into the MOUNT column in the empty MS prior to generating synthetic data.
+    station_mount_types = np.loadtxt(os.path.join(v.CODEDIR, parameters['station_info']), usecols=[18], dtype=str, skiprows=1)
+    tab = pt.table(v.MS)
+    anttab = pt.table(tab.getkeyword('ANTENNA'), readonly=False)
+    anttab.putcol('MOUNT', station_mount_types)
+    anttab.close()
+    tab.close()
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
     sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, aperture_eff,\

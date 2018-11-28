@@ -27,7 +27,8 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag):
+                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR_real, gainR_imag, gainL_real, gainL_imag, \
+                 leakR_real, leakR_imag, leakL_real, leakL_imag):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
