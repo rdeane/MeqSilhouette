@@ -50,6 +50,7 @@ class SimCoordinator():
         anttab = pt.table(tab.getkeyword('ANTENNA'),ack=False)
         self.station_names = anttab.getcol('NAME')
         self.pos = anttab.getcol('POSITION')
+        self.mount = anttab.getcol('MOUNT')
         self.Nant = self.pos.shape[0]
         self.N = range(self.Nant)
         anttab.close()
@@ -69,6 +70,7 @@ class SimCoordinator():
         self.write_flag(elevation_limit)
         self.elevation[self.elevation < elevation_limit] = np.nan  # This is to avoid crashing later tropospheric calculation
         self.calc_ant_rise_set_times()
+        self.parallactic_angle = self.parallactic_angle_calc() # INI: uses self.elevation
                                                 
         self.input_fitsimage = input_fitsimage
         self.input_fitspol = input_fitspol
@@ -228,9 +230,33 @@ class SimCoordinator():
         return dict([((x, y), np.where((self.A0 == x) & (self.A1 == y))[0])
                     for x in self.ant_unique for y in self.ant_unique if y > x])
 
+    def parallactic_angle_calc(self):
+        measure = pm.measures()
+        ra = qa.quantity(self.direction[0], 'rad'); dec = qa.quantity(self.direction[1], 'rad')
+        pointing = measure.direction('j2000', ra, dec)
+        start_time = measure.epoch('utc', qa.quantity(self.time_unique[0], 's'))
+        measure.doframe(start_time)
 
+        parang_matrix = np.zeros((self.Nant, self.time_unique.shape[0]))
 
-                                                                                                                                
+        def antenna_parang(antenna):
+            x = qa.quantity(self.pos[antenna, 0], 'm')
+            y = qa.quantity(self.pos[antenna, 1], 'm')
+            z = qa.quantity(self.pos[antenna, 2], 'm')
+            position = measure.position('wgs84', x, y, z)
+            measure.doframe(position)
+            sec2rad = 2 * np.pi / (24 * 3600.)
+            hour_angle = measure.measure(pointing, 'HADEC')['m0']['value'] +\
+                         (self.time_unique-self.time_unique.min()) * sec2rad
+            earth_radius = 6371000.0
+            latitude = np.arcsin(self.pos[antenna, 2]/earth_radius)
+            return np.arctan((np.sin(hour_angle)*np.cos(latitude))/((np.cos(self.direction[1])*np.sin(latitude))*(np.cos(hour_angle)*np.cos(latitude)*\
+                   np.sin(self.direction[1]))))
+
+        for i in range(self.Nant):
+            parang_matrix[i] = antenna_parang(i)
+
+        return parang_matrix
     
     def elevation_calc(self):
         measure = pm.measures()
@@ -852,25 +878,65 @@ sm.done()
         """ Add constant station-based polarization leakage (D-Jones term) """
 
         # Add P-Jones corruptions (parallactic angle rotation) using meqtrees
-        add_pjones(self.output_column)
+        # add_pjones(self.output_column)
 
         # Construct station-based leakage matrices (D-Jones)
-        self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex)
+        self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
+        self.rotation_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex) # To serve as Rot(theta=parang+/-elev)
+        
+        # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
             self.pol_leak_mat[ant,0,0] = 1
             self.pol_leak_mat[ant,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
             self.pol_leak_mat[ant,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
             self.pol_leak_mat[ant,1,1] = 1
 
-        np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
+            if self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
+                self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]-self.elevation[ant,:])
+                self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]-self.elevation[ant,:])
+                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]
+
+            elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
+                self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]+self.elevation[ant,:])
+                self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]+self.elevation[ant,:])
+                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]
+
+
+        # Save to external file as numpy array
+        # np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-                data_reshaped[bl_ind] = np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.pol_leak_mat[a1]))
 
+                if self.mount[a0] == 'ALT-AZ':
+                    if self.mount[a1] == 'ALT-AZ':
+                        data_reshaped[bl_ind] = np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.pol_leak_mat[a1].T))
+                    elif self.mount[a1] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a1] == 'ALT-AZ+NASMYTH-LEFT':
+                        time_ind = 0
+                        for ind in bl_ind:
+                            data_reshaped[ind] = np.matmul(np.matmul(np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[ind]), \
+                                                 np.conjugate(self.pol_leak_mat[a1].T)), np.conjugate(self.rotation_mat[a1,time_ind].T)), \
+                                                 np.conjugate(self.pol_leak_mat[a1].T))
+                            time_ind = time_ind + 1
+
+                elif self.mount[a0] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a0] == 'ALT-AZ+NASMYTH-LEFT':
+                    if self.mount[a1] == 'ALT-AZ':
+                       time_ind = 0
+                       for ind in bl_ind:
+                           data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0],np.matmul(self.rotation_mat[a0,time_ind],np.matmul(self.pol_leak_mat[a0],
+                                                np.matmul(data_reshaped[ind],np.conjugate(self.pol_leak_mat[a1].T)))))
+                           time_ind = time_ind + 1
+                    elif self.mount[a1] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a1] == 'ALT-AZ+NASMYTH-LEFT':
+                       time_ind = 0
+                       for ind in bl_ind:
+                           data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0],np.matmul(self.rotation_mat[a0,time_ind],np.matmul(self.pol_leak_mat[a0], \
+                                                np.matmul(data_reshaped[ind],np.matmul(np.conjugate(self.pol_leak_mat[a1].T), \
+                                                np.matmul(np.conjugate(self.rotation_mat[a1,time_ind].T),np.conjugate(self.pol_leak_mat[a1].T)))))))
+                           time_ind = time_ind + 1
+                
         self.data = data_reshaped.reshape(self.data.shape) 
         
         self.save_data()
@@ -897,7 +963,7 @@ sm.done()
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-                data_reshaped[bl_ind] = np.matmul(np.matmul(self.gain_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.gain_mat[a1]))
+                data_reshaped[bl_ind] = np.matmul(np.matmul(self.gain_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.gain_mat[a1].T))
 
         self.data = data_reshaped.reshape(self.data.shape)
 
