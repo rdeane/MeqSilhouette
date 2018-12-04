@@ -881,17 +881,31 @@ sm.done()
         # add_pjones(self.output_column)
 
         # Construct station-based leakage matrices (D-Jones)
-        self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
-        self.rotation_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex) # To serve as Rot(theta=parang+/-elev)
+        #self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
+        self.pol_leak_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
+        #self.rotation_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex) # To serve as Rot(theta=parang+/-elev)
         
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
-            self.pol_leak_mat[ant,0,0] = 1
-            self.pol_leak_mat[ant,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
-            self.pol_leak_mat[ant,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
-            self.pol_leak_mat[ant,1,1] = 1
+            if self.mount[ant] == 'ALT-AZ':
+                self.pol_leak_mat[ant,:,0,0] = 1
+                self.pol_leak_mat[ant,:,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
+                self.pol_leak_mat[ant,:,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
+                self.pol_leak_mat[ant,:,1,1] = 1
 
-            if self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
+            elif self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
+                self.pol_leak_mat[ant,:,0,0] = 1
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,1,1] = 1
+           
+            elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
+                self.pol_leak_mat[ant,:,0,0] = 1
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,1,1] = 1
+
+            '''if self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
                 self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]-self.elevation[ant,:])
                 self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]-self.elevation[ant,:])
                 self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]
@@ -899,7 +913,7 @@ sm.done()
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
                 self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]+self.elevation[ant,:])
                 self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]+self.elevation[ant,:])
-                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]
+                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]'''
 
 
         # Save to external file as numpy array
@@ -911,7 +925,7 @@ sm.done()
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
 
-                if self.mount[a0] == 'ALT-AZ':
+                '''if self.mount[a0] == 'ALT-AZ':
                     if self.mount[a1] == 'ALT-AZ':
                         data_reshaped[bl_ind] = np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.pol_leak_mat[a1].T))
                     elif self.mount[a1] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a1] == 'ALT-AZ+NASMYTH-LEFT':
@@ -935,7 +949,12 @@ sm.done()
                            data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0],np.matmul(self.rotation_mat[a0,time_ind],np.matmul(self.pol_leak_mat[a0], \
                                                 np.matmul(data_reshaped[ind],np.matmul(np.conjugate(self.pol_leak_mat[a1].T), \
                                                 np.matmul(np.conjugate(self.rotation_mat[a1,time_ind].T),np.conjugate(self.pol_leak_mat[a1].T)))))))
-                           time_ind = time_ind + 1
+                           time_ind = time_ind + 1'''
+                time_ind = 0
+                for ind in bl_ind:
+                    data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
+                                         np.conjugate(self.pol_leak_mat[a1,time_ind].T)))
+                    time_ind = time_ind + 1
                 
         self.data = data_reshaped.reshape(self.data.shape) 
         
