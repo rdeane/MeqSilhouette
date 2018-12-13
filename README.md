@@ -24,49 +24,34 @@ Two options:
 
 [Pyxis](https://github.com/ska-sa/pyxis/): python-esque scripting language for MeqTrees 
 
-[Astropy](http://www.astropy.org/): v1.3 and above
-
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml): v4.3 and above
 
 [AATM v0.5](http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz): mean atmospheric simulator (average opacities, sky brightness temp). (Download mirrored [here](https://tinyurl.com/ycuf32oy))
 
 
-## List of Python modules used
+## Non-standard python modules required
 
 - numpy
 - matplotlib
 - pyfits
 - pyrap
-- astropy
 - termcolor
-- time
-- glob
-- os
-- sys
 - mpltools
 - seaborn
 
 
-
 ## PATHS to set
-Add the following to the PATH enviroment variable:
-- /path/to/simms/simms/bin
-- /path/to/CASA/bin
+Add the following to the PATH enviroment variable (if they are not installed in standard locations):
+- export PATH=/path/to/simms/simms/bin:/path/to/CASA/bin:$PATH
 
-And the following to your PYTHONPATH:
-- /path/to/MeqSilhouette/framework
-
+And the following to the PYTHONPATH environment variable:
+- export PYTHONPATH=/path/to/MeqSilhouette/framework:$PYTHONPATH
 
 Add the following environment variable to point to your MeqSilhouette directory:
+- export MEQS_DIR=/path/to/MeqSilhouette
 
-export MEQS_DIR=/path/to/MeqSilhouette
-
-Finally, add the symbolic link:
-
+Finally, add a symbolic link to the MeqTrees simulator script to the framework directory within MeqSilhouette:
 - ln -s /path/to/meqtrees-cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
-
-
-
 
 
 # Running MeqSilhouette
@@ -74,7 +59,7 @@ Finally, add the symbolic link:
 To run this synthetic data generator, you need:
 
 1. a driver script (e.g. driver/run_meqsilouette.py)
-2. a configuration file (input/eht230.json is an example. The file 'jsonformat.txt' explains each parameter.)
+2. a configuration file (e.g. input/eht230.json). The file 'jsonformat.txt' explains each parameter used in the json file.
 
 
 The software can be run in three primary modes:
@@ -107,7 +92,7 @@ The following can be installed using pip install:
 - numpy
 - python-casacore==2.1.2 (to get pyrap to run)
 - pyfits
-- scipy==0.17 (to avoid the "Incorrect qhull library called" error)
+- scipy==0.17 (to avoid "Incorrect qhull library called" error)
 - astLib
 - termcolor
 - matplotlib
@@ -142,8 +127,6 @@ The following two important paths are specified in the configuration file:
 
 * "ms_antenna_table": input ANTENNA table for chosen array (CASA format)
 * "station_info" input station-specific information (SEFDs, station names)
-* imaging parameters (pre-pended with "im_")
-* antenna pointing error parameters (pre-pended "pointing_")
 
 ## Commonly encountered problems
 1. If MeqSilhouette cannot find aatm, add the following paths to the following environment variables:
