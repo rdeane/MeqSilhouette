@@ -27,8 +27,8 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, gainR_real, gainR_imag, gainL_real, gainL_imag, \
-                 leakR_real, leakR_imag, leakL_real, leakL_imag):
+                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
+                 gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -68,6 +68,7 @@ class SimCoordinator():
         self.elevation = self.elevation_calc()
         self.baseline_dict = self.make_baseline_dictionary()
         self.write_flag(elevation_limit)
+        self.elevation_copy_dterms = self.elevation.copy()
         self.elevation[self.elevation < elevation_limit] = np.nan  # This is to avoid crashing later tropospheric calculation
         self.calc_ant_rise_set_times()
         self.parallactic_angle = self.parallactic_angle_calc() # INI: uses self.elevation
@@ -107,6 +108,7 @@ class SimCoordinator():
         ### uv_jones information - G, D, and P-Jones (automatically enabled if D is enabled) matrices
         self.uvjones_g_on = uvjones_g_on
         self.uvjones_d_on = uvjones_d_on
+        self.parang_corrected = parang_corrected
 
         self.leakR_real = leakR_real
         self.leakR_imag = leakR_imag
@@ -250,8 +252,8 @@ class SimCoordinator():
                          (self.time_unique-self.time_unique.min()) * sec2rad
             earth_radius = 6371000.0
             latitude = np.arcsin(self.pos[antenna, 2]/earth_radius)
-            return np.arctan((np.sin(hour_angle)*np.cos(latitude))/((np.cos(self.direction[1])*np.sin(latitude))*(np.cos(hour_angle)*np.cos(latitude)*\
-                   np.sin(self.direction[1]))))
+            return np.arctan2(np.sin(hour_angle)*np.cos(latitude), (np.cos(self.direction[1])*np.sin(latitude)-np.cos(hour_angle)*np.cos(latitude)*\
+                   np.sin(self.direction[1])))
 
         for i in range(self.Nant):
             parang_matrix[i] = antenna_parang(i)
@@ -875,8 +877,50 @@ sm.done()
 
 
     def add_pol_leakage_manual(self):
-        """ Add constant station-based polarization leakage (D-Jones term) """
+      """ Add constant station-based polarization leakage (D-Jones term) """
 
+      if self.parang_corrected == False:
+        # Compute P-Jones matrices
+        self.pjones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
+        self.djones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
+
+        for ant in range(self.Nant):
+          self.djones_mat[ant,:,0,0] = 1
+          self.djones_mat[ant,:,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
+          self.djones_mat[ant,:,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
+          self.djones_mat[ant,:,1,1] = 1
+
+          if self.mount[ant] == 'ALT-AZ':
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*self.parallactic_angle[ant,:]) # INI: opposite of feed angle i.e. parang +/- elev
+            self.pjones_mat[ant,:,0,1] = 0
+            self.pjones_mat[ant,:,1,0] = 0
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*self.parallactic_angle[ant,:])
+          elif self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,0,1] = 0
+            self.pjones_mat[ant,:,1,0] = 0
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+          elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,0,1] = 0
+            self.pjones_mat[ant,:,1,0] = 0
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+          
+        data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
+
+        for a0 in range(self.Nant):
+            for a1 in range(a0+1,self.Nant):
+                bl_ind = self.baseline_dict[(a0,a1)]
+                time_ind = 0
+                for ind in bl_ind:
+                    data_reshaped[ind] = np.matmul(self.djones_mat[a0,time_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
+                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,time_ind].T)))))
+                    time_ind = time_ind + 1
+
+        self.data = data_reshaped.reshape(self.data.shape) 
+        self.save_data()
+
+      elif self.parang_corrected == True:
         # Add P-Jones corruptions (parallactic angle rotation) using meqtrees
         # add_pjones(self.output_column)
 
@@ -905,17 +949,6 @@ sm.done()
                 self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
 
-            '''if self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
-                self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]-self.elevation[ant,:])
-                self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]-self.elevation[ant,:])
-                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]
-
-            elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
-                self.rotation_mat[ant,:,0,0] = self.rotation_mat[ant,:,1,1] = np.cos(self.parallactic_angle[ant,:]+self.elevation[ant,:])
-                self.rotation_mat[ant,:,0,1] = np.sin(self.parallactic_angle[ant,:]+self.elevation[ant,:])
-                self.rotation_mat[ant,:,1,0] = -self.rotation_mat[ant,:,0,1]'''
-
-
         # Save to external file as numpy array
         # np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
 
@@ -924,32 +957,6 @@ sm.done()
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-
-                '''if self.mount[a0] == 'ALT-AZ':
-                    if self.mount[a1] == 'ALT-AZ':
-                        data_reshaped[bl_ind] = np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.pol_leak_mat[a1].T))
-                    elif self.mount[a1] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a1] == 'ALT-AZ+NASMYTH-LEFT':
-                        time_ind = 0
-                        for ind in bl_ind:
-                            data_reshaped[ind] = np.matmul(np.matmul(np.matmul(np.matmul(self.pol_leak_mat[a0], data_reshaped[ind]), \
-                                                 np.conjugate(self.pol_leak_mat[a1].T)), np.conjugate(self.rotation_mat[a1,time_ind].T)), \
-                                                 np.conjugate(self.pol_leak_mat[a1].T))
-                            time_ind = time_ind + 1
-
-                elif self.mount[a0] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a0] == 'ALT-AZ+NASMYTH-LEFT':
-                    if self.mount[a1] == 'ALT-AZ':
-                       time_ind = 0
-                       for ind in bl_ind:
-                           data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0],np.matmul(self.rotation_mat[a0,time_ind],np.matmul(self.pol_leak_mat[a0],
-                                                np.matmul(data_reshaped[ind],np.conjugate(self.pol_leak_mat[a1].T)))))
-                           time_ind = time_ind + 1
-                    elif self.mount[a1] == 'ALT-AZ+NASMYTH-RIGHT' or self.mount[a1] == 'ALT-AZ+NASMYTH-LEFT':
-                       time_ind = 0
-                       for ind in bl_ind:
-                           data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0],np.matmul(self.rotation_mat[a0,time_ind],np.matmul(self.pol_leak_mat[a0], \
-                                                np.matmul(data_reshaped[ind],np.matmul(np.conjugate(self.pol_leak_mat[a1].T), \
-                                                np.matmul(np.conjugate(self.rotation_mat[a1,time_ind].T),np.conjugate(self.pol_leak_mat[a1].T)))))))
-                           time_ind = time_ind + 1'''
                 time_ind = 0
                 for ind in bl_ind:
                     data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
@@ -957,7 +964,6 @@ sm.done()
                     time_ind = time_ind + 1
                 
         self.data = data_reshaped.reshape(self.data.shape) 
-        
         self.save_data()
 
 
