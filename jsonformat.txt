@@ -195,3 +195,7 @@ uvjones_d_on:	Switch on polarization leakage effects (D-Jones). The station-base
 
 uvjones_g_on:	Switch on complex gains (G-Jones). The station-based complex gain terms are specified in the station-info file.
 		The 2x2 G-Jones matrix takes the form [[gR_real+1j*gR_imag 0], [0 gL_real+1j*gL_imag]].
+
+parang_corrected:	Toggle 0 or 1 -- If 0, then parallactic angle rotation will be performed while computing the D-Jones terms;
+			if 1, then it will be assumed that parallactic angle correction has already been performed and twice the field angle
+			rotation will be performed while computing the D-Jones terms.
