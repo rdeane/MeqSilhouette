@@ -8,14 +8,6 @@ and offer suggestions on what they might mean.
 
 ## Common errors/warnings
 
-### 'WARNING: Partial frequency mismatch between the input image and the requested MS frequencies'
-
-The input_fitsimage obviously has a reference frequency. This is a meqtrees warning that that
-the input_fitsimage frequency is not perfectly consistent with the that used in the interferometric
-simulation. This is of no concern, however, since only the latter, user-specified value is used
-(from the input configuration file). This error can be ignored.
-
-
 ### VisDataMux
 
 ### 1 frequency channel, but trop module on.
