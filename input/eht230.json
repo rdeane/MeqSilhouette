@@ -1,5 +1,5 @@
 {
-"outdirname":"output/EHT_test_manual_leakage_delete",
+"outdirname":"output/EHT_test_parangcorr",
 "input_fitsimage":"input/sky_models/polpoint",
 "input_fitspol":1,
 "output_to_logfile":0,
@@ -46,5 +46,5 @@
 "pointing_makeplots": 0,
 "uvjones_g_on": 0,
 "uvjones_d_on": 1,
-"parang_corrected": 0
+"parang_corrected": 1
 }

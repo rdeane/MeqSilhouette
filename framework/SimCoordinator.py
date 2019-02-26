@@ -939,14 +939,14 @@ sm.done()
 
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
                 self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
            
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
                 self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation[ant,:]))
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
 
         # Save to external file as numpy array
