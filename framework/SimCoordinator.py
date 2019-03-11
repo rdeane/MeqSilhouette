@@ -28,7 +28,7 @@ class SimCoordinator():
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
-                 gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag):
+                 gainR_imag, gainL_real, gainL_imag, Dterm_amp, Dterm_noise):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -59,6 +59,7 @@ class SimCoordinator():
         self.direction = np.squeeze(field_tab.getcol('PHASE_DIR'))
 
         spec_tab = pt.table(tab.getkeyword('SPECTRAL_WINDOW'),ack=False)
+        self.num_chan = spec_tab.getcol('NUM_CHAN')[0]
         self.chan_freq = spec_tab.getcol('CHAN_FREQ').flatten()
         self.chan_width = spec_tab.getcol('CHAN_WIDTH').flatten()[0]
         self.bandwidth = self.chan_width + self.chan_freq[-1]-self.chan_freq[0]
@@ -106,15 +107,12 @@ class SimCoordinator():
         self.bandpass_freq_interp_order = bandpass_freq_interp_order
 
         ### uv_jones information - G, D, and P-Jones (automatically enabled if D is enabled) matrices
-        self.uvjones_g_on = uvjones_g_on
         self.uvjones_d_on = uvjones_d_on
+        self.Dterm_amp = Dterm_amp
+        self.Dterm_noise = Dterm_noise
         self.parang_corrected = parang_corrected
 
-        self.leakR_real = leakR_real
-        self.leakR_imag = leakR_imag
-        self.leakL_real = leakL_real
-        self.leakL_imag = leakL_imag
-
+        self.uvjones_g_on = uvjones_g_on
         self.gainR_real = gainR_real
         self.gainR_imag = gainR_imag
         self.gainL_real = gainL_real
@@ -882,14 +880,8 @@ sm.done()
       if self.parang_corrected == False:
         # Compute P-Jones matrices
         self.pjones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
-        self.djones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,0,0] = 1
-          self.djones_mat[ant,:,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
-          self.djones_mat[ant,:,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
-          self.djones_mat[ant,:,1,1] = 1
-
           if self.mount[ant] == 'ALT-AZ':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*self.parallactic_angle[ant,:]) # INI: opposite of feed angle i.e. parang +/- elev
             self.pjones_mat[ant,:,0,1] = 0
@@ -905,7 +897,16 @@ sm.done()
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-          
+
+        # Compute time and frequency-dependent D-terms 
+        self.djones_mat = np.ones((self.Nant,self.num_chan,2,2),dtype=complex)
+        for ant in range(self.Nant):
+           self.djones_mat[ant,:,0,1] = np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant], self.num_chan) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant], self.num_chan)
+           self.djones_mat[ant,:,1,0] = np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant], self.num_chan) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant], self.num_chan)
+
+        # Save to external file as numpy array
+        np.save(II('$OUTDIR')+'/parang_uncorr_dterms', self.djones_mat)
+
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
         for a0 in range(self.Nant):
@@ -913,44 +914,35 @@ sm.done()
                 bl_ind = self.baseline_dict[(a0,a1)]
                 time_ind = 0
                 for ind in bl_ind:
-                    data_reshaped[ind] = np.matmul(self.djones_mat[a0,time_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
-                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,time_ind].T)))))
+                    for freq_ind in range(self.num_chan): 
+                      data_reshaped[ind,freq_ind] = np.matmul(self.djones_mat[a0,freq_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind,freq_ind], \
+                                           np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,freq_ind].T)))))
                     time_ind = time_ind + 1
 
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
 
       elif self.parang_corrected == True:
-        # Add P-Jones corruptions (parallactic angle rotation) using meqtrees
-        # add_pjones(self.output_column)
 
-        # Construct station-based leakage matrices (D-Jones)
-        #self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
-        self.pol_leak_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
-        #self.rotation_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex) # To serve as Rot(theta=parang+/-elev)
-        
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
+        self.pol_leak_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
+        
         for ant in range(self.Nant):
+          for freq_ind in range(self.num_chan):
             if self.mount[ant] == 'ALT-AZ':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(1j*2*(self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(-1j*2*(self.parallactic_angle[ant,:]))
 
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
            
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = (np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant]) + 1j*np.random.normal(self.Dterm_amp[ant], self.Dterm_noise[ant])) * np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
 
         # Save to external file as numpy array
-        # np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
+        np.save(II('$OUTDIR')+'/parang_corr_dterms', self.pol_leak_mat)
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
@@ -959,9 +951,10 @@ sm.done()
                 bl_ind = self.baseline_dict[(a0,a1)]
                 time_ind = 0
                 for ind in bl_ind:
-                    data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
-                                         np.conjugate(self.pol_leak_mat[a1,time_ind].T)))
-                    time_ind = time_ind + 1
+                  for freq_ind in range(self.num_chan): 
+                    data_reshaped[ind,freq_ind] = np.matmul(self.pol_leak_mat[a0,time_ind,freq_ind], np.matmul(data_reshaped[ind,freq_ind], \
+                                         np.conjugate(self.pol_leak_mat[a1,time_ind,freq_ind].T)))
+                  time_ind = time_ind + 1
                 
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
@@ -994,29 +987,6 @@ sm.done()
 
         self.save_data()
 
-
-    '''def add_uvjones_mqt(self):
-        """ Add uv-jones corruptions; currently P, D, and G-Jones matrices implemented """
-
-        # reformat the input reals and imags for the R and L components of each station
-        leakR_cplx = self.leakR_real + 1j*self.leakR_imag
-        leakL_cplx = self.leakL_real + 1j*self.leakL_imag
-
-        leak_ampl_string=''
-        leak_phas_string=''
-        for ind in range(leakR_cplx.shape[0]):
-            leak_ampl_string += '%f %f '%(np.absolute(leakR_cplx[ind]), np.absolute(leakL_cplx[ind]))
-            leak_phas_string += '%f %f '%(np.rad2deg(np.angle(leakR_cplx[ind])), np.rad2deg(np.angle(leakL_cplx[ind])))
-
-        leak_ampl_string = leak_ampl_string.strip()
-        leak_phas_string = leak_phas_string.strip()
-
-        add_uvjones(self.output_column, self.uvjones_g_on, self.uvjones_d_on, self.gainR, self.gainL, leak_ampl_string, leak_phas_string)
- 
-        # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that if CASA sm is ever used 
-        # at any point in the Jones chain, it can always read the right visibilities from MODEL_DATA when necessary.
-        if self.output_column != 'MODEL_DATA':
-            copy_between_cols('MODEL_DATA', self.output_column)'''
 
     #############################
     ##### General MS plots  #####
