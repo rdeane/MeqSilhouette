@@ -27,8 +27,8 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
-                 gainR_imag, gainL_real, gainL_imag, Dterm_amp, Dterm_noise):
+                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, Gterm_amp, \
+                 Gterm_noise, Dterm_amp, Dterm_noise):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -113,10 +113,8 @@ class SimCoordinator():
         self.parang_corrected = parang_corrected
 
         self.uvjones_g_on = uvjones_g_on
-        self.gainR_real = gainR_real
-        self.gainR_imag = gainR_imag
-        self.gainL_real = gainL_real
-        self.gainL_imag = gainL_imag
+        self.Gterm_amp = Gterm_amp
+        self.Gterm_noise = Gterm_noise
 
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
@@ -967,24 +965,26 @@ sm.done()
     def add_gjones_manual(self):
         """ Add station-based complex gains """
 
-        self.gain_mat = np.zeros((self.Nant,2,2),dtype=complex)
+        self.gain_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         for ant in range(self.Nant):
-            self.gain_mat[ant,0,0] = self.gainR_real[ant]+1j*self.gainR_imag[ant]
-            self.gain_mat[ant,0,1] = 0
-            self.gain_mat[ant,1,0] = 0
-            self.gain_mat[ant,1,1] = self.gainL_real[ant]+1j*self.gainL_imag[ant]
+            #self.gain_mat[ant,:,0,0] = np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0])*np.exp(1.j*2.*np.pi*np.random.random(self.time_unique.shape[0]))
+            #self.gain_mat[ant,:,1,1] = np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0])*np.exp(1.j*2.*np.pi*np.random.random(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,0,0] = np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0]) + 1j*np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0])
+            self.gain_mat[ant,:,1,1] = np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0]) + 1j*np.random.normal(self.Gterm_amp[ant], self.Gterm_noise[ant], self.time_unique.shape[0])
 
-        np.save(II('$OUTDIR')+'/gains', self.gain_mat)
+        np.save(II('$OUTDIR')+'/gterms', self.gain_mat)
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-                data_reshaped[bl_ind] = np.matmul(np.matmul(self.gain_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.gain_mat[a1].T))
+                time_ind = 0
+                for ind in bl_ind:
+                  data_reshaped[ind] = np.matmul(np.matmul(self.gain_mat[a0,time_ind], data_reshaped[ind]), np.conjugate(self.gain_mat[a1,time_ind].T))
+                  time_ind = time_ind + 1
 
         self.data = data_reshaped.reshape(self.data.shape)
-
         self.save_data()
 
 
