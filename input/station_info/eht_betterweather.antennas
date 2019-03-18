@@ -1,9 +1,9 @@
 station    sefd[Jy]     pwv[mm]     gpress[mb]  gtemp[K]   c_time[sec]   ptg_rms[arcsec]   PB_FWHM230[arcsec]    PB_model    ap_eff    Gterm_amp   Gterm_noise    Dterm_amp   Dterm_noise   mount
 AA         80.0         1.3             555      271             15              2.0             27              gaussian    0.73      1.0        0.00        0.01       0.00        ALT-AZ
-AP         5000.0       1.3             555      271             15              2.0             27              gaussian    0.63      1.0        0.00        0.05       0.00        ALT-AZ+NASMYTH-RIGHT
-AZ         10500.0      2.7             500      276             9               1.0             32              gaussian    0.57      1.0        0.00        0.05       0.00        ALT-AZ+NASMYTH-RIGHT
+AP         5000.0       1.3             555      271             15              2.0             27              gaussian    0.63      1.0        0.00        0.05       0.00        ALT-AZ+NASMYTH-R
+AZ         10500.0      2.7             500      276             9               1.0             32              gaussian    0.57      1.0        0.00        0.05       0.00        ALT-AZ+NASMYTH-R
 JC         9000.0       1.1             550      278             5               2.0             20              gaussian    0.52      1.0        0.00        0.04       0.00        ALT-AZ
-LM         5000.0       2.7             606      273             6               2.0             10              gaussian    0.31      1.0        0.00        0.03       0.00        ALT-AZ+NASMYTH-LEFT
-SM         5000.0       1.1             550      278             5               3.0             55              gaussian    0.73      1.0        0.00        0.04       0.00        ALT-AZ+NASMYTH-LEFT
+LM         5000.0       2.7             606      273             6               2.0             10              gaussian    0.31      1.0        0.00        0.03       0.00        ALT-AZ+NASMYTH-L
+SM         5000.0       1.1             550      278             5               3.0             55              gaussian    0.73      1.0        0.00        0.04       0.00        ALT-AZ+NASMYTH-L
 SP         14000.0      0.57            600      270             20              1.0             55              gaussian    0.62      1.0        0.00        0.05       0.00        ALT-AZ
-PV         6000.0       1.5             723      273             4               1.0             11              gaussian    0.43      1.0        0.00        0.06       0.00        ALT-AZ+NASMYTH-LEFT
+PV         6000.0       1.5             723      273             4               1.0             11              gaussian    0.43      1.0        0.00        0.06       0.00        ALT-AZ+NASMYTH-L
