@@ -895,12 +895,12 @@ sm.done()
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*self.parallactic_angle[ant,:])
-          elif self.mount[ant] == 'ALT-AZ+NASMYTH-LEFT':
+          elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-          elif self.mount[ant] == 'ALT-AZ+NASMYTH-RIGHT':
+          elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
