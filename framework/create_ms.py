@@ -45,7 +45,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
                         nscan, scan_lag,datacolumn, makeplots):
     
     s = "simms -T VLBA -t casa -n %s -ra %.9fdeg -dec %.9fdeg \
--pl '%s' -st %f -sl %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
+-pl '%s' -st %f -sl %f -slg %f -dt %f -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
     " % ( msname, RA, DEC, polproducts, obslength, obslength/float(nscan), scan_lag,
          tint, nu - (dnu/2.) + (dnu/(float(nchan))/2.), dnu/float(nchan),
           nchan, StartTime, os.path.join(II('$CODEDIR'),antenna_table)) 
