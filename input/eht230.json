@@ -1,12 +1,12 @@
 {
-"outdirname":"output/EHT_dtermtest_aftergtermimpl_r7_pcorr_nostdev_G_rectform",
+"outdirname":"output/EHT",
 "input_fitsimage":"input/sky_models/polpoint",
 "input_fitspol":1,
 "output_to_logfile":0,
 "add_thermal_noise":1,
 "make_image":0,
 "exportuvfits":0,
-"station_info":"input/station_info/test_newgterms_eht_betterweather.antennas",
+"station_info":"input/station_info/eht_betterweather.antennas",
 "bandpass_enabled":0,
 "bandpass_table":"input/jones_info/bandpass.txt",
 "bandpass_freq_interp_order":3,
@@ -22,7 +22,7 @@
 "ms_dnu":2,
 "ms_nchan":32,
 "ms_obslength":8,
-"ms_tint":60,
+"ms_tint":0.8,
 "ms_StartTime":"UTC,2017/04/01/00:00:00.00",
 "ms_nscan":1,
 "ms_scan_lag":0,
@@ -46,5 +46,5 @@
 "pointing_makeplots": 0,
 "uvjones_g_on": 1,
 "uvjones_d_on": 1,
-"parang_corrected": 1
+"parang_corrected": 0
 }
