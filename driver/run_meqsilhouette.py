@@ -104,7 +104,6 @@ if (1):
         for c1,c2 in zip(station_names_txt,station_names_anttab):
             print "%s\t\t%s" % (c1, c2)
         abort('Correct input station_info file and/or antenna table')
- 
 
     info('Station info table %s corresponds correctly to antenna table %s'\
          %(parameters['station_info'],ms_dict['antenna_table']))
@@ -153,7 +152,7 @@ if (1):
     sim_coord.interferometric_sim()
 
     info('Start corrupting the perfect visibilities. The corruptions (if enabled) are applied in the following order:\n'+
-	 '1. Pointing errors\n2. Thermal noise\n3. Tropospheric effects\n4. UV-Jones effects (parallactic angle, polarization leakage, receiver gains) \n5. Bandpass effects\n')
+	 '1. Pointing errors\n2. Tropospheric effects\n3. Parallactic angle and polarization leakage\n4. Receiver gains\n5. Bandpass effects\n6. Additive thermal noise')
     
     if parameters['pointing_enabled']:
         info('Pointing errors are enabled, applying antenna-based amplitudes errors')
@@ -165,10 +164,6 @@ if (1):
 
         if parameters['pointing_makeplots']:
             sim_coord.plot_pointing_errors()
-
-        
-    if parameters['add_thermal_noise']:
-        sim_coord.add_receiver_noise()
 
     ### TROPOSPHERE COMPONENTS ###
     combined_phase_errors = 0 #init for trop combo choice
@@ -212,16 +207,17 @@ if (1):
             sim_coord.trop_plots()
             info('Generated troposphere plots')
 
+    ### Parallactic angle and polarization leakage
     if parameters['uvjones_d_on']:
-        info('Introducing polarization leakage (+ parallactic angle) effects')
+        info('Introducing polarization leakage and parallactic angle effects')
         sim_coord.add_pol_leakage_manual()
         info('Polarization leakage and parallactic angle effects added successfully.')
     
+    ### Antenna gains
     if parameters['uvjones_g_on']:
         info('Introducing complex (direction-independent) gain effects')
         sim_coord.add_gjones_manual()
         info('Complex gains added successfully.')
-
 
     ### BANDPASS COMPONENTS ###
     if parameters['bandpass_enabled']:
@@ -231,6 +227,10 @@ if (1):
     if parameters['bandpass_makeplots']:
         info('Generating bandpass plots...')
         sim_coord.make_bandpass_plots()
+
+    ### Add thermal noise
+    if parameters['add_thermal_noise']:
+        sim_coord.add_receiver_noise()
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
@@ -254,8 +254,6 @@ if (1):
     if (os.path.exists('./core')): x.sh('rm core')
     finish_string = "Pipeline finished after %.1f seconds" % (time.time()-start)
     info(finish_string)
-
-
 
 # add later
 """
