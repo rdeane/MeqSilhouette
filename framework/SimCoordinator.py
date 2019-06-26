@@ -86,6 +86,10 @@ class SimCoordinator():
         self.receiver_temp = (self.SEFD * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
         self.corr_eff = corr_eff
 
+        ### INI: populate WEIGHT and SIGMA columns
+        self.receiver_rms = np.zeros(self.data.shape, dtype='float')
+        self.compute_weights()
+
         tab.close() # close main MS table
 
 
@@ -187,19 +191,24 @@ class SimCoordinator():
         if self.output_column != 'MODEL_DATA':
             copy_between_cols('MODEL_DATA', self.output_column)
         
-    def apply_weights(self, rms):
+    def compute_weights(self):
         """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
-        if rms.shape != self.data.shape:
-            abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
-                  'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
+        #if rms.shape != self.data.shape:
+        #    abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
+        #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
+
+        for a0 in range(self.Nant):
+            for a1 in range(self.Nant):
+                if a1 > a0:
+                    self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
         
         tab = pt.table(self.msname, readonly=False,ack=False)
-        tab.putcol("SIGMA", rms[:,0,:])
-        tab.putcol("SIGMA_SPECTRUM", rms)
-        tab.putcol("WEIGHT", 1/rms[:,0,:]**2)
-        tab.putcol("WEIGHT_SPECTRUM", 1/rms**2)
+        tab.putcol("SIGMA", self.receiver_rms[:,0,:])
+        tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
+        tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
+        tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
         tab.close()
-        info('SIGMA and WEIGHT columns updated based on thermal noise only; no frequency dependence (eg., tropospheric opacity) yet. '+ \
+        info('SIGMA and WEIGHT columns populated based on thermal noise only; no frequency dependence (eg., tropospheric opacity) yet. '+ \
              'SIGMA_SPECTRUM and WEIGHT_SPECTRUM are populated with frequency independent SIGMA and WEIGHT values.')
 
     def add_receiver_noise(self, load=None):
@@ -208,24 +217,24 @@ class SimCoordinator():
             self.thermal_noise = np.load(II('$OUTDIR')+'/receiver_noise.npy')
         else:
             self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
-            receiver_rms = np.zeros(self.data.shape, dtype='float')
+            #receiver_rms = np.zeros(self.data.shape, dtype='float')
             size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
-                        rms = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
+                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]] #(1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
 
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
                             np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
-                        receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
+                        #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
 
             np.save(II('$OUTDIR')+'/receiver_noise', self.thermal_noise)
         self.data = np.add(self.data, self.thermal_noise)
         self.save_data()
         info("Thermal noise added")
 
-        # INI: Populating noise-related columns and weights in the MS
-        self.apply_weights(receiver_rms)
+        ## INI: Populating noise-related columns and weights in the MS
+        #self.apply_weights(receiver_rms)
         
         
     def make_baseline_dictionary(self):
