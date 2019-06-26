@@ -167,8 +167,8 @@ if (1):
             sim_coord.plot_pointing_errors()
 
         
-    if parameters['add_thermal_noise']:
-        sim_coord.add_receiver_noise()
+    #if parameters['add_thermal_noise']:
+    #    sim_coord.add_receiver_noise()
 
     ### TROPOSPHERE COMPONENTS ###
     combined_phase_errors = 0 #init for trop combo choice
@@ -231,6 +231,9 @@ if (1):
     if parameters['bandpass_makeplots']:
         info('Generating bandpass plots...')
         sim_coord.make_bandpass_plots()
+
+    if parameters['add_thermal_noise']:
+        sim_coord.add_receiver_noise()
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
