@@ -28,7 +28,7 @@ class SimCoordinator():
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
-                 gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag):
+                 gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -112,6 +112,7 @@ class SimCoordinator():
         ### uv_jones information - G, D, and P-Jones (automatically enabled if D is enabled) matrices
         self.uvjones_g_on = uvjones_g_on
         self.uvjones_d_on = uvjones_d_on
+        self.feed_angle = np.deg2rad(feed_angle)
         self.parang_corrected = parang_corrected
 
         self.leakR_real = leakR_real
@@ -900,20 +901,20 @@ sm.done()
           self.djones_mat[ant,:,1,1] = 1
 
           if self.mount[ant] == 'ALT-AZ':
-            self.pjones_mat[ant,:,0,0] = np.exp(-1j*self.parallactic_angle[ant,:]) # INI: opposite of feed angle i.e. parang +/- elev
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:])) # INI: opposite of feed angle i.e. parang +/- elev
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
-            self.pjones_mat[ant,:,1,1] = np.exp(1j*self.parallactic_angle[ant,:])
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
           elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
-            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
-            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
           elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
-            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
             self.pjones_mat[ant,:,0,1] = 0
             self.pjones_mat[ant,:,1,0] = 0
-            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+            self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
           
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
@@ -941,20 +942,20 @@ sm.done()
         for ant in range(self.Nant):
             if self.mount[ant] == 'ALT-AZ':
                 self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
 
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
                 self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
            
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
                 self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
                 self.pol_leak_mat[ant,:,1,1] = 1
 
         # Save to external file as numpy array

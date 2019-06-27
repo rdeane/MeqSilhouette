@@ -84,9 +84,9 @@ if (1):
 
     info('Loading station info table %s'%parameters['station_info'])
     sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR_real, gainR_imag,\
-    gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag = \
+    gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle = \
     np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
-    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17]), 0, 1)
+    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]), 0, 1)
     
     #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
@@ -148,7 +148,7 @@ if (1):
     sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
-                               gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag)
+                               gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle)
 
     sim_coord.interferometric_sim()
 
