@@ -930,8 +930,7 @@ sm.done()
         self.save_data()
 
       elif self.parang_corrected == True:
-        # Add P-Jones corruptions (parallactic angle rotation) using meqtrees
-        # add_pjones(self.output_column)
+        # INI: Assume that parallactic angle rotation effect has been removed/corrected for. Hence, perform 2*field_angle rotation (Leppanen, 1995)
 
         # Construct station-based leakage matrices (D-Jones)
         #self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
