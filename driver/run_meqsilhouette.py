@@ -153,7 +153,7 @@ if (1):
     sim_coord.interferometric_sim()
 
     info('Start corrupting the perfect visibilities. The corruptions (if enabled) are applied in the following order:\n'+
-	 '1. Pointing errors\n2. Thermal noise\n3. Tropospheric effects\n4. UV-Jones effects (parallactic angle, polarization leakage, receiver gains) \n5. Bandpass effects\n')
+	 '1. Pointing errors\n2. Tropospheric effects\n3. Parallactic angle and polarization leakage\n4. Receiver gains\n5. Bandpass effects\n6. Additive thermal noise')
     
     if parameters['pointing_enabled']:
         info('Pointing errors are enabled, applying antenna-based amplitudes errors')
@@ -212,16 +212,17 @@ if (1):
             sim_coord.trop_plots()
             info('Generated troposphere plots')
 
+    ### PARALLACTIC ANGLE AND POLARIZATION LEAKAGE ###
     if parameters['uvjones_d_on']:
-        info('Introducing polarization leakage (+ parallactic angle) effects')
+        info('Introducing parallactic angle rotation and polarization leakage effects')
         sim_coord.add_pol_leakage_manual()
         info('Polarization leakage and parallactic angle effects added successfully.')
-    
+
+    ### RECEIVER GAINS ###
     if parameters['uvjones_g_on']:
         info('Introducing complex (direction-independent) gain effects')
         sim_coord.add_gjones_manual()
         info('Complex gains added successfully.')
-
 
     ### BANDPASS COMPONENTS ###
     if parameters['bandpass_enabled']:
@@ -232,6 +233,7 @@ if (1):
         info('Generating bandpass plots...')
         sim_coord.make_bandpass_plots()
 
+    ### THERMAL NOISE ###
     if parameters['add_thermal_noise']:
         sim_coord.add_receiver_noise()
 

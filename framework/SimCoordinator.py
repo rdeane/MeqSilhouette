@@ -729,7 +729,7 @@ class SimCoordinator():
 
             amp_errors = np.zeros([self.Nant,self.num_mispoint_epochs])
             for ant in range(self.Nant):
-                if PB_model[ant] == 'consine3':
+                if PB_model[ant] == 'cosine3':
                     amp_errors[ant,:] = np.cos(self.pointing_offsets[ant,:]/206265.)**3 #placeholder, incorrect
 
                 elif PB_model[ant] == 'gaussian':
