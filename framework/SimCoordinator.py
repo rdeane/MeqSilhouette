@@ -20,7 +20,7 @@ from mpltools import layout
 from mpltools import color
 from matplotlib.patches import Circle
 from matplotlib.ticker import FormatStrFormatter
-
+from cycler import cycler
 
 
 class SimCoordinator():
@@ -53,6 +53,7 @@ class SimCoordinator():
         self.mount = anttab.getcol('MOUNT')
         self.Nant = self.pos.shape[0]
         self.N = range(self.Nant)
+        self.nbl = (self.Nant*(self.Nant-1))/2
         anttab.close()
 
         field_tab = pt.table(tab.getkeyword('FIELD'),ack=False)
@@ -597,7 +598,10 @@ class SimCoordinator():
 
         ### plot zenith opacity vs frequency (subplots)
         fig,axes = pl.subplots(self.Nant,1,figsize=(10,16))
-        color.cycle_cmap(self.Nant,cmap=cmap)
+        #color.cycle_cmap(self.Nant,cmap=cmap) # INI: deprecated
+        #colors = [pl.cm.Set1(i) for i in np.linspace(0, 1, self.nbl)]
+        #axes.set_prop_cycle(cycler('color', colors))
+
         for i,ax in enumerate(axes.flatten()):
             ax.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
             ax.legend()
@@ -610,7 +614,7 @@ class SimCoordinator():
 
         ### plot zenith opacity vs frequency
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap) 
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
         pl.xlabel('frequency / GHz')
@@ -638,7 +642,7 @@ class SimCoordinator():
 
         ### plot zenith sky temp vs frequency
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(self.chan_freq/1e9,self.sky_temp[0,:,i],label=self.station_names[i])
         pl.xlabel('frequency / GHz')
@@ -666,7 +670,7 @@ class SimCoordinator():
                                                                                                                             
         ### plot turbulent phase errors vs time
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
                     (self.turb_phase_errors[:,0,i]*180./np.pi),\
@@ -683,7 +687,7 @@ class SimCoordinator():
 
         ### plot delays vs time
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         try:
             delay_temp = fixdelay_phase_errors # checks if fixdelays are set
         except NameError:
@@ -764,7 +768,7 @@ class SimCoordinator():
 
         ### plot antenna offset vs pointing epoch
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength/3600,self.num_mispoint_epochs),self.pointing_offsets[i,:],alpha=1,label=self.station_names[i])
         pl.xlabel('time since obs start / hours')
@@ -776,9 +780,9 @@ class SimCoordinator():
                                                                                                 
 
 
-        ### plot pointin amp error vs pointing epoch
+        ### plot pointing amp error vs pointing epoch
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength/3600,self.num_mispoint_epochs),self.pointing_amp_errors[i,:],alpha=1,label=self.station_names[i])
         pl.ylim(np.nanmin(self.pointing_amp_errors[:, :]) * 0.9, 1.04)
@@ -792,7 +796,7 @@ class SimCoordinator():
 
         ### plot pointing amp error vs pointing offset
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(abs(self.pointing_offsets[i,:]),self.pointing_amp_errors[i,:],'o',alpha=1,label=self.station_names[i])
         pl.xlim(0,np.nanmax(abs(self.pointing_offsets))*1.1)
@@ -841,7 +845,7 @@ class SimCoordinator():
         ### plot bandpasses
     def make_bandpass_plots(self):
         pl.figure(figsize=(10,6.8))
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(self.bpass_input_freq,self.bjones_ampl[i],label=self.station_names[i])
         pl.vlines(self.chan_freq[0]-(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
@@ -1038,9 +1042,11 @@ sm.done()
         ### uv-coverage plot, different color baselines, legend, uv-annuli ###
         pl.figure(figsize=(16,16))
         #from mpltools import color
-        cmap = pl.cm.Set1
-        color.cycle_cmap(self.Nant, cmap=cmap)
+        #cmap = pl.cm.Set1
+        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated; use prop_cycle
+        colors = [pl.cm.Set1(i) for i in np.linspace(0, 1, self.nbl)]
         fig, ax = pl.subplots()
+        ax.set_prop_cycle(cycler('color', colors))
         for ant0 in range(self.Nant):
             for ant1 in range(self.Nant):
                 if (ant1 > ant0) \
