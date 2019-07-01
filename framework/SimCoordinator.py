@@ -979,6 +979,11 @@ sm.done()
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
 
+      # Write D-terms to ASCII file
+      with open(v.OUTDIR+'/dterms_sim.txt','w') as dfile:
+          dfile.write("#st DR_real sigma_DR_real DR_imag sigma_DR_imag DL_real sigma_DL_real DL_imag sigma_DL_imag\n")
+          for ant in np.arange(self.Nant):
+              dfile.write("%s\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\n"%(self.station_names[ant], self.leakR_real[ant], self.leakR_imag[ant], self.leakL_real[ant], self.leakL_imag[ant]))
 
     ##################################
     # COMPLEX G-JONES FUNCTIONS #
