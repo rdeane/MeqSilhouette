@@ -714,20 +714,17 @@ class SimCoordinator():
             """this will change the pointing error for each antenna every pointing_timescale
             which one of could essentially think of as a scan length (e.g. 10 minutes)"""
             self.PB_FWHM = PB_FWHM230 / (self.chan_freq.mean() / 230e9) # convert 230 GHz PB to current obs frequency
-            self.num_mispoint_epochs = max(1, int(np.floor(self.obslength / (pointing_timescale * 60.)))) # could be number of scans, for example
+            self.num_mispoint_epochs = max(1, int(round(self.obslength / (pointing_timescale * 60.), 0))) # could be number of scans, for example
             self.mjd_per_ptg_epoch = (self.mjd_obs_end - self.mjd_obs_start) / self.num_mispoint_epochs
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
 
-            
             self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
                     | (self.mjd_ptg_epoch_timecentroid > self.mjd_ant_set[ant])
 
                 self.pointing_offsets[ant,ind] = np.nan # this masks out pointing offsets for stowed antennas
-
-
 
             PB_model = ['gaussian']*self.Nant # primary beam model set in input config file. Hardwired to Gaussian for now. 
 
