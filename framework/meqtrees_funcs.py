@@ -14,7 +14,7 @@ def run_wsclean(input_fitsimage,input_fitspol,startvis,endvis,oversampling):
     msname = II('$MS')
 
     if input_fitspol == 0:
-        subprocess.check_call(['wsclean','-predict','-name',input_fitsimage,'-interval',str(int(startvis)),str(int(endvis)),'-oversampling',str(oversampling),'no-small-inversion',msname])
+        subprocess.check_call(['wsclean','-predict','-name',input_fitsimage,'-interval',str(int(startvis)),str(int(endvis)),'-oversampling',str(oversampling),'-no-small-inversion',msname])
     else:
         subprocess.check_call(["wsclean","-predict","-name",input_fitsimage,"-interval",str(int(startvis)),str(int(endvis)),"-pol","I,Q,U,V","-no-reorder",'-oversampling',str(oversampling),'-no-small-inversion',msname])
 
