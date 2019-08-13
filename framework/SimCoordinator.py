@@ -26,7 +26,7 @@ from cycler import cycler
 class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
-                 corr_eff, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
+                 corr_eff, predict_oversampling, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
                  coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
                  gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle):
         info('Generating MS attributes based on input parameters')
@@ -86,6 +86,9 @@ class SimCoordinator():
         self.dish_area = aperture_eff * np.pi * np.power((self.dish_diameter / 2.), 2)
         self.receiver_temp = (self.SEFD * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
         self.corr_eff = corr_eff
+
+        ### INI: Oversampling factor to use for visibility prediction
+        self.oversampling = predict_oversampling
 
         ### INI: populate WEIGHT and SIGMA columns
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
@@ -161,7 +164,7 @@ class SimCoordinator():
             for img_ind in range(self.num_images):
                 temp_input_fits = '%s/t%04d'%(self.input_fitsimage,img_ind)
                 info('Simulating visibilities (corr dumps) from %d to %d using input sky model %s'%(startvis,endvis,temp_input_fits))
-                run_wsclean(temp_input_fits, self.input_fitspol, startvis, endvis)
+                run_wsclean(temp_input_fits, self.input_fitspol, startvis, endvis, self.oversampling)
                 startvis = endvis
                 if img_ind != self.num_images-2:
                     endvis = endvis + self.vis_per_image

@@ -67,6 +67,10 @@ corr_quantbits:	Number of bits used for quantization by the correlator -- for in
 		Units: bits
 		e.g.: 2
 
+ms_oversampling: Oversampling factor to improve the accuracy of forward modelling with wsclean. MUST BE AN ODD NUMBER.
+                 Format: integer
+                 e.g.: 8191
+
 ms_antenna_table:	Input CASA antenna table to use for creating the Measurement Set. Samples can be found in input/antenna_tables
 			Format: string
 			e.g.: 'input/antenna_Tables/EHT2017_ANTENNA'

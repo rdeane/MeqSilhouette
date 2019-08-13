@@ -3,7 +3,7 @@
 "input_fitsimage":"input/sky_models/polpoint",
 "input_fitspol":1,
 "output_to_logfile":0,
-"add_thermal_noise":1,
+"add_thermal_noise":0,
 "make_image":0,
 "exportuvfits":0,
 "station_info":"input/station_info/eht_betterweather.antennas",
@@ -13,6 +13,7 @@
 "bandpass_makeplots": 0,
 "elevation_limit":0.174,
 "corr_quantbits":2,
+"ms_predict_oversampling":8191,
 "ms_antenna_table":"input/antenna_tables/EHT2017_Freekv4",
 "ms_datacolumn":"DATA",
 "ms_RA":187.7059308333333,
@@ -45,6 +46,6 @@
 "pointing_time_per_mispoint": 10,
 "pointing_makeplots": 0,
 "uvjones_g_on": 0,
-"uvjones_d_on": 1,
+"uvjones_d_on": 0,
 "parang_corrected": 1
 }
