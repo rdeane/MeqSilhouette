@@ -13,7 +13,7 @@
 "bandpass_makeplots": 0,
 "elevation_limit":0.174,
 "corr_quantbits":2,
-"ms_predict_oversampling":8191,
+"predict_oversampling":8191,
 "ms_antenna_table":"input/antenna_tables/EHT2017_Freekv4",
 "ms_datacolumn":"DATA",
 "ms_RA":187.7059308333333,
