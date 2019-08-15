@@ -72,7 +72,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
             os.system(strtemp) 
             tab = pt.table(tempms, readonly=True,ack=False)
             casatime = tab.getcol('TIME')
-            tint_casa = np.unique(casatime)[1] - np.unique(casatime)[0]
+            #tint_casa = np.unique(casatime)[1] - np.unique(casatime)[0]
             tab.close()
             os.system('rm -fr %s'%tempms) # delete temp MS
     
@@ -82,7 +82,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
                           StartTimeSplit[2],StartTimeSplit[3])
             t = Time([symba_time], format='isot', scale='utc')
             # calculate offset between CASA and intended StartTime
-            offsetSec_casa_minus_symba = casatime[0] -   (t.mjd*24*60*60) - (tint_casa/2.)
+            offsetSec_casa_minus_symba = casatime[0] -   (t.mjd*24*60*60) 
             info('CASA start time is at StartTime plus %.2f seconds'
                  %offsetSec_casa_minus_symba )
             newSymbaTime_MJD = t.mjd - (offsetSec_casa_minus_symba / (24*60*60.))
