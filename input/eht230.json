@@ -28,6 +28,7 @@
 "ms_nscan":1,
 "ms_scan_lag":0,
 "ms_makeplots": 0,
+"ms_correctCASAoffset":1,
 "im_cellsize":"3e-6arcsec",
 "im_npix":64,
 "im_stokes":"I",
