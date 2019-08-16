@@ -6,6 +6,7 @@ from framework.comm_functions import *
 import pickle
 import subprocess
 import os
+import time
 import glob
 import shlex
 import tempfile
@@ -999,7 +1000,7 @@ sm.done()
             self.gain_mat[ant,1,0] = 0
             self.gain_mat[ant,1,1] = self.gainL_real[ant]+1j*self.gainL_imag[ant]
 
-        np.save(II('$OUTDIR')+'/gains', self.gain_mat)
+        np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(int(time.time())), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
