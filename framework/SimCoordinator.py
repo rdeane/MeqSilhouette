@@ -10,6 +10,7 @@ import time
 import glob
 import shlex
 import tempfile
+import cmath
 import numpy as np
 from scipy.constants import Boltzmann, speed_of_light
 from scipy.interpolate import InterpolatedUnivariateSpline as ius
@@ -131,6 +132,9 @@ class SimCoordinator():
         self.gainL_real = gainL_real
         self.gainL_imag = gainL_imag
 
+        # Get timestamp at the start of the data generation
+        self.timestamp = int(time.time())
+
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
 
@@ -230,12 +234,12 @@ class SimCoordinator():
                 for a1 in range(self.Nant):
                     if a1 > a0:
                         rms = self.receiver_rms[self.baseline_dict[(a0,a1)]] #(1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
-                        np.random.seed(self.seed)
+                        if self.seed != -1: np.random.seed(self.seed)
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
                             np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
                         #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
 
-            np.save(II('$OUTDIR')+'/receiver_noise', self.thermal_noise)
+            np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
         self.data = np.add(self.data, self.thermal_noise)
         self.save_data()
         info("Thermal noise added")
@@ -358,7 +362,7 @@ class SimCoordinator():
 
     def trop_opacity_attenuate(self):
         transmission_matrix = np.exp(-1 * self.opacity / np.sin(self.elevation_tropshape))
-        np.save(II('$OUTDIR')+'/transmission', transmission_matrix)
+        np.save(II('$OUTDIR')+'/transmission_timestamp_%d'%(self.timestamp), transmission_matrix)
 
         transmission_matrix = np.expand_dims(transmission_matrix, 3)
         self.transmission_matrix = transmission_matrix
@@ -446,9 +450,9 @@ class SimCoordinator():
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
-                        np.random.seed(self.seed)
+                        if self.seed != -1: np.random.seed(self.seed)
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
-            np.save(II('$OUTDIR')+'/atm_output/sky_noise', self.sky_noise)
+            np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
         self.data = np.add(self.data, self.sky_noise)
         self.save_data()
         
@@ -459,9 +463,9 @@ class SimCoordinator():
         turb_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
         beta = 5/3.
         stddevs = np.sqrt(1/(beta**2 + 3 * beta + 2) * (self.tint/self.coherence_time)**beta)
-        np.save(II('$OUTDIR')+'/turbulence_phase_std_devs', np.array(stddevs))
+        np.save(II('$OUTDIR')+'/turbulence_phase_std_devs_timestamp_%d'%(self.timestamp), np.array(stddevs))
         for ant in range(self.Nant):
-            np.random.seed(self.seed)
+            if self.seed != -1: np.random.seed(self.seed)
             turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * \
                                 np.cumsum(np.random.normal(0, stddevs[ant], self.time_unique.shape[0]))
 
@@ -469,7 +473,7 @@ class SimCoordinator():
                                             (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
 
 
-        np.save(II('$OUTDIR')+'/turbulent_phase_errors', turb_phase_errors)
+        np.save(II('$OUTDIR')+'/turbulent_phase_errors_timestamp_%d'%(self.timestamp), turb_phase_errors)
 
         self.turb_phase_errors = turb_phase_errors
 
@@ -481,7 +485,7 @@ class SimCoordinator():
         delay_ref_channel = 0 # NB: delay referenced is hardwired to channel 0
             # This is currently hard-wired, as we don't expect this
             # to be used extensively. 
-        np.random.seed(self.seed)
+        if self.seed != -1: np.random.seed(self.seed)
         fixed_delays = np.random.rand(self.Nant)*(self.fixdelay_max_picosec*1e-12) \
                        - (self.fixdelay_max_picosec/2.*1e-12) # from .json file
         fixdelay_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
@@ -490,8 +494,8 @@ class SimCoordinator():
             phases = 2*np.pi * fixed_delays[ant] * (self.chan_freq - self.chan_freq[delay_ref_channel]) 
             fixdelay_phase_errors[:,:,ant] = phases
 
-        np.save(II('$OUTDIR')+'/fixdelay_phase_errors_chanref%i'%delay_ref_channel, fixdelay_phase_errors)
-        np.save(II('$OUTDIR')+'/fixed_delays_noreference',fixed_delays)
+        np.save(II('$OUTDIR')+'/fixdelay_phase_errors_chanref%i_timestamp_%d'%(delay_ref_channel, self.timestamp), fixdelay_phase_errors)
+        np.save(II('$OUTDIR')+'/fixed_delays_noreference_timestamp_%d'%(self.timestamp),fixed_delays)
 
         info('Fixed delays min/max = %.1f pico-seconds'\
             %self.fixdelay_max_picosec )
@@ -528,9 +532,9 @@ class SimCoordinator():
                 extra_path_length[:, ant] = wet_disp + wet_non_disp  + dry_non_disp
 
 
-            np.save(II('$OUTDIR')+'/atm_output/delay_norm_ant%i'%ant, extra_path_length[:,ant] / speed_of_light)
+            np.save(II('$OUTDIR')+'/atm_output/delay_norm_ant%i_timestamp_%d'%(ant, self.timestamp), extra_path_length[:,ant] / speed_of_light)
 
-        np.save(II('$OUTDIR')+'/atm_output/delay_norm', extra_path_length / speed_of_light)
+        np.save(II('$OUTDIR')+'/atm_output/delay_norm_timestamp_%d'%(self.timestamp), extra_path_length / speed_of_light)
 
             
         return extra_path_length
@@ -546,8 +550,8 @@ class SimCoordinator():
         delay = self.trop_ATM_dispersion() / speed_of_light
         self.delay_alltimes = delay / np.sin(self.elevation_tropshape)
         phasedelay_alltimes = 2*np.pi * delay / np.sin(self.elevation_tropshape) * self.chan_freq.reshape((1, self.chan_freq.shape[0], 1))
-        np.save(II('$OUTDIR')+'/atm_output/phasedelay_alltimes', phasedelay_alltimes)
-        np.save(II('$OUTDIR')+'/atm_output/delay_alltimes', self.delay_alltimes)
+        np.save(II('$OUTDIR')+'/atm_output/phasedelay_alltimes_timestamp_%d'%(self.timestamp), phasedelay_alltimes)
+        np.save(II('$OUTDIR')+'/atm_output/delay_alltimes_timestamp_%d'%(self.timestamp), self.delay_alltimes)
 
         self.phasedelay_alltimes = phasedelay_alltimes 
 
@@ -727,7 +731,7 @@ class SimCoordinator():
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
 
-            np.random.seed(self.seed)
+            if self.seed != -1: np.random.seed(self.seed)
             self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
@@ -834,19 +838,25 @@ class SimCoordinator():
         if self.bpass_input_freq[0] > self.chan_freq[0] or self.bpass_input_freq[-1] < self.chan_freq[-1]:
             warn("Input frequencies out of range of MS frequencies. Extrapolating in some places.")
 
-        bjones_interpolated=np.zeros((self.Nant,self.chan_freq.shape[0]))
+        self.bjones_interpolated=np.zeros((self.Nant,self.chan_freq.shape[0]), dtype=complex)
         for ant in range(self.Nant):
             spl = ius(self.bpass_input_freq, self.bjones_ampl[ant],k=self.bandpass_freq_interp_order)
-            bjones_interpolated[ant] = spl(self.chan_freq)
+            #bjones_interpolated[ant] = spl(self.chan_freq)
+            temp_amplitudes = spl(self.chan_freq)
+            if self.seed != -1: np.random.seed(self.seed)
+            temp_phases = np.deg2rad(60*np.random.random(temp_amplitudes.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            self.bjones_interpolated[ant] = np.array(map(cmath.rect, temp_amplitudes, temp_phases))
 
         # apply the B-Jones terms by iterating over baselines
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 for msfreq_ind in range(self.chan_freq.shape[0]):
                     bl_ind = self.baseline_dict[(a0,a1)]
-                    self.data[bl_ind,msfreq_ind,:] *= bjones_interpolated[a0,msfreq_ind] * bjones_interpolated[a1,msfreq_ind]
+                    self.data[bl_ind,msfreq_ind,:] *= self.bjones_interpolated[a0,msfreq_ind] * np.conj(self.bjones_interpolated[a1,msfreq_ind])
         self.save_data()
 
+        # INI: Write the bandpass gains
+        np.save(II('$OUTDIR')+'/bterms_timestamp_%d'%(self.timestamp), self.bjones_interpolated)
 
         ### plot bandpasses
     def make_bandpass_plots(self):
@@ -940,6 +950,8 @@ sm.done()
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
 
+        np.save(II('$OUTDIR')+'/dterms_ant_time_corr_timestamp_%d'%(self.timestamp), self.pjones_mat)
+
       elif self.parang_corrected == True:
         # INI: Assume that parallactic angle rotation effect has been removed/corrected for. Hence, perform 2*field_angle rotation (Leppanen, 1995)
 
@@ -969,7 +981,7 @@ sm.done()
                 self.pol_leak_mat[ant,:,1,1] = 1
 
         # Save to external file as numpy array
-        # np.save(II('$OUTDIR')+'/pol_leakage', self.pol_leak_mat)
+        np.save(II('$OUTDIR')+'/dterms_ant_time_corr_timestamp_%d'%(self.timestamp), self.pol_leak_mat)
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
@@ -1005,7 +1017,7 @@ sm.done()
             self.gain_mat[ant,1,0] = 0
             self.gain_mat[ant,1,1] = self.gainL_real[ant]+1j*self.gainL_imag[ant]
 
-        np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(int(time.time())), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
+        np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(self.timestamp), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 

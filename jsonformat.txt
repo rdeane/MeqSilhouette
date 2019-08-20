@@ -42,7 +42,7 @@ station_info:	Name of the file containing individual station info such as SEFD, 
 		Format: string
 		e.g.: 'input/station_info/EHT2017_station_info.txt'
 
-bandpass_enabled:	Toggle 0 or 1 -- add bandpass corruptions.
+bandpass_enabled:	Toggle 0 or 1 -- add complex bandpass corruptions (phases currently set to between -30 to +30 deg).
 			Format: integer or boolean
 
 bandpass_table:	ASCII file to read bandpass info from. The input file must contain bandpass gain amplitudes for each station for a set of frequencies.
@@ -67,9 +67,14 @@ corr_quantbits:	Number of bits used for quantization by the correlator -- for in
 		Units: bits
 		e.g.: 2
 
-ms_oversampling: Oversampling factor to improve the accuracy of forward modelling with wsclean. MUST BE AN ODD NUMBER.
+predict_oversampling: Oversampling factor to improve the accuracy of forward modelling with wsclean. MUST BE AN ODD NUMBER.
                  Format: integer
                  e.g.: 8191
+
+predict_seed:	Value of the seed for random number generation with numpy. Setting seed=-1 will disable seeding.
+		Format: integer
+		Units: none
+		e.g.: 42
 
 ms_antenna_table:	Input CASA antenna table to use for creating the Measurement Set. Samples can be found in input/antenna_tables
 			Format: string
@@ -133,6 +138,9 @@ ms_scan_lag:	Specify the lag time between scans.
 
 ms_makeplots:	Toggle 0 or 1 -- generate MS-related plots such as uv-coverage, uv-distance sensitivity bins etc.,
 		Format: integer or boolean
+
+ms_correctCASAoffset:	Toggle 0 or 1 -- correct the spurios offset that CASA introduces to the starttime of the observation.
+			Format: integer or boolean
 
 im_cellsize:	Specify the cell size to be used for imaging.  Used only if <make_image> is enabled.
 		Format: string
