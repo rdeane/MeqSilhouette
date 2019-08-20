@@ -27,8 +27,8 @@ from cycler import cycler
 class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
-                 corr_eff, predict_oversampling, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, gpress, gtemp, \
-                 coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
+                 corr_eff, predict_oversampling, predict_seed, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, \
+                 gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
                  gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
@@ -90,6 +90,7 @@ class SimCoordinator():
 
         ### INI: Oversampling factor to use for visibility prediction
         self.oversampling = predict_oversampling
+        self.seed = predict_seed
 
         ### INI: populate WEIGHT and SIGMA columns
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
@@ -229,7 +230,7 @@ class SimCoordinator():
                 for a1 in range(self.Nant):
                     if a1 > a0:
                         rms = self.receiver_rms[self.baseline_dict[(a0,a1)]] #(1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
-
+                        np.random.seed(self.seed)
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
                             np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
                         #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
@@ -445,6 +446,7 @@ class SimCoordinator():
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
+                        np.random.seed(self.seed)
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
             np.save(II('$OUTDIR')+'/atm_output/sky_noise', self.sky_noise)
         self.data = np.add(self.data, self.sky_noise)
@@ -459,6 +461,7 @@ class SimCoordinator():
         stddevs = np.sqrt(1/(beta**2 + 3 * beta + 2) * (self.tint/self.coherence_time)**beta)
         np.save(II('$OUTDIR')+'/turbulence_phase_std_devs', np.array(stddevs))
         for ant in range(self.Nant):
+            np.random.seed(self.seed)
             turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * \
                                 np.cumsum(np.random.normal(0, stddevs[ant], self.time_unique.shape[0]))
 
@@ -478,6 +481,7 @@ class SimCoordinator():
         delay_ref_channel = 0 # NB: delay referenced is hardwired to channel 0
             # This is currently hard-wired, as we don't expect this
             # to be used extensively. 
+        np.random.seed(self.seed)
         fixed_delays = np.random.rand(self.Nant)*(self.fixdelay_max_picosec*1e-12) \
                        - (self.fixdelay_max_picosec/2.*1e-12) # from .json file
         fixdelay_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
@@ -723,6 +727,7 @@ class SimCoordinator():
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
 
+            np.random.seed(self.seed)
             self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \

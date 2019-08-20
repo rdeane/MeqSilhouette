@@ -1,7 +1,7 @@
 {
-"outdirname":"output/EHT_test_parangcorr",
-"input_fitsimage":"input/sky_models/polpoint",
-"input_fitspol":1,
+"outdirname":"output/EHT_testseed",
+"input_fitsimage":"input/sky_models/singlept",
+"input_fitspol":0,
 "output_to_logfile":0,
 "add_thermal_noise":0,
 "make_image":0,
@@ -14,6 +14,7 @@
 "elevation_limit":0.174,
 "corr_quantbits":2,
 "predict_oversampling":8191,
+"predict_seed":42,
 "ms_antenna_table":"input/antenna_tables/EHT2017_Freekv4",
 "ms_datacolumn":"DATA",
 "ms_RA":187.7059308333333,
