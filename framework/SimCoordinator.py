@@ -832,7 +832,7 @@ class SimCoordinator():
         self.bpass_input_freq = bjones_inp[0][1:].astype(np.float64)
         self.bpass_input_freq *= 1e9 # convert from GHz to Hz
         self.bjones_ampl = bjones_inp[1:,1:].astype(np.float64)
-        
+
 
         # Interpolate between the frequencies given in the bandpass table
         if self.bpass_input_freq[0] > self.chan_freq[0] or self.bpass_input_freq[-1] < self.chan_freq[-1]:
