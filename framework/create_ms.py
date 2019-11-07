@@ -55,8 +55,8 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
 
     
     if correctCASAoffset:
-        if os.path.exists(os.path.join(v.OUTDIR,'CASAtimeOffset.txt')):
-            with open(os.path.join(v.OUTDIR,'CASAtimeOffset.txt'), 'r') as file:
+        if os.path.exists(os.path.join(v.OUTDIR,'CASAcorrectedStartTime.txt')):
+            with open(os.path.join(v.OUTDIR,'CASAcorrectedStartTime.txt'), 'r') as file:
                tmod_StartTime  = file.read().replace('\n', '')
         else:
             
@@ -98,11 +98,14 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
 
             #### for save for subsequent scans (if SYMBA run)
             #np.savetxt(os.path.join(v.OUTDIR,'CASAtimeOffset.txt'),tmod_StartTime)
-            with open(os.path.join(v.OUTDIR,'CASAtimeOffset.txt'), 'w') as file:
+            with open(os.path.join(v.OUTDIR,'CASAcorrectedStartTime.txt'), 'w') as file:
                file.write(tmod_StartTime)
                file.close()
+            with open(os.path.join(v.OUTDIR,'CASAtimeOffset.txt'), 'w') as file:
+               file.write('%.2f'%offsetSec_casa_minus_symba)
+               file.close()
     else:
-        """ if no CASA offset has/sholud be(en) calcualted, just use user-provided StartTime"""
+        """ if no CASA offset has/should be(en) calculated, just use user-provided StartTime"""
         tmod_StartTime = StartTime
     
         ### MAIN MS simulation with update StartTime 
