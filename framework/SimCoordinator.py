@@ -482,27 +482,17 @@ class SimCoordinator():
     def trop_calc_fixdelay_phase_offsets(self):
         """insert constant delay for each station for all time stamps. 
         Used for testing fringe fitters"""
-        delay_ref_channel = 0 # NB: delay referenced is hardwired to channel 0
-            # This is currently hard-wired, as we don't expect this
-            # to be used extensively. 
-        if self.seed != -1: np.random.seed(self.seed)
-        fixed_delays = np.random.rand(self.Nant)*(self.fixdelay_max_picosec*1e-12) \
-                       - (self.fixdelay_max_picosec/2.*1e-12) # from .json file
-        fixdelay_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
+        delay = self.trop_ATM_dispersion() / speed_of_light
+        self.delay_alltimes = delay / np.sin(self.elevation_tropshape)
+        phasedelay_alltimes = 2*np.pi * delay / np.sin(self.elevation_tropshape) * self.chan_freq.reshape((1, self.chan_freq.shape[0], 1))
+        mean_phasedelays = np.nanmean(phasedelay_alltimes,axis=0)
+        phasedelay_alltimes_iter = range(len(phasedelay_alltimes))
+        for i in phasedelay_alltimes_iter:
+            phasedelay_alltimes[i] = mean_phasedelays
+        np.save(II('$OUTDIR')+'/atm_output/phasedelay_alltimes_timestamp_%d'%(self.timestamp), phasedelay_alltimes)
+        np.save(II('$OUTDIR')+'/atm_output/delay_alltimes_timestamp_%d'%(self.timestamp), self.delay_alltimes)
 
-        for ant in range(self.Nant):
-            phases = 2*np.pi * fixed_delays[ant] * (self.chan_freq - self.chan_freq[delay_ref_channel]) 
-            fixdelay_phase_errors[:,:,ant] = phases
-
-        np.save(II('$OUTDIR')+'/fixdelay_phase_errors_chanref%i_timestamp_%d'%(delay_ref_channel, self.timestamp), fixdelay_phase_errors)
-        np.save(II('$OUTDIR')+'/fixed_delays_noreference_timestamp_%d'%(self.timestamp),fixed_delays)
-
-        info('Fixed delays min/max = %.1f pico-seconds'\
-            %self.fixdelay_max_picosec )
-
-        self.fixdelay_phase_errors = fixdelay_phase_errors
-
-
+        self.fixdelay_phase_errors = phasedelay_alltimes
 
     
 
