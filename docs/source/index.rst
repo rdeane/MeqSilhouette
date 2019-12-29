@@ -12,7 +12,6 @@ Welcome to MeqSilhouette's documentation!
 
    requirements
    usage
-   todo
    history
 
 Indices and tables
