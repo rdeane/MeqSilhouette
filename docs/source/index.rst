@@ -10,7 +10,10 @@ Welcome to MeqSilhouette's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   requirements
+   usage
+   todo
+   history
 
 Indices and tables
 ==================
