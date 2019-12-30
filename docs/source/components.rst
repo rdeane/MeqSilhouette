@@ -167,9 +167,9 @@ input/settings.json
 * **pointing_makeplots** Toggle 0 or 1 to plot pointing offset against time; integer or boolean
 
 * **uvjones_d_on** Switch on polarization leakage effects (D-Jones). The D-Jones matrix takes the form [[1 dR_real+1j*dR_imag], [dL_real+1j*dL_imag 1]].
-                 When switched on, the parallactic angle (P-Jones) effects are added automatically.
+  When switched on, the parallactic angle (P-Jones) effects are added automatically.
 
 * **uvjones_g_on** Switch on complex gains (G-Jones). The G-Jones matrix takes the form [[gR_real+1j*gR_imag 0], [0 gL_real+1j*gL_imag]].
 
-* **parang_corrected** Toggle 0 or 1. If 0, perform parallactic angle rotation before introducing the leakage (D-Jones) terms; if 1, then assume
-                    that parallactic angle rotation correction has already been made and rotate by twice the field angle.
+* **parang_corrected** Toggle 0 or 1. If 0, perform parallactic angle rotation before introducing the leakage (D-Jones) terms; if 1, then assume 
+  that parallactic angle rotation correction has already been made and rotate by twice the field angle.
