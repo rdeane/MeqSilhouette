@@ -95,43 +95,81 @@ input/settings.json
 
 * **elevation_limit** Flag visibilities below this elevation limit given in radians.
 
-corr_quantbits: Number of bits used for quantization by the correlator -- for instance, 2 bits for 4 level quantization.
-                Format: integer
-                Units: bits
-                e.g.: 2
+* **corr_quantbits** Number of bits used for quantization by the correlator (*e.g.* 2 bits for 4 levels)
 
-predict_oversampling: Oversampling factor to improve the accuracy of forward modelling with wsclean. MUST BE AN ODD NUMBER.
-                 Format: integer
-                 e.g.: 8191
+* **predict_oversampling** Oversampling factor to improve the accuracy of forward modelling with WSClean. MUST BE AN ODD NUMBER (*e.g.* 8191)
 
-predict_seed:   Value of the seed for random number generation with numpy. Setting seed=-1 will disable seeding.
-                Format: integer
-                Units: none
-                e.g.: 42
+* **predict_seed** Seed for random number generation with numpy. Setting seed=-1 will disable seeding
 
-ms_antenna_table:       Input CASA antenna table to use for creating the Measurement Set. Samples can be found in input/antenna_tables
-                        Format: string
-                        e.g.: 'input/antenna_Tables/EHT2017_ANTENNA'
+* **ms_antenna_table** Name of CASA ANTENNA table to use for creating the MS, with relative path to $MEQS_DIR
 
-ms_datacolumn:  Specify the column in the Measurement Set in which to write the output visibilities.
-                Format: string
-                e.g.: 'DATA'
+* **ms_datacolumn** Name of the MS column to write the output visibilities into: *DATA*, *CORRECTED_DATA*, or *MODEL_DATA*
 
-ms_RA:  Right Ascension of the pointing centre of the observation.
-        Format: float
-        Units: Degrees
-        e.g.: 266.416837
+* **ms_RA**  Right Ascension of the pointing centre of the observation in decimal degrees
 
-ms_DEC: Declination of the pointing centre of the observation.
-        Format: float
-        Units: Degrees
-        e.g.: -29.000781
+* **ms_DEC** Declination of the pointing centre of the observation in decimal degrees
 
-ms_polproducts: Indicate how to interpret the polarization information of the 2 x 2 complex visibilities, based on whether the polarization feeds
-                are circular or linear.
-                Format: string
-                e.g.: 'RR RL LR LL' or 'XX XY YX YY'
+* **ms_polproducts** Specify whether the polarization feeds are circular or linear: *RR RL LR LL* or *XX XY YX YY*
 
-ms_nu:  Specify the centre frequency of the bandpass.
-        Format: float
+* **ms_nu** Centre frequency of the bandpass in GHz
 
+* **ms_dnu** Bandwidth of the spectral window in GHz
+
+* **ms_nchan** Number of channels
+
+* **ms_obslength** Duration of the observation in hours
+
+* **ms_tint** Integration time (i.e. the correlator dump time) in seconds
+
+* **ms_StartTime** Starting time of the observation; *e.g.* 'UTC,2017/04/01/00:00:00.00'
+
+* **ms_nscan** Number of scans in the observation.
+
+* **ms_scan_lag** Lag time between scans in hours
+
+* **ms_makeplots** Toggle 0 or 1 to generate MS-related plots such as uv-coverage, uv-distance sensitivity bins etc.; integer or boolean
+
+* **ms_correctCASAoffset** Toggle 0 or 1 to correct the spurios offset that CASA introduces to the starttime of the observation; integer or boolean
+
+* **im_cellsize** Cell size to be used for imaging with units when **make_image=True**; *e.g.* '3e-6arcsec'
+
+* **im_npix** Image size in pixels when **make_image=True**
+
+* **im_stokes** Stokes parameter to image - 'I', 'Q', 'U', 'V' when **make_image=True**
+
+* **im_weight** Weighting scheme to use for imaging when **make_image=True**; *uniform*, *natural*, or *briggs*
+
+* **trop_enabled** Toggle 0 or 1 to enable tropospheric corruptions; integer or boolean
+
+* **trop_wetonly** Toggle 0 or 1 to simulate only the wet component when **trop_enabled=True**; integer or boolean
+
+* **trop_attenuate** Toggle 0 or 1 to enable tropospheric attenuation when **trop_enabled=True**; integer or boolean
+
+* **trop_noise** Toggle 0 or 1 to include tropospheric (i.e. sky) noise when **trop_enabled=True**
+
+* **trop_turbulence** Toggle 0 or 1 to add Kolmogorov turbulence to the visibility phases when **trop_enabled=True**
+
+* **trop_mean_delay** Toggle 0 or 1 to add mean (i.e. non-turbulent) delay errors due to both dry and wet components when **trop_enabled=True**
+
+* **trop_percentage_calibration_error** Unused
+
+* **trop_fixdelays** Toggle 0 or 1 to insert time-invariant delay errors for testing purposes when **trop_enabled=True**
+
+* **trop_fixdelay_max_picosec** Maximum absolute value of the constant delay errors in picoseconds when **trop_enabled=True** and **trop_fixdelays=True**
+
+* **trop_makeplots** Toggle 0 or 1 to plot troposphere-related quantities such as zenith opacity, elevation-dependent transmission, zenith sky temperature against frequency
+                and turbulent phase errors and delays against time; integer or boolean
+
+* **pointing_enabled** Toggle 0 or 1 to enable pointing errors; integer or boolean
+
+* **pointing_time_per_mispoint** Number of minutes per mispointing in minutes
+
+* **pointing_makeplots** Toggle 0 or 1 to plot pointing offset against time; integer or boolean
+
+* **uvjones_d_on** Switch on polarization leakage effects (D-Jones). The D-Jones matrix takes the form [[1 dR_real+1j*dR_imag], [dL_real+1j*dL_imag 1]].
+                 When switched on, the parallactic angle (P-Jones) effects are added automatically.
+
+* **uvjones_g_on** Switch on complex gains (G-Jones). The G-Jones matrix takes the form [[gR_real+1j*gR_imag 0], [0 gL_real+1j*gL_imag]].
+
+* **parang_corrected** Toggle 0 or 1. If 0, perform parallactic angle rotation before introducing the leakage (D-Jones) terms; if 1, then assume
+                    that parallactic angle rotation correction has already been made and rotate by twice the field angle.
