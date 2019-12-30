@@ -2,8 +2,8 @@
 Requirements & Installation
 ===========================
 
-Requirements:
--------------
+Requirements
+------------
 
 MeqSilhouette v2 depends on the following software packages:
 
@@ -24,8 +24,8 @@ The following non-standard python libraries are required:
    * mpltools
    * seaborn
 
-Installation:
--------------
+Installation
+------------
 
 Steps to build MeqSilhouette on Ubuntu 18.04:
 
@@ -52,8 +52,8 @@ Steps to build MeqSilhouette on Ubuntu 18.04:
 
 .. note:: If installing in a virtual environment, a number of python packages mentioned under 'Requirements' must be installed.
 
-Commonly encountered problems:
-------------------------------
+Commonly encountered problems
+-----------------------------
 
 The following is a collection of the list of errors encountered while installing/running MeqSilhouette.
 

@@ -12,6 +12,8 @@ Welcome to MeqSilhouette's documentation!
 
    requirements
    usage
+   components
+   contributors
    history
 
 Indices and tables

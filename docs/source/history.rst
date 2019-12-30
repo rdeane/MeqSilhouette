@@ -22,7 +22,7 @@ History
 (Natarajan et al., in prep)
 
 1.0 (2016)
--------------
+----------
 
 * Tropospheric corruptions
 * Basic pointing error module
