@@ -12,6 +12,7 @@ Welcome to MeqSilhouette's documentation!
 
    requirements
    usage
+   io
    components
    contributors
    history
