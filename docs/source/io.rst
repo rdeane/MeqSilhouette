@@ -187,8 +187,9 @@ Each parameter is explained below:
 Outputs
 #######
 
-* The primary output of MeqSilhouette is a CASA Measurement Set containing the complex visibilities, with all the user-requested corruptions applied.
+* The primary output of MeqSilhouette is a CASA Measurement Set containing the complex visibilities, with all the user-requested corruptions applied. The Measurement Set v2 definition can be
+  found `here <https://casa.nrao.edu/Memos/229.html>`_.
 
-* MeqSilhouette also saves in numpy format the numerical values of all the Jones matrices applied to the source coherency matrix. Details can be found in ...
+* MeqSilhouette also saves in numpy format the numerical values of all the Jones matrices applied to the source coherency matrix. Details can be found in the *Components* section.
 
 * A number of plots illustrating the various effects applied to the complex visibilities.
