@@ -67,9 +67,19 @@ corresponding to each antenna in the array.
 input/settings.json
 -------------------
 
-* **outdirname** Name of the output directory in which to write all the output products of MeqSilhouette, with relative path to $MEQS_DIR
+The configuration file is a *.json* file with parameters that are loosely grouped into the following groups:
 
-* **input_fitsimage** Name of the directory containing input fits images named using the naming convention explained in `input/sky_models`_, with relative path to $MEQS_DIR
+*    general parameters (paths, output options, etc.)
+*    measurement set parameters (prefixed with *ms_*)
+*    imaging parameters (prefixed with *im_*)
+*    tropospheric parameters (prefixed with *trop_*)
+*    antenna pointing error parameters (prefixed with *pointing_*)
+
+Each parameter is explained below:
+
+* **outdirname** Name of the output directory in which to write all the output products of MeqSilhouette, with path relative to $MEQS_DIR
+
+* **input_fitsimage** Name of the directory containing input fits images named using the naming convention explained in `input/sky_models`_, with path relative to $MEQS_DIR
 
 * **input_fitspol**  Toggle 0 or 1 for polarisation simulation; integer or boolean
 
@@ -83,11 +93,11 @@ input/settings.json
 
 * **exportuvfits** Toggle 0 or 1 to export MS to UVFITS; integer or boolean
 
-* **station_info** Name of the file containing individual station info such as SEFD, coherence time, primary beam model etc., with relative path to $MEQS_DIR
+* **station_info** Name of the file containing individual station info such as SEFD, coherence time, primary beam model etc., with path relative to $MEQS_DIR
 
 * **bandpass_enabled** Toggle 0 or 1 to add complex bandpass corruptions (phases currently randomised to between -30 to +30 deg); integer or boolean
 
-* **bandpass_table** Name of the *.txt* file containing bandpass gain amplitudes for each station for a set of frequencies, with relative path to $MEQS_DIR
+* **bandpass_table** Name of the *.txt* file containing bandpass gain amplitudes for each station for a set of frequencies, with path relative to $MEQS_DIR
 
 * **bandpass_freq_interp_order** Order of spline interpolation; integer between 1 and 5
 
@@ -101,7 +111,7 @@ input/settings.json
 
 * **predict_seed** Seed for random number generation with numpy. Setting seed=-1 will disable seeding
 
-* **ms_antenna_table** Name of CASA ANTENNA table to use for creating the MS, with relative path to $MEQS_DIR
+* **ms_antenna_table** Name of CASA ANTENNA table to use for creating the MS, with path relative to $MEQS_DIR
 
 * **ms_datacolumn** Name of the MS column to write the output visibilities into: *DATA*, *CORRECTED_DATA*, or *MODEL_DATA*
 
