@@ -14,6 +14,7 @@ Welcome to MeqSilhouette's documentation!
    usage
    io
    components
+   pipelines
    contributors
    history
 
