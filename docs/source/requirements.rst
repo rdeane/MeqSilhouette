@@ -5,7 +5,7 @@ Requirements & Installation
 Requirements
 ------------
 
-MeqSilhouette v2 depends on the following software packages:
+MeqSilhouette depends on the following software packages:
 
    * `WSClean <https://sourceforge.net/p/wsclean/wiki/Home/>`_
    * `MeqTrees <http://meqtrees.net>`_
