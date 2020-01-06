@@ -43,6 +43,12 @@ The following naming convention applies to the individual FITS images:
 
 If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**.
 
+.. image:: LSM.png
+    :width: 764px
+    :align: center
+    :height: 579px
+    :alt: alternate text
+
 input/station_info
 ------------------
 
