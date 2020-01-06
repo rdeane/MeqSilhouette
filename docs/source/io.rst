@@ -47,7 +47,7 @@ If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**
     :width: 764px
     :align: center
     :height: 579px
-    :alt: alternate text
+    :alt: MeqTrees compatible LSM format
 
 input/station_info
 ------------------
