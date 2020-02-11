@@ -52,6 +52,8 @@ Steps to build MeqSilhouette on Ubuntu 18.04:
 
 .. note:: If installing in a virtual environment, a number of python packages mentioned under 'Requirements' must be installed.
 
+.. todo:: MeqSilhouette + Docker/Singularity
+
 Commonly encountered problems
 -----------------------------
 
