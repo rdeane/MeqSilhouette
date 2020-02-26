@@ -86,7 +86,7 @@ if (1):
     sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR_real, gainR_imag,\
     gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle = \
     np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
-    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19]), 0, 1)
+    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]), 0, 1)
     
     #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
@@ -137,7 +137,7 @@ if (1):
     create_ms(MS, input_fitsimage, ms_dict)
 
     # INI: Write mount types into the MOUNT column in the empty MS prior to generating synthetic data.
-    station_mount_types = np.loadtxt(os.path.join(v.CODEDIR, parameters['station_info']), usecols=[18], dtype=str, skiprows=1)
+    station_mount_types = np.loadtxt(os.path.join(v.CODEDIR, parameters['station_info']), usecols=[19], dtype=str, skiprows=1)
     tab = pt.table(v.MS)
     anttab = pt.table(tab.getkeyword('ANTENNA'), readonly=False)
     anttab.putcol('MOUNT', station_mount_types)
