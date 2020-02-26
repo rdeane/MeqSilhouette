@@ -218,6 +218,8 @@ if (1):
         info('Introducing parallactic angle rotation and polarization leakage effects')
         sim_coord.add_pol_leakage_manual()
         info('Polarization leakage and parallactic angle effects added successfully.')
+        info('Generating parallactic angle plots...')
+        sim_coord.make_pol_plots()
 
     ### RECEIVER GAINS ###
     if parameters['uvjones_g_on']:

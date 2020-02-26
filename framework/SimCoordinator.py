@@ -16,8 +16,11 @@ from scipy.constants import Boltzmann, speed_of_light
 from scipy.interpolate import InterpolatedUnivariateSpline as ius
 import pylab as pl
 import seaborn as sns
-sns.set_style("darkgrid")
+#sns.set_style("darkgrid")
 cmap = pl.cm.Set1 #tab20 #viridis
+from matplotlib import rc
+rc('font',**{'family':'serif','serif':['Times']})
+rc('text', usetex=True)
 from mpltools import layout
 from mpltools import color
 from matplotlib.patches import Circle
@@ -606,10 +609,10 @@ class SimCoordinator():
 
         for i,ax in enumerate(axes.flatten()):
             ax.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
-            ax.legend()
+            ax.legend(prop={'size':12})
             ax.set_ylim(np.nanmin(self.transmission),1)
-        pl.xlabel('frequency / GHz')
-        pl.ylabel('transmission')
+        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+        pl.ylabel('Transmission', fontsize=FSIZE)
         pl.tight_layout()
         pl.savefig(os.path.join(v.PLOTDIR,'transmission_vs_freq_subplots.png'),bbox_inches='tight')
         pl.close()
@@ -619,8 +622,10 @@ class SimCoordinator():
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
-        pl.xlabel('frequency / GHz')
-        pl.ylabel('zenith transmission')
+        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+        pl.ylabel('Zenith transmission', fontsize=FSIZE)
+        pl.xticks(fontsize=18)
+        pl.yticks(fontsize=18)
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'zenith_transmission_vs_freq.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -631,10 +636,13 @@ class SimCoordinator():
         for i in range(self.Nant):
             pl.imshow(self.transmission_matrix[:,:,i,0],origin='lower',aspect='auto',\
                       extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.])
-            pl.xlabel('frequency / GHz')
-            pl.ylabel('relative time / hr')
+            pl.xlabel('Frequency / GHz', fontsize=16)
+            pl.ylabel('Relative time / hr', fontsize=16)
+            pl.xticks(fontsize=14)
+            pl.yticks(fontsize=14)            
             cb = pl.colorbar()
-            cb.set_label('transmission')
+            cb.set_label('Transmission', fontsize=12)
+            cb.ax.tick_params(labelsize=12)
             pl.title(self.station_names[i])
             pl.tight_layout()
             pl.savefig(os.path.join(v.PLOTDIR,'transmission_vs_freq_%s.png'%self.station_names[i]))
@@ -647,8 +655,10 @@ class SimCoordinator():
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(self.chan_freq/1e9,self.sky_temp[0,:,i],label=self.station_names[i])
-        pl.xlabel('frequency / GHz')
-        pl.ylabel('zenith sky temperature / K')
+        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+        pl.ylabel('Zenith sky temperature / K', fontsize=FSIZE)
+        pl.xticks(fontsize=18)
+        pl.yticks(fontsize=18)        
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'zenith_skytemp_vs_freq.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -661,10 +671,12 @@ class SimCoordinator():
         for i in range(self.Nant):
             pl.imshow( (self.turb_phase_errors[:,:,i] * 180. / np.pi) ,origin='lower',aspect='auto',\
                       extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.]) #vmin=-180,180
-            pl.xlabel('frequency / GHz')
-            pl.ylabel('relative time / hr')
+            pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+            pl.ylabel('Relative time / hr', fontsize=FSIZE)
+            pl.xticks(fontsize=18)
+            pl.yticks(fontsize=18)            
             cb = pl.colorbar()
-            cb.set_label('turbulent phase / degrees')
+            cb.set_label('Turbulent phase / degrees')
             pl.title(self.station_names[i])
             pl.tight_layout()
             pl.savefig(os.path.join(v.PLOTDIR,'turbulent_phase_waterfall_plot_%s.png'%self.station_names[i]))
@@ -677,10 +689,13 @@ class SimCoordinator():
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
                     (self.turb_phase_errors[:,0,i]*180./np.pi),\
                     label=self.station_names[i],alpha=1)
-        pl.xlabel('relative time / hr')
-        pl.ylabel('tubulent phase / degrees')
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Turbulent phase / degrees', fontsize=FSIZE)
+        pl.xticks(fontsize=18)
+        pl.yticks(fontsize=18)        
         #pl.ylim(-180,180)
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+        #lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+        lgd = pl.legend()
         pl.savefig(os.path.join(v.PLOTDIR,'turbulent_phase_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
@@ -697,8 +712,10 @@ class SimCoordinator():
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
                     np.nanmean(delay_temp[:,:,i],axis=1) * 1e9,label=self.station_names[i])
-        pl.xlabel('relative time / hr')
-        pl.ylabel('delay / nano-seconds')
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Delay / ns', fontsize=FSIZE)
+        pl.xticks(fontsize=18)
+        pl.yticks(fontsize=18)        
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'mean_delay_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -771,8 +788,8 @@ class SimCoordinator():
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength/3600,self.num_mispoint_epochs),self.pointing_offsets[i,:],alpha=1,label=self.station_names[i])
-        pl.xlabel('time since obs start / hours')
-        pl.ylabel('antenna pointing offset / arcsec')
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Pointing offset / arcsec', fontsize=FSIZE) 
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'pointing_angular_offset_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -786,8 +803,8 @@ class SimCoordinator():
         for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength/3600,self.num_mispoint_epochs),self.pointing_amp_errors[i,:],alpha=1,label=self.station_names[i])
         pl.ylim(np.nanmin(self.pointing_amp_errors[:, :]) * 0.9, 1.04)
-        pl.xlabel('time since obs start / hours')
-        pl.ylabel('true primary beam response') #antenna pointing amplitude error')
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Primary beam response', fontsize=FSIZE)        
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'pointing_amp_error_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -797,13 +814,17 @@ class SimCoordinator():
         ### plot pointing amp error vs pointing offset
         pl.figure(figsize=(10,6.8))
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
+        marker = itertools.cycle(('.', 'o', 'v', '^', 's', '+', '*', 'h', 'D'))
         for i in range(self.Nant):
-            pl.plot(abs(self.pointing_offsets[i,:]),self.pointing_amp_errors[i,:],'o',alpha=1,label=self.station_names[i])
+            pl.plot(abs(self.pointing_offsets[i,:]),self.pointing_amp_errors[i,:], marker=marker.next(), linestyle='', alpha=1,label=self.station_names[i])
         pl.xlim(0,np.nanmax(abs(self.pointing_offsets))*1.1)
         pl.ylim(np.nanmin(self.pointing_amp_errors[i,:])*0.8,1.04)
-        pl.xlabel('pointing offset / arcsec')
-        pl.ylabel('true primary beam response') #antenna pointing amplitude error')
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+        pl.xlabel(r'Pointing offset, $\rho$ / arcsec', fontsize=FSIZE)
+        pl.ylabel('Primary beam response', fontsize=FSIZE) #antenna pointing amplitude error')
+        pl.xticks(fontsize=20)
+        pl.yticks(fontsize=20)        
+        #lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+        lgd = pl.legend(loc='lower left', prop={'size':12})
         pl.savefig(os.path.join(v.PLOTDIR,'pointing_amp_error_vs_angular_offset.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
@@ -853,14 +874,17 @@ class SimCoordinator():
         pl.figure(figsize=(10,6.8))
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
-            pl.plot(self.bpass_input_freq,self.bjones_ampl[i],label=self.station_names[i])
-        pl.vlines(self.chan_freq[0]-(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
+            #pl.plot(self.bpass_input_freq,self.bjones_ampl[i],label=self.station_names[i])
+            pl.plot(self.chan_freq,np.abs(self.bjones_interpolated[i]),label=self.station_names[i])
+        '''pl.vlines(self.chan_freq[0]-(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
                   linestyles='dashed',colors='k')
         pl.vlines(self.chan_freq[-1]+(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
-                  linestyles='dashed',colors='k',label='simulated bandpass limits')
-        pl.xlabel('frequency / GHz')
-        pl.ylabel('gain')
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+                  linestyles='dashed',colors='k',label='simulated bandpass limits')'''
+        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+        pl.ylabel('Gain', fontsize=FSIZE)
+        pl.xticks(fontsize=18)
+        pl.yticks(fontsize=18)                  
+        lgd = pl.legend(prop={'size':12}) #bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
@@ -993,6 +1017,34 @@ sm.done()
           for ant in np.arange(self.Nant):
               dfile.write("%s\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\n"%(self.station_names[ant], self.leakR_real[ant], self.leakR_imag[ant], self.leakL_real[ant], self.leakL_imag[ant]))
 
+    def make_pol_plots(self):
+        ### parang vs time ###
+        pl.figure(figsize=(10,6.8))
+        for ant in range(self.Nant):
+        #for ant in [0,3,6,8]:
+            if (self.station_names[ant] == 'JC') or \
+               (self.station_names[ant] == 'AP'):
+                ls = ':'
+                lw=3.5
+                alpha = 1
+                zorder = 2
+            else:
+                ls = 'solid'
+                alpha = 1
+                lw=2
+                zorder = 1
+            pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),
+                    self.parallactic_angle[ant, :]*180./np.pi, alpha=alpha, lw=lw, \
+                    ls=ls,zorder=zorder,label=self.station_names[ant])
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Parallactic angle / degrees', fontsize=FSIZE)
+        pl.xticks(fontsize=20)
+        pl.yticks(fontsize=20)
+        #lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+        lgd = pl.legend(loc='upper left', prop={'size':12})
+        pl.savefig(os.path.join(v.PLOTDIR,'parallactic_angle_vs_time.png'),\
+                   bbox_extra_artists=(lgd,), bbox_inches='tight')
+
     ##################################
     # COMPLEX G-JONES FUNCTIONS #
     ##################################
@@ -1083,11 +1135,13 @@ sm.done()
         uvbins_centre = (uvbins_edges[:-1] + uvbins_edges[1:]) / 2.
         numuvbins = len(uvbins_centre)
         binwidths = uvbins_edges[1] - uvbins_edges[0]
-        for b in range(numuvbins):
+        '''for b in range(numuvbins):
             p = Circle((0, 0), uvbins_edges[b + 1], edgecolor='k', ls='solid', facecolor='none', alpha=0.5, lw=0.5)
-            ax.add_artist(p)
-        pl.xlabel('$u$ /  G$\,\lambda$')
-        pl.ylabel('$v$ /  G$\,\lambda$')
+            ax.add_artist(p)'''
+        pl.xlabel('$u$ / G$\,\lambda$', fontsize=FSIZE)
+        pl.ylabel('$v$ / G$\,\lambda$', fontsize=FSIZE)
+        pl.xticks(fontsize=10)
+        pl.yticks(fontsize=10)        
         pl.xlim(-10, 10)
         pl.ylim(-10, 10)
         ax.set_aspect('equal')
@@ -1124,13 +1178,13 @@ sm.done()
                             c=np.hstack([temp_minelev,temp_minelev])*180./np.pi,\
                                s=10,cmap="viridis",edgecolors="None",vmin=0,vmax=30) #
         cb = pl.colorbar()
-        cb.set_label("min baseline elevation / degrees")
+        cb.set_label("Minimum baseline elevation / degrees")
         ax = pl.gca()
         for b in range(numuvbins):
             p = Circle((0, 0), uvbins_edges[b + 1], edgecolor='k', ls='solid', facecolor='none', alpha=0.5, lw=0.5)
             ax.add_artist(p)
-        pl.xlabel('$u$ /  G$\,\lambda$')
-        pl.ylabel('$v$ /  G$\,\lambda$')
+        pl.xlabel('$u$ /  G$\,\lambda$', fontsize=FSIZE)
+        pl.ylabel('$v$ /  G$\,\lambda$', fontsize=FSIZE)
         pl.xlim(-10, 10)
         pl.ylim(-10, 10)
         ax.set_aspect('equal')
@@ -1164,13 +1218,13 @@ sm.done()
                             c=np.hstack([temp_meanelev,temp_meanelev])*180./np.pi,\
                                s=10,cmap="viridis",edgecolors="None",vmin=0,vmax=30) #
         cb = pl.colorbar()
-        cb.set_label("mean baseline elevation / degrees")
+        cb.set_label("Mean baseline elevation / degrees")
         ax = pl.gca()
         for b in range(numuvbins):
             p = Circle((0, 0), uvbins_edges[b + 1], edgecolor='k', ls='solid', facecolor='none', alpha=0.5, lw=0.5)
             ax.add_artist(p)
-        pl.xlabel('$u$ /  G$\,\lambda$')
-        pl.ylabel('$v$ /  G$\,\lambda$')
+        pl.xlabel('$u$ /  G$\,\lambda$', fontsize=FSIZE)
+        pl.ylabel('$v$ /  G$\,\lambda$', fontsize=FSIZE)
         pl.xlim(-10, 10)
         pl.ylim(-10, 10)
         ax.set_aspect('equal')
@@ -1242,8 +1296,8 @@ sm.done()
             ax1.plot(uvbins_centre[b],ampbins[b],'o',mec='none',alpha=1,color='#336699')
             ax1.errorbar(uvbins_centre[b],ampbins[b],xerr=xerr[b],yerr=yerr[b],ecolor='grey',lw=0.5,alpha=1,fmt='none',capsize=0)
         #ax1.vlines(uas2uvdist(shadow_size_mas),0,np.nanmax(ampbins)*1.2,linestyles='dashed')
-        ax1.set_xlabel('${uv}$-distance / G$\,\lambda$')
-        ax1.set_ylabel('Stokes I amplitude / Jy')
+        ax1.set_xlabel('${uv}$-distance / G$\,\lambda$', fontsize=FSIZE)
+        ax1.set_ylabel('Stokes I amplitude / Jy', fontsize=FSIZE)
         ax1.set_ylim(0,np.nanmax(ampbins)*1.2)
         ax1.set_xlim(0,uvbins_edges.max())
         ax2.set_xlim(ax1.get_xlim())
@@ -1253,7 +1307,7 @@ sm.done()
         ax2.set_xticks(uas2uvdist(np.array(angular_tick_locations))) # np.array([25.,50.,100.,200.]))) #   angular_tick_locations))
         ax2.set_xticklabels(angular_tick_locations)
         #ax2.xaxis.set_major_formatter(FormatStrFormatter('%i'))
-        ax2.set_xlabel("angular scale / $\mu$-arcsec")
+        ax2.set_xlabel("Angular scale / $\mu$-arcsec", fontsize=FSIZE)
         #np.savetxt('uvdistplot_ampdatapts.txt',np.vstack([uvbins_centre,xerr,ampbins,yerr]))
         pl.savefig(os.path.join(v.PLOTDIR,'amp_uvdist.png'), \
                    bbox_inches='tight')
@@ -1272,8 +1326,8 @@ sm.done()
             #ax1.bar(uvbins_centre[b],percent_increase[b],width=binwidths,color='orange',alpha=1) #,label='MeerKAT included')
             ax1.bar(uvbins_centre[b],percentVisperbin[b],width=binwidths,color='orange',alpha=0.9,align='center',edgecolor='none') #,label='')
             #ax1.bar(uvbins_centre[b],percentVisperbin_minus1ant[b],width=binwidths,color='#336699',alpha=0.6,label='MeerKAT excluded')
-        ax1.set_xlabel('$uv$-distance / G$\,\lambda$')
-        ax1.set_ylabel('percentage of total visibilities')
+        ax1.set_xlabel('$uv$-distance / G$\,\lambda$', fontsize=FSIZE)
+        ax1.set_ylabel('Percentage of total visibilities', fontsize=FSIZE)
         #ax1.set_ylabel('percentage increase')
         #ax1.set_ylim(0,np.nanmax(percentVisperbin)*1.2)
         #ax1.set_ylim(0,percent_increase.max()*1.2)
@@ -1283,7 +1337,7 @@ sm.done()
         # configure upper x-axis
         ax2.set_xticks(uas2uvdist(np.array(angular_tick_locations)))
         ax2.set_xticklabels(angular_tick_locations) #(angular_tick_locations))
-        ax2.set_xlabel(r"angular scale / $\mu$-arcsec")
+        ax2.set_xlabel(r"Angular scale / $\mu$-arcsec", fontsize=FSIZE)
         #pl.legend()
         pl.savefig(os.path.join(v.PLOTDIR,'num_vis_perbin.png'), \
                    bbox_inches='tight')
@@ -1303,18 +1357,20 @@ sm.done()
         ax1.plot(x,y*1e3,color='#336699',linestyle='solid',alpha=1,label='EHT',lw=3)
         #ax1.plot(x,y*1e6,color='orange',alpha=0.7,label='EVN + MeerKAT',lw=3)
 
-        ax1.set_xlabel('$uv$-distance / G$\,\lambda$',size=16)
-        ax1.set_ylabel('thermal + sky noise rms / mJy',size=16)
+        ax1.set_xlabel('$uv$-distance / G$\,\lambda$', fontsize=18)
+        ax1.set_ylabel('Thermal + sky noise rms / mJy', fontsize=18)
         #ax1.set_ylabel('percentage increase')
         ax1.set_ylim(0,np.nanmax(y)*1.2*1e3)
         ax1.set_xlim(0,uvbins_edges.max())
+        ax1.tick_params(axis='both', which='major', labelsize=12)
         #ax1.vlines(uas2uvdist(shadow_size_uarcsec),0,np.nanmax(Nvisperbin)*1.2,linestyles='dashed')
         ax2.set_xlim(ax1.get_xlim())
         # configure upper x-axis
         ax2.set_xticks(uas2uvdist(np.array(angular_tick_locations)))
         ax2.set_xticklabels(angular_tick_locations)
-        ax2.set_xlabel(r"angular scale / $\mu$-arcsec",size=16)
-        ax1.legend(loc='upper left',fontsize=16)
+        ax2.set_xlabel(r"angular scale / $\mu$-arcsec", fontsize=FSIZE)
+        ax2.tick_params(axis='both', which='major', labelsize=12)
+        #ax1.legend(loc='upper left',fontsize=16)
         pl.savefig(os.path.join(v.PLOTDIR, 'sensitivity_perbin.png'), \
              bbox_inches = 'tight')
 
@@ -1336,8 +1392,8 @@ sm.done()
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),
                     self.elevation[ant, :]*180./np.pi, alpha=alpha, lw=lw, \
                     ls=ls,zorder=zorder,label=self.station_names[ant])
-        pl.xlabel('relative time / hr')
-        pl.ylabel('elevation / degrees')
+        pl.xlabel('Relative time / hr', fontsize=FSIZE)
+        pl.ylabel('Elevation / degrees', fontsize=FSIZE)
         lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
         pl.savefig(os.path.join(v.PLOTDIR,'antenna_elevation_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
