@@ -61,7 +61,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
         else:
             
             ### make a very short obs, single channel MS to get the start time offset
-            tempms = 'temp_gettimeoffset.ms' # to be deleted 
+            tempms = os.path.join(v.OUTDIR,'temp_gettimeoffset.ms') # to be deleted
             strtemp = "simms -T VLBA -t casa -n %s -ra %.9fdeg -dec %.9fdeg \
                -pl '%s' -st %f -sl %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
                " % ( tempms, RA, DEC, polproducts, tint*5, obslength/float(nscan), scan_lag,
