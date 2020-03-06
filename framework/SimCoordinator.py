@@ -94,7 +94,7 @@ class SimCoordinator():
 
         ### INI: Oversampling factor to use for visibility prediction
         self.oversampling = predict_oversampling
-        self.seed = predict_seed
+        if predict_seed != -1: np.random.seed(predict_seed)
 
         ### INI: populate WEIGHT and SIGMA columns
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
@@ -237,7 +237,6 @@ class SimCoordinator():
                 for a1 in range(self.Nant):
                     if a1 > a0:
                         rms = self.receiver_rms[self.baseline_dict[(a0,a1)]] #(1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
-                        if self.seed != -1: np.random.seed(self.seed)
                         self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
                             np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
                         #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
@@ -453,7 +452,6 @@ class SimCoordinator():
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
-                        if self.seed != -1: np.random.seed(self.seed)
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
         self.data = np.add(self.data, self.sky_noise)
@@ -468,7 +466,6 @@ class SimCoordinator():
         stddevs = np.sqrt(1/(beta**2 + 3 * beta + 2) * (self.tint/self.coherence_time)**beta)
         np.save(II('$OUTDIR')+'/turbulence_phase_std_devs_timestamp_%d'%(self.timestamp), np.array(stddevs))
         for ant in range(self.Nant):
-            if self.seed != -1: np.random.seed(self.seed)
             turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * \
                                 np.cumsum(np.random.normal(0, stddevs[ant], self.time_unique.shape[0]))
 
@@ -738,7 +735,6 @@ class SimCoordinator():
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
 
-            if self.seed != -1: np.random.seed(self.seed)
             self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
@@ -854,7 +850,6 @@ class SimCoordinator():
             spl = ius(self.bpass_input_freq, self.bjones_ampl[ant],k=self.bandpass_freq_interp_order)
             #bjones_interpolated[ant] = spl(self.chan_freq)
             temp_amplitudes = spl(self.chan_freq)
-            if self.seed != -1: np.random.seed(self.seed)
             temp_phases = np.deg2rad(60*np.random.random(temp_amplitudes.shape[0]) - 30) # add random phases between -30 deg to +30 deg
             self.bjones_interpolated[ant] = np.array(map(cmath.rect, temp_amplitudes, temp_phases))
 
