@@ -734,6 +734,9 @@ class SimCoordinator():
             self.mjd_per_ptg_epoch = (self.mjd_obs_end - self.mjd_obs_start) / self.num_mispoint_epochs
             self.mjd_ptg_epoch_timecentroid = np.arange(self.mjd_obs_start,self.mjd_obs_end,
                                                         self.mjd_per_ptg_epoch) + (self.mjd_per_ptg_epoch/2.)
+            # handle potential rounding error
+            if self.num_mispoint_epochs != len(self.mjd_ptg_epoch_timecentroid):
+                self.mjd_ptg_epoch_timecentroid = self.mjd_ptg_epoch_timecentroid[:-1]
 
             self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
