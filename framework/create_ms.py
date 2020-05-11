@@ -63,14 +63,14 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
             ### make a very short obs, single channel MS to get the start time offset
             tempms = os.path.join(v.OUTDIR,'temp_gettimeoffset.ms') # to be deleted
             strtemp = "simms -T VLBA -t casa -n %s -ra %.9fdeg -dec %.9fdeg \
-               -pl '%s' -st %f -sl %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
-               " % ( tempms, RA, DEC, polproducts, tint*5, obslength/float(nscan), scan_lag,
-                tint, nu - (dnu/2.) + (dnu/(float(nchan))/2.), dnu,
+               -pl '%s' -st %f -slg %f -dt %i -f0 %fGHz -df %fGHz -nc %i  -date %s %s\
+               " % ( tempms, RA, DEC, polproducts, obslength, scan_lag,
+                min(tint*10, obslength*3600), nu - (dnu/2.) + (dnu/(float(nchan))/2.), dnu,
                 1, StartTime, os.path.join(II('$CODEDIR'),antenna_table))
 
-            info('running the followig simms command to generate a temp dataset:')
+            info('Generating a smaller temporary MS to compute the StartTime offset introduced by CASA...')
             info(strtemp)
-            # run simms, grab actual StartTime
+            # run simms, grab CASA generated StartTime
             os.system(strtemp) 
             tab = pt.table(tempms, readonly=True,ack=False)
             casatime = tab.getcol('TIME')
@@ -78,7 +78,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
             tab.close()
             os.system('rm -fr %s'%tempms) # delete temp MS
     
-            # get MJD of intended (i.e. specified) time in SYMBA config file
+            # get MJD of expected StartTime in SYMBA config file
             StartTimeSplit = StartTime.split(',')[1].split('/')
             symba_time = '%s-%s-%sT%s'%(StartTimeSplit[0],StartTimeSplit[1],
                           StartTimeSplit[2],StartTimeSplit[3])
@@ -88,7 +88,6 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
             info('CASA start time is at StartTime plus %.2f seconds'
                  %offsetSec_casa_minus_symba )
             newSymbaTime_MJD = t.mjd - (offsetSec_casa_minus_symba / (24*60*60.))
-
             
             #  Now convert into simms StartTime format
             ## (e.g. 'UTC,2017/04/01/00:00:00.00')
@@ -96,7 +95,7 @@ def return_simms_string(msname, input_fits, RA, DEC, polproducts, antenna_table,
             tmod_str = tmod.iso[0]
             tmod_StartTime = 'UTC,'+tmod_str.replace('-','/').replace(' ','/')
 
-            #### for save for subsequent scans (if SYMBA run)
+            #### save for subsequent scans (to assist with SYMBA run)
             #np.savetxt(os.path.join(v.OUTDIR,'CASAtimeOffset.txt'),tmod_StartTime)
             with open(os.path.join(v.OUTDIR,'CASAcorrectedStartTime.txt'), 'w') as file:
                file.write(tmod_StartTime)
