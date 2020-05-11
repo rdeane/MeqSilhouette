@@ -98,6 +98,7 @@ class SimCoordinator():
 
         ### INI: populate WEIGHT and SIGMA columns
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
+
         self.compute_weights()
 
         tab.close() # close main MS table
@@ -206,7 +207,7 @@ class SimCoordinator():
             copy_between_cols('MODEL_DATA', self.output_column)
         
     def compute_weights(self):
-        """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
+        """ Compute thermal noise """
         #if rms.shape != self.data.shape:
         #    abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
         #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
@@ -215,15 +216,24 @@ class SimCoordinator():
             for a1 in range(self.Nant):
                 if a1 > a0:
                     self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
-        
+
+
+    def add_weights(self, additional_noise_terms=None):
+        """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
+        #if rms.shape != self.data.shape:
+        #    abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
+        #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
+
+        if additional_noise_terms is not None:
+            self.receiver_rms += additional_noise_terms
+
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
         tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
         tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
         tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
         tab.close()
-        info('SIGMA and WEIGHT columns populated based on thermal noise only; no frequency dependence (eg., tropospheric opacity) yet. '+ \
-             'SIGMA_SPECTRUM and WEIGHT_SPECTRUM are populated with frequency independent SIGMA and WEIGHT values.')
+
 
     def add_receiver_noise(self, load=None):
         """ baseline dependent thermal noise only. Calculated from SEFDs, tint, dnu """
@@ -442,20 +452,21 @@ class SimCoordinator():
 
             sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape))))
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
+            sky_sigma_estimator = np.zeros(self.data.shape)
 
-            self.sefd_matrix = sefd_matrix
-            
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
-                        rms = np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / (float(2 * self.tint * self.chan_width)))
+                        rms = (1/self.corr_eff) * np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / (float(2 * self.tint * self.chan_width)))
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
+                        sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
         self.data = np.add(self.data, self.sky_noise)
         self.save_data()
+        return sky_sigma_estimator
         
 
 

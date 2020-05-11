@@ -173,6 +173,7 @@ if (1):
 
     ### TROPOSPHERE COMPONENTS ###
     combined_phase_errors = 0 #init for trop combo choice
+    additive_noises       = None
     if parameters['trop_enabled']:
         info('Tropospheric module is enabled, applying corruptions...')
         if parameters['trop_wetonly']:
@@ -186,7 +187,7 @@ if (1):
 
         if parameters['trop_noise']:
             info('TROPOSPHERE NOISE: adding sky noise from non-zero PWV')
-            sim_coord.trop_add_sky_noise()
+            additive_noises = sim_coord.trop_add_sky_noise()
 
         if parameters['trop_mean_delay']:
             info('TROPOSPHERE DELAY: adding mean delay (time-variability from elevation changes)')
@@ -212,6 +213,9 @@ if (1):
         if parameters['trop_makeplots']:
             sim_coord.trop_plots()
             info('Generated troposphere plots')
+
+    ### POPULATE MS WITH SIGMA AND WEIGHT ESTIMATORS ###
+    sim_coord.add_weights(additive_noises)
 
     ### PARALLACTIC ANGLE AND POLARIZATION LEAKAGE ###
     if parameters['uvjones_d_on']:
