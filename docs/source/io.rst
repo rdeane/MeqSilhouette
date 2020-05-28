@@ -65,8 +65,8 @@ corresponding to each antenna in the array.
 * **PB_FWHM230[arcsec]** FWHM of the primary beam in arcseconds
 * **PB_model** Geometric model to be used for the primary beam (hardwired to *gaussian* for now in the code regardless of the value of this parameter)
 * **ap_eff** Aperture efficiency
-* **gain[RL]_real, gain[RL]_imag** Real and imaginary parts of the RR and LL gain terms
-* **leak[RL]_real, leak[RL]_imag** Real and imaginary parts of the complex polarization leakage for RR and LL
+* **g[RL]_mean, g[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-varying G-Jones terms
+* **d[RL]_mean, d[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-and-frequency-varying D-Jones terms
 * **feed_angle[deg]** Initial feed angle offset in degrees
 * **mount** Mount type of each station; valid values are ALT-AZ, ALT-AZ+NASMYTH-R, ALT-AZ+NASMYTH-L
 
