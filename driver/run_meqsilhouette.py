@@ -83,8 +83,8 @@ if (1):
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
 
     info('Loading station info table %s'%parameters['station_info'])
-    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gainR_real, gainR_imag,\
-    gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle = \
+    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gR_mean, gR_std,\
+    gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle = \
     np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
     skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]), 0, 1)
     
@@ -149,7 +149,7 @@ if (1):
                                parameters["predict_seed"], aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
-                               gainR_real, gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle)
+                               gR_mean, gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle)
 
     sim_coord.interferometric_sim()
 

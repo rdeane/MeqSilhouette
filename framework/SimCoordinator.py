@@ -21,6 +21,7 @@ cmap = pl.cm.Set1 #tab20 #viridis
 from matplotlib import rc
 rc('font',**{'family':'serif','serif':['Times']})
 rc('text', usetex=True)
+FSIZE=24
 from mpltools import layout
 from mpltools import color
 from matplotlib.patches import Circle
@@ -32,8 +33,8 @@ class SimCoordinator():
 
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, predict_oversampling, predict_seed, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, \
-                 gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gainR_real, \
-                 gainR_imag, gainL_real, gainL_imag, leakR_real, leakR_imag, leakL_real, leakL_imag, feed_angle):
+                 gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gR_mean, \
+                 gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -65,6 +66,7 @@ class SimCoordinator():
         self.direction = np.squeeze(field_tab.getcol('PHASE_DIR'))
 
         spec_tab = pt.table(tab.getkeyword('SPECTRAL_WINDOW'),ack=False)
+        self.num_chan = spec_tab.getcol('NUM_CHAN')[0]
         self.chan_freq = spec_tab.getcol('CHAN_FREQ').flatten()
         self.chan_width = spec_tab.getcol('CHAN_WIDTH').flatten()[0]
         self.bandwidth = self.chan_width + self.chan_freq[-1]-self.chan_freq[0]
@@ -126,15 +128,15 @@ class SimCoordinator():
         self.feed_angle = np.deg2rad(feed_angle)
         self.parang_corrected = parang_corrected
 
-        self.leakR_real = leakR_real
-        self.leakR_imag = leakR_imag
-        self.leakL_real = leakL_real
-        self.leakL_imag = leakL_imag
+        self.gR_mean = gR_mean
+        self.gR_std = gR_std
+        self.gL_mean = gL_mean
+        self.gL_std = gL_std
 
-        self.gainR_real = gainR_real
-        self.gainR_imag = gainR_imag
-        self.gainL_real = gainL_real
-        self.gainL_imag = gainL_imag
+        self.dR_mean = dR_mean
+        self.dR_std = dR_std
+        self.dL_mean = dL_mean
+        self.dL_std = dL_std
 
         # Get timestamp at the start of the data generation
         self.timestamp = int(time.time())
@@ -902,61 +904,28 @@ class SimCoordinator():
     ##################################
     # POLARIZATION LEAKAGE FUNCTIONS #
     ##################################
-    '''def add_pol_leakage(self):
-        """ Add constant polarization leakage using the casa simulator """
-        casa_log = II('$OUTDIR')+'/casa_pol_leakage_corrupt.log'
-        pl_tab = II('$OUTDIR')+'/POL_LEAKAGE'
-        with tempfile.NamedTemporaryFile(prefix='pol_leakage_', suffix='.py', dir=II('$OUTDIR'), delete=False) as run_in_casa:
-            run_in_casa.write("""
-sm.openfromms('%s')
-sm.setleakage(mode='constant', table='%s', amplitude=%f, offset=%f)
-sm.corrupt()
-sm.done()
-"""%(self.msname, pl_tab, self.pol_leak_ampl, self.pol_leak_offset))
-
-            run_in_casa.flush()
-
-            cmd = 'casa --nologger --log2term --logfile %s -c %s'%(casa_log, run_in_casa.name)
-
-            proc = subprocess.Popen(shlex.split(cmd))
-            out,err = proc.communicate()
-
-        if proc.returncode != 0:
-            abort('Error adding polarization leakage. Process returned error code %d. Check the file %s.'%(proc.returncode, casa_log))
-
-        # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that CASA sm can always read
-        # from MODEL_DATA when necessary.
-        copy_between_cols('MODEL_DATA', 'DATA') # sm.corrupt() writes corrupted data to both DATA and CORRECTED_DATA'''
-
-
     def add_pol_leakage_manual(self):
       """ Add constant station-based polarization leakage (D-Jones term) """
 
       if self.parang_corrected == False:
+        # INI: Do not remove parallactic angle rotation effect (vis in antenna plane). Hence, perform 2*field_angle rotation (Leppanen, 1995)
+        info("Applying D-terms without correcting for parang rotation. Visibilities are in the antenna plane.")
         # Compute P-Jones matrices
         self.pjones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
-        self.djones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
+        self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,0,0] = 1
-          self.djones_mat[ant,:,0,1] = self.leakR_real[ant]+1j*self.leakR_imag[ant]
-          self.djones_mat[ant,:,1,0] = self.leakL_real[ant]+1j*self.leakL_imag[ant]
-          self.djones_mat[ant,:,1,1] = 1
+          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan))
 
           if self.mount[ant] == 'ALT-AZ':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:])) # INI: opposite of feed angle i.e. parang +/- elev
-            self.pjones_mat[ant,:,0,1] = 0
-            self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
           elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-            self.pjones_mat[ant,:,0,1] = 0
-            self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
           elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-            self.pjones_mat[ant,:,0,1] = 0
-            self.pjones_mat[ant,:,1,0] = 0
             self.pjones_mat[ant,:,1,1] = np.exp(1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
           
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
@@ -966,45 +935,49 @@ sm.done()
                 bl_ind = self.baseline_dict[(a0,a1)]
                 time_ind = 0
                 for ind in bl_ind:
-                    data_reshaped[ind] = np.matmul(self.djones_mat[a0,time_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
-                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,time_ind].T)))))
-                    time_ind = time_ind + 1
+                  for freq_ind in range(self.num_chan):
+                    data_reshaped[ind,freq_ind] = np.matmul(self.djones_mat[a0,time_ind,freq_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind,freq_ind], \
+                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,time_ind,freq_ind].T)))))
+                  time_ind = time_ind + 1
 
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
 
-        np.save(II('$OUTDIR')+'/dterms_ant_time_corr_timestamp_%d'%(self.timestamp), self.pjones_mat)
+        np.save(II('$OUTDIR')+'/pjones_noparangcorr_timestamp_%d'%(self.timestamp), self.pjones_mat)
+        np.save(II('$OUTDIR')+'/djones_noparangcorr_timestamp_%d'%(self.timestamp), self.djones_mat)
 
       elif self.parang_corrected == True:
-        # INI: Assume that parallactic angle rotation effect has been removed/corrected for. Hence, perform 2*field_angle rotation (Leppanen, 1995)
+        # INI: Remove parallactic angle rotation effect (vis in sky plane). Hence, perform 2*field_angle rotation (Leppanen, 1995)
+        info("Applying D-terms with parang rotation corrected for. Visibilities are in the sky plane.")
 
         # Construct station-based leakage matrices (D-Jones)
         #self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
-        self.pol_leak_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
-        #self.rotation_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex) # To serve as Rot(theta=parang+/-elev)
-        
+        #self.pol_leak_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
+        self.pol_leak_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
+        self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
+
+        for ant in range(self.Nant):
+          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan))
+
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
+          for freq_ind in range(self.num_chan):
             if self.mount[ant] == 'ALT-AZ':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
 
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
            
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
-                self.pol_leak_mat[ant,:,0,0] = 1
-                self.pol_leak_mat[ant,:,0,1] = (self.leakR_real[ant]+1j*self.leakR_imag[ant])*np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,0] = (self.leakL_real[ant]+1j*self.leakL_imag[ant])*np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,1,1] = 1
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
 
         # Save to external file as numpy array
-        np.save(II('$OUTDIR')+'/dterms_ant_time_corr_timestamp_%d'%(self.timestamp), self.pol_leak_mat)
+        np.save(II('$OUTDIR')+'/panddjones_parangcorr_timestamp_%d'%(self.timestamp), self.pol_leak_mat)
+        np.save(II('$OUTDIR')+'/dterms_parangcorr_timestamp_%d'%(self.timestamp), self.djones_mat)
 
         data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
 
@@ -1013,18 +986,14 @@ sm.done()
                 bl_ind = self.baseline_dict[(a0,a1)]
                 time_ind = 0
                 for ind in bl_ind:
-                    data_reshaped[ind] = np.matmul(self.pol_leak_mat[a0,time_ind], np.matmul(data_reshaped[ind], \
-                                         np.conjugate(self.pol_leak_mat[a1,time_ind].T)))
-                    time_ind = time_ind + 1
+                  for freq_ind in range(self.num_chan):
+                    data_reshaped[ind,freq_ind] = np.matmul(self.pol_leak_mat[a0,time_ind,freq_ind], np.matmul(data_reshaped[ind,freq_ind], \
+                                         np.conjugate(self.pol_leak_mat[a1,time_ind,freq_ind].T)))
+                  time_ind = time_ind + 1
                 
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
 
-      # Write D-terms to ASCII file
-      with open(v.OUTDIR+'/dterms_sim.txt','w') as dfile:
-          dfile.write("#st DR_real sigma_DR_real DR_imag sigma_DR_imag DL_real sigma_DL_real DL_imag sigma_DL_imag\n")
-          for ant in np.arange(self.Nant):
-              dfile.write("%s\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\t%1.4e\t0.0\n"%(self.station_names[ant], self.leakR_real[ant], self.leakR_imag[ant], self.leakL_real[ant], self.leakL_imag[ant]))
 
     def make_pol_plots(self):
         ### parang vs time ###
@@ -1061,12 +1030,12 @@ sm.done()
     def add_gjones_manual(self):
         """ Add station-based complex gains """
 
-        self.gain_mat = np.zeros((self.Nant,2,2),dtype=complex)
+        self.gain_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         for ant in range(self.Nant):
-            self.gain_mat[ant,0,0] = self.gainR_real[ant]+1j*self.gainR_imag[ant]
-            self.gain_mat[ant,0,1] = 0
-            self.gain_mat[ant,1,0] = 0
-            self.gain_mat[ant,1,1] = self.gainL_real[ant]+1j*self.gainL_imag[ant]
+            #self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0]))
+            #self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(0, self.gR_std[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(0, self.gL_std[ant], size=(self.time_unique.shape[0]))
 
         np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(self.timestamp), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
@@ -1075,35 +1044,14 @@ sm.done()
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-                data_reshaped[bl_ind] = np.matmul(np.matmul(self.gain_mat[a0], data_reshaped[bl_ind]), np.conjugate(self.gain_mat[a1].T))
+                utime=0 # INI: the assumption here is that all baselines have an entry for each utime
+                for ind in bl_ind:
+                  data_reshaped[ind] = np.matmul(np.matmul(self.gain_mat[a0,utime], data_reshaped[ind]), np.conjugate(self.gain_mat[a1,utime].T))
+                  utime = utime + 1
 
         self.data = data_reshaped.reshape(self.data.shape)
 
         self.save_data()
-
-
-    '''def add_uvjones_mqt(self):
-        """ Add uv-jones corruptions; currently P, D, and G-Jones matrices implemented """
-
-        # reformat the input reals and imags for the R and L components of each station
-        leakR_cplx = self.leakR_real + 1j*self.leakR_imag
-        leakL_cplx = self.leakL_real + 1j*self.leakL_imag
-
-        leak_ampl_string=''
-        leak_phas_string=''
-        for ind in range(leakR_cplx.shape[0]):
-            leak_ampl_string += '%f %f '%(np.absolute(leakR_cplx[ind]), np.absolute(leakL_cplx[ind]))
-            leak_phas_string += '%f %f '%(np.rad2deg(np.angle(leakR_cplx[ind])), np.rad2deg(np.angle(leakL_cplx[ind])))
-
-        leak_ampl_string = leak_ampl_string.strip()
-        leak_phas_string = leak_phas_string.strip()
-
-        add_uvjones(self.output_column, self.uvjones_g_on, self.uvjones_d_on, self.gainR, self.gainL, leak_ampl_string, leak_phas_string)
- 
-        # INI: Do the following to ensure that MODEL_DATA always has the same data as self.output_column, so that if CASA sm is ever used 
-        # at any point in the Jones chain, it can always read the right visibilities from MODEL_DATA when necessary.
-        if self.output_column != 'MODEL_DATA':
-            copy_between_cols('MODEL_DATA', self.output_column)'''
 
     #############################
     ##### General MS plots  #####
