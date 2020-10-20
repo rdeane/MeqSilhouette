@@ -882,23 +882,39 @@ class SimCoordinator():
 
         ### plot bandpasses
     def make_bandpass_plots(self):
-        pl.figure(figsize=(10,6.8))
+        ''' Make plots of bandpass amplitudes and phases vs frequency'''
+        fig, ax1 = pl.subplots()
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
-            #pl.plot(self.bpass_input_freq,self.bjones_ampl[i],label=self.station_names[i])
-            pl.plot(self.chan_freq,np.abs(self.bjones_interpolated[i]),label=self.station_names[i])
-        '''pl.vlines(self.chan_freq[0]-(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
-                  linestyles='dashed',colors='k')
-        pl.vlines(self.chan_freq[-1]+(self.chan_width/2.),self.bjones_ampl.min()*0.8,self.bjones_ampl.max()*1.2,\
-                  linestyles='dashed',colors='k',label='simulated bandpass limits')'''
-        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
-        pl.ylabel('Gain', fontsize=FSIZE)
-        pl.xticks(fontsize=18)
-        pl.yticks(fontsize=18)                  
-        lgd = pl.legend(prop={'size':12}) #bbox_to_anchor=(1.02,1),loc=2,shadow=True)
-        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses.png'),\
+            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i]),label=self.station_names[i])
+        ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
+        ax1.set_ylabel('Gain amplitude', fontsize=FSIZE)
+        ax1.tick_params(axis="x", labelsize=18)
+        ax1.tick_params(axis="y", labelsize=18)
+        ax2 = ax1.twiny()
+        ax2.set_xlim(0,self.num_chan-1)
+        ax2.set_xlabel('Channel', fontsize=FSIZE)
+        ax2.tick_params(axis="x", labelsize=18)
+
+        lgd = ax1.legend(prop={'size':12})
+        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
-        pl.close()
+
+        fig, ax1 = pl.subplots()
+        for i in range(self.Nant):
+            ax1.plot(self.chan_freq,np.rad2deg(np.angle(self.bjones_interpolated[i])),'x',label=self.station_names[i])
+        ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
+        ax1.set_ylabel('Gain phase / deg', fontsize=FSIZE)
+        ax1.tick_params(axis="x", labelsize=18)
+        ax1.tick_params(axis="y", labelsize=18)
+        ax2 = ax1.twiny()
+        ax2.set_xlim(0,self.num_chan-1)
+        ax2.set_xlabel('Channel', fontsize=FSIZE)
+        ax2.tick_params(axis="x", labelsize=18)
+
+        lgd = ax1.legend(prop={'size':12})
+        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_phases.png'),\
+                   bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 
     ##################################
@@ -1000,20 +1016,22 @@ class SimCoordinator():
         pl.figure(figsize=(10,6.8))
         for ant in range(self.Nant):
         #for ant in [0,3,6,8]:
-            if (self.station_names[ant] == 'JC') or \
-               (self.station_names[ant] == 'AP'):
-                ls = ':'
-                lw=3.5
-                alpha = 1
-                zorder = 2
-            else:
-                ls = 'solid'
-                alpha = 1
+            if (self.station_names[ant] == 'JCMT') or (self.station_names[ant] == 'JC') or\
+               (self.station_names[ant] == 'ALMA') or (self.station_names[ant] == 'AA'):
+                ls=''
+                alpha=1
                 lw=2
-                zorder = 1
+                #zorder=2
+                marker='+'
+            else:
+                ls=''
+                alpha=1
+                lw=2
+                #zorder=2
+                marker='.'
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),
-                    self.parallactic_angle[ant, :]*180./np.pi, alpha=alpha, lw=lw, \
-                    ls=ls,zorder=zorder,label=self.station_names[ant])
+                    self.parallactic_angle[ant, :]*180./np.pi, alpha=alpha, lw=lw,\
+                    ls=ls, label=self.station_names[ant], marker=marker)
         pl.xlabel('Relative time / hr', fontsize=FSIZE)
         pl.ylabel('Parallactic angle / degrees', fontsize=FSIZE)
         pl.xticks(fontsize=20)
