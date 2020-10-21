@@ -110,7 +110,7 @@ if (1):
          %(parameters['station_info'],ms_dict['antenna_table']))
 
     if parameters['bandpass_enabled']:
-        if not os.path.isfile(parameters['bandpass_table']):
+        if not os.path.isfile(os.path.join(v.CODEDIR,parameters['bandpass_table'])):
             abort("File '%s' does not exist. Aborting..."%(parameters['bandpass_table']))
         station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
                                     parameters['bandpass_table']),\
