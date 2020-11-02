@@ -31,7 +31,7 @@ from cycler import cycler
 
 class SimCoordinator():
 
-    def __init__(self, msname, output_column, input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, \
+    def __init__(self, msname, output_column, input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, predict_oversampling, predict_seed, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, \
                  gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gR_mean, \
                  gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle):
@@ -83,6 +83,7 @@ class SimCoordinator():
                                                 
         self.input_fitsimage = input_fitsimage
         self.input_fitspol = input_fitspol
+        self.input_changroups = input_changroups
         self.output_column = output_column
 
         ### thermal noise relevant calculations ###
@@ -163,11 +164,11 @@ class SimCoordinator():
         elif os.path.isdir(self.input_fitsimage):
             self.input_fitsimage_list = np.sort(glob.glob(os.path.join(self.input_fitsimage,'./*')))
             if self.input_fitspol == 0:
-                self.num_images = len(self.input_fitsimage_list)
-            elif len(self.input_fitsimage_list)%4 != 0:
-                abort("Not all polarisation images are present but 'input_fitspol' is set to True!!!")
+                self.num_images = len(self.input_fitsimage_list)/self.input_changroups
+            elif self.input_fitspol == 1 and len(self.input_fitsimage_list)%4 == 0:
+                self.num_images = len(self.input_fitsimage_list)/self.input_changroups/4
             else:
-                self.num_images = len(self.input_fitsimage_list)/4
+                abort("Not all polarisation images are present but 'input_fitspol' is set to True!!!")
             self.vis_per_image = np.floor(self.time_unique.shape[0]/self.num_images)
 
             startvis = 0
@@ -176,7 +177,7 @@ class SimCoordinator():
             for img_ind in range(self.num_images):
                 temp_input_fits = '%s/t%04d'%(self.input_fitsimage,img_ind)
                 info('Simulating visibilities (corr dumps) from %d to %d using input sky model %s'%(startvis,endvis,temp_input_fits))
-                run_wsclean(temp_input_fits, self.input_fitspol, startvis, endvis, self.oversampling)
+                run_wsclean(temp_input_fits, self.input_fitspol, self.input_changroups, startvis, endvis, self.oversampling)
                 startvis = endvis
                 if img_ind != self.num_images-2:
                     endvis = endvis + self.vis_per_image

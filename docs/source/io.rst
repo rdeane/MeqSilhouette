@@ -37,9 +37,16 @@ The following naming convention applies to the individual FITS images:
 * If the sky model is polarised, the FITS images are named *txxxx-[IQUV]-model.fits*, representing each Stokes component I, Q, U, V. Note that all Stokes components
   must be present.
 
+* If the sky model is frequency-variable, then the sky model directory contains a series of FITS images named *t0000-xxxx-model.fits*, where xxxx=0000, 0001, ... This must be equal to
+  the value of the input parameter **input_changroups** in the input *settings.json* file.
+
+* Putting all of the above together, a time and frequency varible polarised sky model will consist of a series of FITS files named *txxxx-yyyy-[I,Q,U,V]-model.fits*, where
+  xxxx=0000, 0001, .... (as many as needed) and yyyy=0000, 0001, .... (as many as the value of **input_changroups**).
+
 .. note:: The total number of unique times (i.e., correlator dumps) are divided evenly between the input FITS images which are simulated into the column indicated by
  the parameter *ms_datacolumn* in the input JSON file (see `input/settings.json`_). Since **WSClean** can predict visibilities only into the MODEL_DATA column, MeqSilhouette will retain
- them in MODEL_DATA, while copying the same into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*.
+ them in MODEL_DATA, while copying the same into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*. Hence, the uncorrupted visibilities are available
+ in MODEL_DATA column.
 
 If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**.
 
@@ -87,13 +94,17 @@ Each parameter is explained below:
 
 * **input_fitsimage** Name of the directory containing input fits images named using the naming convention explained in `input/sky_models`_, with path relative to $MEQS_DIR
 
-* **input_fitspol**  Toggle 0 or 1 for polarisation simulation; integer or boolean
+  .. note:: Use FITS images as inputs. ASCII sky models are only used for testing and specific experiments. MeqTrees can potentially offset the sources by +/-1 uas due to precision errors.
+
+* **input_fitspol**  Toggle 0 or 1 for polarisation simulation; integer or boolean.
 
   .. note:: This does not apply when **input_fitsimage** is a *.txt/.lsm.html* file, since any polarisation info is read by MeqTrees automatically.
 
-* **output_to_logfile** Toggle 0 or 1 to create 'logfile.txt' within **outdirname**; integer or boolean
+* **input_changroups** The number of groups into which the frequency channels of the dataset must be divided; used for simulating frequency-dependent source structure; integer.
 
-* **add_thermal_noise** Toggle 0 or 1 to add baseline-dependent thermal noise, calculated using station SEFDs obtained from *station_info*; integer or boolean
+* **output_to_logfile** Toggle 0 or 1 to create 'logfile.txt' within **outdirname**; integer or boolean.
+
+* **add_thermal_noise** Toggle 0 or 1 to add baseline-dependent thermal noise, calculated using station SEFDs obtained from *station_info*; integer or boolean.
 
 * **make_image** Toggle 0 or 1 to make a dirty image using lwimager; integer or boolean. Other imagers such as WSClean and PyMORESANE to be used in the future.
 

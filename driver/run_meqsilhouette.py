@@ -51,6 +51,7 @@ if (1):
                         + '.MS')  # name of output Measurement Set
     input_fitsimage = os.path.join(v.CODEDIR,parameters['input_fitsimage'])
     input_fitspol = parameters['input_fitspol']
+    input_changroups = parameters['input_changroups']
     
     info('Loaded input configuration file: \n%s'%config_abspath)
     info('Input FITS image: \n%s'%input_fitsimage)
@@ -145,7 +146,7 @@ if (1):
     tab.close()
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
-    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, parameters['predict_oversampling'], \
+    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, parameters['predict_oversampling'], \
                                parameters["predict_seed"], aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
