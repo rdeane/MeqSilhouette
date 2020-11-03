@@ -40,8 +40,12 @@ The following naming convention applies to the individual FITS images:
 * If the sky model is frequency-variable, then the sky model directory contains a series of FITS images named *t0000-xxxx-model.fits*, where xxxx=0000, 0001, ... This must be equal to
   the value of the input parameter **input_changroups** in the input *settings.json* file.
 
+.. note:: Following **WSClean**, **MeqSilhouette** does not care about the actual frequencies in the FITS files. This means that the input channels will be divided into **input_changroups**
+ number of groups and the corresponding frequency images will be written to the appropriate channel group, regardless of the frequencies in the FITS files. This may change in the future to
+ accommodate any relevant changes to the behaviour of **WSClean**.
+
 * Putting all of the above together, a time and frequency varible polarised sky model will consist of a series of FITS files named *txxxx-yyyy-[I,Q,U,V]-model.fits*, where
-  xxxx=0000, 0001, .... (as many as needed) and yyyy=0000, 0001, .... (as many as the value of **input_changroups**).
+  xxxx=0000, 0001, .... (as many as needed) and yyyy=0000, 0001, .... (must be equal to the value of **input_changroups**).
 
 .. note:: The total number of unique times (i.e., correlator dumps) are divided evenly between the input FITS images which are simulated into the column indicated by
  the parameter *ms_datacolumn* in the input JSON file (see `input/settings.json`_). Since **WSClean** can predict visibilities only into the MODEL_DATA column, MeqSilhouette will retain
