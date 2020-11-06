@@ -60,6 +60,9 @@ If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**
     :height: 579px
     :alt: MeqTrees compatible LSM format
 
+.. note:: It is recommended to use FITS images as inputs. ASCII sky models are only used for testing and specific experiments. 
+ MeqTrees can potentially offset the sources by +/-1 uas due to precision errors which is an outstanding issue as of now.
+
 input/station_info
 ------------------
 
@@ -97,8 +100,6 @@ Each parameter is explained below:
 * **outdirname** Name of the output directory in which to write all the output products of MeqSilhouette, with path relative to $MEQS_DIR
 
 * **input_fitsimage** Name of the directory containing input fits images named using the naming convention explained in `input/sky_models`_, with path relative to $MEQS_DIR
-
-  .. note:: Use FITS images as inputs. ASCII sky models are only used for testing and specific experiments. MeqTrees can potentially offset the sources by +/-1 uas due to precision errors.
 
 * **input_fitspol**  Toggle 0 or 1 for polarisation simulation; integer or boolean.
 
