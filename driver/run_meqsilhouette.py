@@ -169,9 +169,6 @@ if (1):
             sim_coord.plot_pointing_errors()
 
         
-    #if parameters['add_thermal_noise']:
-    #    sim_coord.add_receiver_noise()
-
     ### TROPOSPHERE COMPONENTS ###
     combined_phase_errors = 0 #init for trop combo choice
     additive_noises       = None

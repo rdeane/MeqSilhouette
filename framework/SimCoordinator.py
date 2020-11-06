@@ -1051,10 +1051,8 @@ class SimCoordinator():
 
         self.gain_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         for ant in range(self.Nant):
-            #self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0]))
-            #self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0]))
-            self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(0, self.gR_std[ant], size=(self.time_unique.shape[0]))
-            self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(0, self.gL_std[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0]))
 
         np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(self.timestamp), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
