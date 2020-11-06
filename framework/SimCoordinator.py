@@ -1,5 +1,5 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols, add_pjones
+from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
 from framework.comm_functions import *
