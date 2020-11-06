@@ -3,7 +3,7 @@ RIME Components
 ===============
 
 The various components of the Radio Interferometer Measurement Equation (RIME) (`Smirnov 2011 <https://arxiv.org/abs/1101.1764>`_, and references therein) are
-implemented manually in MeqSilhouette. Currently, the following RIME terms are implemented:
+implemented manually in MeqSilhouette. The generic RIME is given by
 
 .. math::
 
