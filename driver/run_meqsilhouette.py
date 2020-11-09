@@ -87,7 +87,17 @@ if (1):
     sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gR_mean, gR_std,\
     gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle = \
     np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
-    skiprows=1,usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]), 0, 1)
+    skiprows=1, usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], dtype=np.complex128), 0, 1)
+    # extract real parts
+    sefd = sefd.real
+    pwv = pwv.real
+    gpress = gpress.real
+    gtemp = gtemp.real
+    coherence_time = coherence_time.real
+    pointing_rms = pointing_rms.real
+    PB_FWHM230 = PB_FWHM230.real
+    aperture_eff = aperture_eff.real
+    feed_angle = feed_angle.real
     
     #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
     station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\

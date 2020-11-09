@@ -932,8 +932,8 @@ class SimCoordinator():
         self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan))
-          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
 
           if self.mount[ant] == 'ALT-AZ':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:])) # INI: opposite of feed angle i.e. parang +/- elev
@@ -974,8 +974,8 @@ class SimCoordinator():
         self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean[ant],self.dR_std[ant],size=(self.time_unique.shape[0],self.num_chan))
-          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean[ant],self.dL_std[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
 
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
@@ -1051,8 +1051,8 @@ class SimCoordinator():
 
         self.gain_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         for ant in range(self.Nant):
-            self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean[ant], self.gR_std[ant], size=(self.time_unique.shape[0]))
-            self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean[ant], self.gL_std[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean.real[ant], self.gR_std.real[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean.imag[ant], self.gR_std.imag[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean.real[ant], self.gL_std.real[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean.imag[ant], self.gL_std.imag[ant], size=(self.time_unique.shape[0]))
 
         np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(self.timestamp), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
