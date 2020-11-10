@@ -20,6 +20,8 @@ input/jones_info
 This directory contains information on individual Jones matrices that require detailed information. Currently, this is restricted to bandpass amplitudes for each station
 and representative frequency in *.txt* format.
 
+Each line consists of the station name and a tuple **(bpass_ampl_pol1, bpass_ampl_pol2)** for each representative frequency.
+
 input/sky_models
 ----------------
 

@@ -6,6 +6,7 @@ from framework.comm_functions import *
 import pickle
 import subprocess
 import os
+import ast
 import time
 import glob
 import shlex
@@ -847,39 +848,51 @@ class SimCoordinator():
     # BANDPASS (B-JONES) FUNCTIONS #
     ################################
 
-    def bandpass_correct(self):
+    def add_bjones_manual(self):
         """Read in the bandpass info from an ASCII table, interpolate (spline) MS frequencies,
            and apply to data"""
         info("Applying scalar B-Jones amplitudes")
         # Read in the file
         bjones_inp = np.loadtxt(self.bandpass_table,dtype=str)
-        self.bpass_input_freq = bjones_inp[0][1:].astype(np.float64)
-        self.bpass_input_freq *= 1e9 # convert from GHz to Hz
-        self.bjones_ampl = bjones_inp[1:,1:].astype(np.float64)
+        self.bpass_input_freq = bjones_inp[0][1:].astype(np.float64)*1e9 # convert from GHz to Hz
 
+        bjones_ampl = bjones_inp[1:,1:]
+        self.bjones_ampl_r = np.zeros((bjones_ampl.shape[0],bjones_ampl.shape[1]))
+        self.bjones_ampl_l = np.zeros((bjones_ampl.shape[0],bjones_ampl.shape[1]))
+        for i in range(bjones_ampl.shape[0]):
+            for j in range(bjones_ampl.shape[1]):
+                self.bjones_ampl_r[i,j] = ast.literal_eval(bjones_ampl[i,j])[0]
+                self.bjones_ampl_l[i,j] = ast.literal_eval(bjones_ampl[i,j])[1]
 
         # Interpolate between the frequencies given in the bandpass table
         if self.bpass_input_freq[0] > self.chan_freq[0] or self.bpass_input_freq[-1] < self.chan_freq[-1]:
             warn("Input frequencies out of range of MS frequencies. Extrapolating in some places.")
 
-        self.bjones_interpolated=np.zeros((self.Nant,self.chan_freq.shape[0]), dtype=complex)
+        self.bjones_interpolated=np.zeros((self.Nant,self.chan_freq.shape[0],2,2), dtype=complex)
         for ant in range(self.Nant):
-            spl = ius(self.bpass_input_freq, self.bjones_ampl[ant],k=self.bandpass_freq_interp_order)
+            spl_r = ius(self.bpass_input_freq, self.bjones_ampl_r[ant], k=self.bandpass_freq_interp_order)
+            spl_l = ius(self.bpass_input_freq, self.bjones_ampl_l[ant], k=self.bandpass_freq_interp_order)
             #bjones_interpolated[ant] = spl(self.chan_freq)
-            temp_amplitudes = spl(self.chan_freq)
-            temp_phases = np.deg2rad(60*np.random.random(temp_amplitudes.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            self.bjones_interpolated[ant] = np.array(map(cmath.rect, temp_amplitudes, temp_phases))
-
-        # apply the B-Jones terms by iterating over baselines
-        for a0 in range(self.Nant):
-            for a1 in range(a0+1,self.Nant):
-                for msfreq_ind in range(self.chan_freq.shape[0]):
-                    bl_ind = self.baseline_dict[(a0,a1)]
-                    self.data[bl_ind,msfreq_ind,:] *= self.bjones_interpolated[a0,msfreq_ind] * np.conj(self.bjones_interpolated[a1,msfreq_ind])
-        self.save_data()
+            temp_amplitudes_r = spl_r(self.chan_freq)
+            temp_amplitudes_l = spl_l(self.chan_freq)
+            temp_phases_r = np.deg2rad(60*np.random.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_l = np.deg2rad(60*np.random.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            self.bjones_interpolated[ant,:,0,0] = np.array(map(cmath.rect, temp_amplitudes_r, temp_phases_r))
+            self.bjones_interpolated[ant,:,1,1] = np.array(map(cmath.rect, temp_amplitudes_l, temp_phases_l))
 
         # INI: Write the bandpass gains
         np.save(II('$OUTDIR')+'/bterms_timestamp_%d'%(self.timestamp), self.bjones_interpolated)
+
+        # apply the B-Jones terms by iterating over baselines
+        data_reshaped = self.data.reshape((self.data.shape[0],self.data.shape[1],2,2))
+        for a0 in range(self.Nant):
+            for a1 in range(a0+1,self.Nant):
+                bl_ind = self.baseline_dict[(a0,a1)]
+                for freq_ind in range(self.chan_freq.shape[0]):
+                    data_reshaped[bl_ind,freq_ind] = np.matmul(np.matmul(self.bjones_interpolated[a0,freq_ind], data_reshaped[bl_ind,freq_ind]), np.conjugate(self.bjones_interpolated[a1,freq_ind].T))
+        self.data = data_reshaped.reshape(self.data.shape)
+        self.save_data()
+
 
         ### plot bandpasses
     def make_bandpass_plots(self):
@@ -887,7 +900,7 @@ class SimCoordinator():
         fig, ax1 = pl.subplots()
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
-            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i]),label=self.station_names[i])
+            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,0,0]),label=self.station_names[i])
         ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
         ax1.set_ylabel('Gain amplitude', fontsize=FSIZE)
         ax1.tick_params(axis="x", labelsize=18)
@@ -898,14 +911,14 @@ class SimCoordinator():
         ax2.tick_params(axis="x", labelsize=18)
 
         lgd = ax1.legend(prop={'size':12})
-        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl.png'),\
+        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl_Rpol.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
 
         fig, ax1 = pl.subplots()
         for i in range(self.Nant):
-            ax1.plot(self.chan_freq,np.rad2deg(np.angle(self.bjones_interpolated[i])),'x',label=self.station_names[i])
+            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,1,1]),label=self.station_names[i])
         ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
-        ax1.set_ylabel('Gain phase / deg', fontsize=FSIZE)
+        ax1.set_ylabel('Gain amplitude', fontsize=FSIZE)
         ax1.tick_params(axis="x", labelsize=18)
         ax1.tick_params(axis="y", labelsize=18)
         ax2 = ax1.twiny()
@@ -914,9 +927,9 @@ class SimCoordinator():
         ax2.tick_params(axis="x", labelsize=18)
 
         lgd = ax1.legend(prop={'size':12})
-        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_phases.png'),\
+        pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl_Lpol.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
-
+        
 
     ##################################
     # POLARIZATION LEAKAGE FUNCTIONS #

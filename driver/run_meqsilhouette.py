@@ -241,8 +241,8 @@ if (1):
 
     ### BANDPASS COMPONENTS ###
     if parameters['bandpass_enabled']:
-        info('BANDPASS: incorporating bandpass (B-Jones) effects; for now, scalar B-Jones constant in time')
-        sim_coord.bandpass_correct()
+        info('BANDPASS: incorporating bandpass (B-Jones) effects')
+        sim_coord.add_bjones_manual()
         info('B-Jones terms applied.')       
         if parameters['bandpass_makeplots']:
             info('Generating bandpass plots...')
