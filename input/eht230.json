@@ -9,7 +9,7 @@
 "exportuvfits":0,
 "station_info":"input/station_info/eht_betterweather.antennas",
 "bandpass_enabled":1,
-"bandpass_table":"input/jones_info/bandpass_Freekv4.txt",
+"bandpass_table":"input/jones_info/bandpass.txt",
 "bandpass_freq_interp_order":1,
 "bandpass_makeplots": 1,
 "elevation_limit":0.174,
