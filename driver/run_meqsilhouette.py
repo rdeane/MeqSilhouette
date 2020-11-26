@@ -185,26 +185,26 @@ if (1):
     if parameters['trop_enabled']:
         info('Tropospheric module is enabled, applying corruptions...')
         if parameters['trop_wetonly']:
-            info('... using on the WET component')
+            info('... using only the WET component')
         else:
-            info('... using both the WET and DRY components')
+            info('... using both WET and DRY components')
         
         if parameters['trop_attenuate']:
-            info('TROPOSPHERE ATTENUATE: using PWV-derived opacity to determine station-based attenuation')
+            info('TROPOSPHERE ATTENUATE: attenuating signal using PWV-derived opacity...')
             sim_coord.trop_opacity_attenuate() 
 
         if parameters['trop_noise']:
-            info('TROPOSPHERE NOISE: adding sky noise from non-zero PWV')
+            info('TROPOSPHERE NOISE: adding sky noise from non-zero PWV...')
             additive_noises = sim_coord.trop_add_sky_noise()
 
         if parameters['trop_mean_delay']:
-            info('TROPOSPHERE DELAY: adding mean delay (time-variability from elevation changes)')
+            info('TROPOSPHERE DELAY: computing mean delay (time-variability from elevation changes)...')
             sim_coord.trop_calc_mean_delays()
             combined_phase_errors += sim_coord.phasedelay_alltimes
     
             
         if parameters['trop_turbulence']:
-            info('TROPOSPHERE TURBULENCE: adding Kolmogorov turbulence phase errors')
+            info('TROPOSPHERE TURBULENCE: computing Kolmogorov turbulence phase errors...')
             sim_coord.trop_generate_turbulence_phase_errors()
             combined_phase_errors += sim_coord.turb_phase_errors
             
@@ -213,7 +213,7 @@ if (1):
             sim_coord.trop_calc_fixdelay_phase_offsets()
             combined_phase_errors += sim_coord.fixdelay_phase_errors
 
-        info('TROPOSPHERE: applying desired combination of phase errors')
+        info('TROPOSPHERE: applying desired combination of phase errors...')
         sim_coord.apply_phase_errors(combined_phase_errors) 
 
         info('All selected tropospheric corruptions applied.')
@@ -250,7 +250,9 @@ if (1):
 
     ### THERMAL NOISE ###
     if parameters['add_thermal_noise']:
+        info('Adding thermal noise...')
         sim_coord.add_receiver_noise()
+        info('Thermal noise added...')
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:

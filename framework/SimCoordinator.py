@@ -229,7 +229,10 @@ class SimCoordinator():
         #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
 
         if additional_noise_terms is not None:
-            self.receiver_rms += additional_noise_terms
+            try:
+              self.receiver_rms += additional_noise_terms
+            except MemoryError:
+              abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
 
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
@@ -256,13 +259,12 @@ class SimCoordinator():
                         #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
 
             np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
-        self.data = np.add(self.data, self.thermal_noise)
+        try:
+          self.data = np.add(self.data, self.thermal_noise)
+        except MemoryError:
+          abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
         self.save_data()
-        info("Thermal noise added")
 
-        ## INI: Populating noise-related columns and weights in the MS
-        #self.apply_weights(receiver_rms)
-        
         
     def make_baseline_dictionary(self):
         return dict([((x, y), np.where((self.A0 == x) & (self.A1 == y))[0])
@@ -468,7 +470,11 @@ class SimCoordinator():
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
                         sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
-        self.data = np.add(self.data, self.sky_noise)
+        try:
+          self.data = np.add(self.data, self.sky_noise)
+        except:
+          abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
+
         self.save_data()
         return sky_sigma_estimator
         
