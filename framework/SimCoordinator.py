@@ -46,6 +46,9 @@ class SimCoordinator():
         self.A0 = tab.getcol('ANTENNA1')
         self.A1 = tab.getcol("ANTENNA2")
         self.time = tab.getcol('TIME')
+        self.nrows = self.time.shape[0]
+        self.chunksize = 100000 # hardcoded for now
+        self.nchunks = int(np.ceil(float(self.nrows)/self.chunksize))
         self.time_unique = np.unique(self.time)
         self.mjd_obs_start = self.time_unique[0]
         self.mjd_obs_end  = self.time_unique[-1]
@@ -140,9 +143,6 @@ class SimCoordinator():
         self.dL_mean = dL_mean
         self.dL_std = dL_std
 
-        # Get timestamp at the start of the data generation
-        self.timestamp = int(time.time())
-
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
 
@@ -151,15 +151,15 @@ class SimCoordinator():
             self.input_fitsimage = self.input_fitsimage+'.txt'
             info('Input sky model is assumed static, given single input ASCII LSM file. Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
-            if self.output_column != 'MODEL_DATA':
-                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
+            #if self.output_column != 'MODEL_DATA':
+            #    copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
 
         elif os.path.exists(self.input_fitsimage+'.html') == True:
             self.input_fitsimage = self.input_fitsimage+'.html'
             info('Input sky model is assumed static, given single input Tigger LSM file (MeqTrees-specific). Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
-            if self.output_column != 'MODEL_DATA':
-                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
+            #if self.output_column != 'MODEL_DATA':
+            #    copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
 
         ### INI: if fits image(s), input a directory. Follow conventions for time and polarisation variability.
         elif os.path.isdir(self.input_fitsimage):
@@ -204,11 +204,6 @@ class SimCoordinator():
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol(self.output_column, self.data)
         tab.close()
-
-        # INI: After every corruption, copy from output_column to MODEL_DATA. This is to ensure that the CASA simulator,
-        # which always looks for the data to corrupt in MODEL_DATA, can apply corruptions to the right visibilities.
-        if self.output_column != 'MODEL_DATA':
-            copy_between_cols('MODEL_DATA', self.output_column)
         
     def compute_weights(self):
         """ Compute thermal noise """
@@ -230,9 +225,10 @@ class SimCoordinator():
 
         if additional_noise_terms is not None:
             try:
-              self.receiver_rms += additional_noise_terms
+              for tind in range(self.nchunks):
+                self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] += self.additional_noise_terms[tind*self.chunksize:(tind+1)*self.chunksize]
             except MemoryError:
-              abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
+              abort("Arrays too large to be held in memory. Aborting execution.")
 
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
@@ -247,23 +243,23 @@ class SimCoordinator():
         if load:
             self.thermal_noise = np.load(II('$OUTDIR')+'/receiver_noise.npy')
         else:
+            info('Instantiating thermal noise...')
             self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
-            #receiver_rms = np.zeros(self.data.shape, dtype='float')
             size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
-                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]] #(1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
-                        self.thermal_noise[self.baseline_dict[(a0, a1)]] =\
-                            np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
-                        #receiver_rms[self.baseline_dict[(a0,a1)]] = rms 
+                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]]
+                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
 
             np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
         try:
-          self.data = np.add(self.data, self.thermal_noise)
+          info('Applying thermal noise to data...')
+          for tind in range(self.nchunks):
+            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.thermal_noise[tind*self.chunksize:(tind+1)*self.chunksize]
+          self.save_data()
         except MemoryError:
-          abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
-        self.save_data()
+          abort("Arrays too large to be held in memory. Aborting execution.")
 
         
     def make_baseline_dictionary(self):
@@ -471,11 +467,12 @@ class SimCoordinator():
                         sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
         try:
-          self.data = np.add(self.data, self.sky_noise)
+          for tind in range(self.nchunks):
+            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.sky_noise[tind*self.chunksize:(tind+1)*self.chunksize]          
+          self.save_data()
         except:
-          abort("Noise file too large. Try reducing the dimensionality of the data or running on a system with larger memory!!!")
+          abort("Arrays too large to be held in memory. Aborting execution.")
 
-        self.save_data()
         return sky_sigma_estimator
         
 

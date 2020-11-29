@@ -252,7 +252,7 @@ if (1):
     if parameters['add_thermal_noise']:
         info('Adding thermal noise...')
         sim_coord.add_receiver_noise()
-        info('Thermal noise added...')
+        info('Thermal noise added.')
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:

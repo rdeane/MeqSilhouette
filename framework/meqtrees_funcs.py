@@ -21,6 +21,8 @@ def run_wsclean(input_fitsimage, input_fitspol, input_changroups, startvis, endv
 def copy_between_cols(dest_col, src_col):
     msname = II('$MS')
 
+    info('Copying to %s from %s...'%(dest_col, src_col))
+
     tab=pt.table(msname, readonly=False)
     src_data = tab.getcol(src_col)
     tab.putcol(dest_col, src_data)
