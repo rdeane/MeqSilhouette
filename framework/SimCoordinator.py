@@ -143,6 +143,9 @@ class SimCoordinator():
         self.dL_mean = dL_mean
         self.dL_std = dL_std
 
+        # Get timestamp at the start of the data generation
+        self.timestamp = int(time.time())
+
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
 
