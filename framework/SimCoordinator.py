@@ -906,33 +906,35 @@ class SimCoordinator():
         fig, ax1 = pl.subplots()
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
-            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,0,0]),label=self.station_names[i])
-        ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
-        ax1.set_ylabel('Gain amplitude', fontsize=FSIZE)
-        ax1.tick_params(axis="x", labelsize=18)
+            ax1.plot(self.chan_freq/1e9,np.abs(self.bjones_interpolated[i,:,0,0]),label=self.station_names[i])
+            #ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,0,0]),label=self.station_names[i])
+        ax1.set_xlabel('Frequency / GHz', fontsize=18) # was FSIZE
+        ax1.set_ylabel('Gain amplitude', fontsize=18)
+        ax1.tick_params(axis="x", labelsize=18) # was 18
         ax1.tick_params(axis="y", labelsize=18)
         ax2 = ax1.twiny()
         ax2.set_xlim(0,self.num_chan-1)
-        ax2.set_xlabel('Channel', fontsize=FSIZE)
+        ax2.set_xlabel('Channel', fontsize=18) # was FSIZE
         ax2.tick_params(axis="x", labelsize=18)
 
-        lgd = ax1.legend(prop={'size':12})
+        lgd = ax1.legend(prop={'size':11})
         pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl_Rpol.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
 
         fig, ax1 = pl.subplots()
         for i in range(self.Nant):
-            ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,1,1]),label=self.station_names[i])
-        ax1.set_xlabel('Frequency / GHz', fontsize=FSIZE)
-        ax1.set_ylabel('Gain amplitude', fontsize=FSIZE)
-        ax1.tick_params(axis="x", labelsize=18)
-        ax1.tick_params(axis="y", labelsize=18)
+            ax1.plot(self.chan_freq/1e9,np.abs(self.bjones_interpolated[i,:,1,1]),label=self.station_names[i])
+            #ax1.plot(self.chan_freq,np.abs(self.bjones_interpolated[i,:,1,1]),label=self.station_names[i])
+        ax1.set_xlabel('Frequency / GHz', fontsize=18) # was FSIZE
+        ax1.set_ylabel('Gain amplitude', fontsize=18) # was FSIZE
+        ax1.tick_params(axis="x", labelsize=18) # was 18
+        ax1.tick_params(axis="y", labelsize=18) # was 18
         ax2 = ax1.twiny()
         ax2.set_xlim(0,self.num_chan-1)
-        ax2.set_xlabel('Channel', fontsize=FSIZE)
-        ax2.tick_params(axis="x", labelsize=18)
+        ax2.set_xlabel('Channel', fontsize=18) # was FSIZE
+        ax2.tick_params(axis="x", labelsize=18) # was 18
 
-        lgd = ax1.legend(prop={'size':12})
+        lgd = ax1.legend(prop={'size':11}) # was 12
         pl.savefig(os.path.join(v.PLOTDIR,'input_bandpasses_ampl_Lpol.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         
