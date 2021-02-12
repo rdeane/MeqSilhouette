@@ -229,7 +229,7 @@ class SimCoordinator():
         if additional_noise_terms is not None:
             try:
               for tind in range(self.nchunks):
-                self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] += self.additional_noise_terms[tind*self.chunksize:(tind+1)*self.chunksize]
+                self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] += additional_noise_terms[tind*self.chunksize:(tind+1)*self.chunksize]
             except MemoryError:
               abort("Arrays too large to be held in memory. Aborting execution.")
 
