@@ -950,11 +950,11 @@ class SimCoordinator():
         info("Applying D-terms without correcting for parang rotation. Visibilities are in the antenna plane.")
         # Compute P-Jones matrices
         self.pjones_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
-        self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
+        self.djones_mat = np.ones((self.Nant,self.num_chan,2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
-          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
 
           if self.mount[ant] == 'ALT-AZ':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:])) # INI: opposite of feed angle i.e. parang +/- elev
@@ -971,12 +971,10 @@ class SimCoordinator():
         for a0 in range(self.Nant):
             for a1 in range(a0+1,self.Nant):
                 bl_ind = self.baseline_dict[(a0,a1)]
-                time_ind = 0
                 for ind in bl_ind:
                   for freq_ind in range(self.num_chan):
-                    data_reshaped[ind,freq_ind] = np.matmul(self.djones_mat[a0,time_ind,freq_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind,freq_ind], \
-                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,time_ind,freq_ind].T)))))
-                  time_ind = time_ind + 1
+                    data_reshaped[ind,freq_ind] = np.matmul(self.djones_mat[a0,freq_ind], np.matmul(self.pjones_mat[a0,time_ind], np.matmul(data_reshaped[ind,freq_ind], \
+                                         np.matmul(np.conjugate(self.pjones_mat[a1,time_ind].T), np.conjugate(self.djones_mat[a1,freq_ind].T)))))
 
         self.data = data_reshaped.reshape(self.data.shape) 
         self.save_data()
@@ -992,26 +990,26 @@ class SimCoordinator():
         #self.pol_leak_mat = np.zeros((self.Nant,2,2),dtype=complex) # To serve as both D_N and D_C
         #self.pol_leak_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         self.pol_leak_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
-        self.djones_mat = np.ones((self.Nant,self.time_unique.shape[0],self.num_chan,2,2),dtype=complex)
+        self.djones_mat = np.ones((self.Nant,self.num_chan,2,2),dtype=complex)
 
         for ant in range(self.Nant):
-          self.djones_mat[ant,:,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
-          self.djones_mat[ant,:,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.time_unique.shape[0],self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.time_unique.shape[0],self.num_chan))
+          self.djones_mat[ant,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
 
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
           for freq_ind in range(self.num_chan):
             if self.mount[ant] == 'ALT-AZ':
-                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
-                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]))
 
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-L':
-                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]-self.elevation_copy_dterms[ant,:]))
            
             elif self.mount[ant] == 'ALT-AZ+NASMYTH-R':
-                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,:,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
-                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,:,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,0,1] = self.djones_mat[ant,freq_ind,0,1] * np.exp(1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
+                self.pol_leak_mat[ant,:,freq_ind,1,0] = self.djones_mat[ant,freq_ind,1,0] * np.exp(-1j*2*(self.feed_angle[ant]+self.parallactic_angle[ant,:]+self.elevation_copy_dterms[ant,:]))
 
         # Save to external file as numpy array
         np.save(II('$OUTDIR')+'/panddjones_parangcorr_timestamp_%d'%(self.timestamp), self.pol_leak_mat)

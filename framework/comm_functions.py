@@ -2,11 +2,11 @@ from termcolor import colored
 ### Communication functions
 def info(string):
     #t = "%d/%d/%d %d:%d:%d"%(time.localtime()[:6])
-    print colored("\n>>> MEQSILHOUETTE INFO <<< : %s\n"%(string),'green')
+    print(colored("\n>>> MEQSILHOUETTE INFO <<< : %s\n"%(string),'green'))
 
 def warn(string):
     #t = "%d/%d/%d %d:%d:%d"%(time.localtime()[:6])
-    print colored("\n>> MEQSILHOUETTE WARNING <<: %s\n"%(string),'yellow')
+    print(colored("\n>> MEQSILHOUETTE WARNING <<: %s\n"%(string),'yellow'))
 
 def abort(string,exception=SystemExit):
     #t = "%d/%d/%d %d:%d:%d"%(time.localtime()[:6])
