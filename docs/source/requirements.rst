@@ -19,7 +19,7 @@ The following non-standard python libraries are required:
    * numpy
    * matplotlib
    * pyfits
-   * pyrap
+   * pyrap (now `python-casacore <https://github.com/casacore/python-casacore>`_)
    * termcolor
    * mpltools
    * seaborn
