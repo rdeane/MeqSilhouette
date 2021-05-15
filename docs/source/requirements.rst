@@ -2,55 +2,52 @@
 Requirements & Installation
 ===========================
 
-Requirements
-------------
+.. note:: The following instructions pertain to Ubuntu 18.04 and Python 2.7
+  
+It is recommended to install the `KERN-5 <https://kernsuite.info>`_ software suite which makes it easy to install many dependencies of MeqSilhouette::
 
-MeqSilhouette depends on the following software packages:
+   $ sudo apt-get install software-properties-common
+   $ sudo add-apt-repository -s ppa:kernsuite/kern-5
+   $ sudo apt-add-repository multiverse
+   $ sudo apt-add-repository restricted
+   $ sudo apt-get update
 
-   * `WSClean <https://sourceforge.net/p/wsclean/wiki/Home/>`_
-   * `MeqTrees <http://meqtrees.net>`_
-   * `CASA (v5.4 or above) <https://casa.nrao.edu/casa_obtaining.shtml>`_
-   * `Pyxis <https://github.com/ska-sa/pyxis/>`_
-   * `simms <https://github.com/radio-astro/simms>`_
-   * `AATM v0.5 <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_
+Install the following dependencies via **apt-get**::
 
-The following non-standard python libraries are required:
+   $ sudo apt-get install meqtrees casalite wsclean simms pyxis python-casacore
 
-   * numpy
-   * matplotlib
-   * pyfits
-   * pyrap (now `python-casacore <https://github.com/casacore/python-casacore>`_)
-   * termcolor
-   * mpltools
-   * seaborn
+`Download <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_ and build AATM v0.5.
 
-Installation
-------------
+Install Latex (for creating paper-quality plots)::
 
-Steps to build MeqSilhouette on Ubuntu 18.04:
+  $ sudo apt-get install texlive-fonts-recommended texlive-fonts-extra dvipng
 
-* Install KERN and follow the few-step instructions
-* Install the following packages using apt-get: **meqtrees, casalite, simms, pyxis, wsclean**
-* Build **aatm**
-* Add the following paths:
+The following non-standard python libraries are required and can be installed via **pip**:
 
-  Add the following to the PATH enviroment variable (if they are not installed in standard locations)::
+  * mpltools
+  * seaborn
+  * astLib
+  * astropy
+  * termcolor
+  * numpy
+  * matplotlib
+  * pyfits
+
+Add the following to the PATH enviroment variable (if they are not installed in standard locations)::
 
     export PATH=/path/to/simms/simms/bin:/path/to/CASA/bin:$PATH
 
-  And the following to the PYTHONPATH environment variable::
+And the following to the PYTHONPATH environment variable::
 
     export PYTHONPATH=/path/to/MeqSilhouette/framework:$PYTHONPATH
 
-  Add the following environment variable to point to your MeqSilhouette directory::
+Add the following environment variable to point to your MeqSilhouette directory::
 
     export MEQS_DIR=/path/to/MeqSilhouette
 
-* Finally, add a symbolic link to the MeqTrees simulator script to the framework directory within MeqSilhouette::
+The **turbo-sim.py** script from MeqTrees is included in the *framework* directory. If you do not have it, add a symbolic link to the original file in your MeqTrees installation::
 
     ln -s /path/to/meqtrees-cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
-
-.. note:: If installing in a virtual environment, a number of python packages mentioned under 'Requirements' must be installed.
 
 .. todo:: MeqSilhouette + Docker/Singularity
 

@@ -8,83 +8,6 @@ Inputs
 MeqSilhouette accepts as inputs various telescope, sky, and observation parameters. These are input in various formats and can be found in the *input* subdirectory.
 Each subdirectory and its contents are explained in detail below. Samples for each category can be found in the source code.
 
-input/antenna_tables
---------------------
-
-The *antenna_tables* directory contains information on antennas participating in the observation, in the CASA ANTENNA table format.
-Each interferometer array is a directory and can be opened and examined using the CASA tool *browsetable*.
-
-input/jones_info
-----------------
-
-This directory contains information on individual Jones matrices that require detailed information. Currently, this is restricted to bandpass amplitudes for each station
-and representative frequency in *.txt* format.
-
-Each line consists of the station name and a tuple **(bpass_ampl_pol1, bpass_ampl_pol2)** for each representative frequency.
-
-input/sky_models
-----------------
-
-This directory contains sky models in two different formats that are recognisable by MeqSilhouette: *.fits* and *.txt/.lsm.html*. The *.lsm.html* format is
-compatible with **Tigger**, a software package that is part of the **MeqTrees** software suite.
-
-Sky models in FITS image formats are forward-modelled using **WSClean** under the hood.
-All FITS images corresponding to a single sky model are collected in a single subdirectory within the *sky_models* subdirectory.
-The following naming convention applies to the individual FITS images:
-
-* If there is no time-variability or polarization, the sky model directory contains only one FITS image named *t0000-model.fits*.
-
-* If the sky model is time-variable, then the sky model directory contains a series of FITS images named *txxxx-model.fits*, where xxxx=0000, 0001, ...
-
-* If the sky model is polarised, the FITS images are named *txxxx-[IQUV]-model.fits*, representing each Stokes component I, Q, U, V. Note that all Stokes components
-  must be present.
-
-* If the sky model is frequency-variable, then the sky model directory contains a series of FITS images named *t0000-xxxx-model.fits*, where xxxx=0000, 0001, ... This must be equal to
-  the value of the input parameter **input_changroups** in the input *settings.json* file.
-
-.. note:: Following **WSClean**, **MeqSilhouette** does not care about the actual frequencies in the FITS files. This means that the input channels will be divided into **input_changroups**
- number of groups and the corresponding frequency images will be written to the appropriate channel group, regardless of the frequencies in the FITS files. This may change in the future to
- accommodate any relevant changes to the behaviour of **WSClean**.
-
-* Putting all of the above together, a time and frequency varible polarised sky model will consist of a series of FITS files named *txxxx-yyyy-[I,Q,U,V]-model.fits*, where
-  xxxx=0000, 0001, .... (as many as needed) and yyyy=0000, 0001, .... (must be equal to the value of **input_changroups**).
-
-.. note:: The total number of unique times (i.e., correlator dumps) are divided evenly between the input FITS images which are simulated into the column indicated by
- the parameter *ms_datacolumn* in the input JSON file (see `input/settings.json`_). Since **WSClean** can predict visibilities only into the MODEL_DATA column, MeqSilhouette will retain
- them in MODEL_DATA, while copying the same into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*. Hence, the uncorrupted visibilities are available
- in MODEL_DATA column.
-
-If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**.
-
-.. image:: LSM.png
-    :width: 764px
-    :align: center
-    :height: 579px
-    :alt: MeqTrees compatible LSM format
-
-.. note:: It is recommended to use FITS images as inputs. ASCII sky models are only used for testing and specific experiments. 
- MeqTrees can potentially offset the sources by +/-1 uas due to precision errors which is an outstanding issue as of now.
-
-input/station_info
-------------------
-
-This directory contains *.txt* files that correspond to the arrays found in *input/antenna_tables*, with information on the following instrument/site/weather parameters
-corresponding to each antenna in the array.
-
-* **station** Station name/code
-* **sefd[Jy]** System Equivalent Flux Density (SEFD) in Jansky
-* **pwv[mm]** Precipitable water vapour in mm
-* **gpress[mb]** Ground pressure at site in millibars
-* **gtemp[K]** Ground temperature at site in Kelvin
-* **c_time[sec]** atmospheric coherence time in seconds
-* **ptg_rms[arcsec]** RMS error in pointing in arcseconds
-* **PB_FWHM230[arcsec]** FWHM of the primary beam in arcseconds
-* **PB_model** Geometric model to be used for the primary beam (hardwired to *gaussian* for now in the code regardless of the value of this parameter)
-* **ap_eff** Aperture efficiency
-* **g[RL]_mean, g[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-varying real/imag parts of the G-Jones terms for R and L feeds
-* **d[RL]_mean, d[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-and-frequency-varying real/imag parts of the D-Jones terms for R and L feeds
-* **feed_angle[deg]** Initial feed angle offset in degrees
-* **mount** Mount type of each station; valid values are ALT-AZ, ALT-AZ+NASMYTH-R, ALT-AZ+NASMYTH-L
 
 input/settings.json
 -------------------
@@ -99,7 +22,7 @@ The configuration file is a *.json* file with parameters that are loosely groupe
 
 Each parameter is explained below:
 
-* **outdirname** Name of the output directory in which to write all the output products of MeqSilhouette, with path relative to $MEQS_DIR
+* **outdirname** Name of the output directory in which to write all the output products of MeqSilhouette. Can be either absolute or relative; if relative, assumed to be relative to $MEQS_DIR.
 
 * **input_fitsimage** Name of the directory containing input fits images named using the naming convention explained in `input/sky_models`_, with path relative to $MEQS_DIR
 
@@ -207,6 +130,86 @@ Each parameter is explained below:
 
 * **parang_corrected** Toggle 0 or 1. If 0, perform parallactic angle rotation before introducing the leakage (D-Jones) terms; if 1, then assume 
   that parallactic angle rotation correction has already been made and rotate by twice the field angle.
+
+
+input/antenna_tables
+--------------------
+
+The *antenna_tables* directory contains information on antennas participating in the observation, in the CASA ANTENNA table format.
+Each interferometer array is a directory and can be opened and examined using the CASA tool *browsetable*.
+
+input/jones_info
+----------------
+
+This directory contains information on individual Jones matrices that require detailed information. Currently, this is restricted to bandpass amplitudes for each station
+and representative frequency in *.txt* format.
+
+Each line consists of the station name and a tuple **(bpass_ampl_pol1, bpass_ampl_pol2)** for each representative frequency.
+
+input/sky_models
+----------------
+
+This directory contains sky models in two different formats that are recognisable by MeqSilhouette: *.fits* and *.txt/.lsm.html*. The *.lsm.html* format is
+compatible with **Tigger**, a software package that is part of the **MeqTrees** software suite.
+
+Sky models in FITS image formats are forward-modelled using **WSClean** under the hood.
+All FITS images corresponding to a single sky model are collected in a single subdirectory within the *sky_models* subdirectory.
+The following naming convention applies to the individual FITS images:
+
+* If there is no time-variability or polarization, the sky model directory contains only one FITS image named *t0000-model.fits*.
+
+* If the sky model is time-variable, then the sky model directory contains a series of FITS images named *txxxx-model.fits*, where xxxx=0000, 0001, ...
+
+* If the sky model is polarised, the FITS images are named *txxxx-[IQUV]-model.fits*, representing each Stokes component I, Q, U, V. Note that all Stokes components
+  must be present.
+
+* If the sky model is frequency-variable, then the sky model directory contains a series of FITS images named *t0000-xxxx-model.fits*, where xxxx=0000, 0001, ... This must be equal to
+  the value of the input parameter **input_changroups** in the input *settings.json* file.
+
+.. note:: Following **WSClean**, **MeqSilhouette** does not care about the actual frequencies in the FITS files. This means that the input channels will be divided into **input_changroups**
+ number of groups and the corresponding frequency images will be written to the appropriate channel group, regardless of the frequencies in the FITS files. This may change in the future to
+ accommodate any relevant changes to the behaviour of **WSClean**.
+
+* Putting all of the above together, a time and frequency varible polarised sky model will consist of a series of FITS files named *txxxx-yyyy-[I,Q,U,V]-model.fits*, where
+  xxxx=0000, 0001, .... (as many as needed) and yyyy=0000, 0001, .... (must be equal to the value of **input_changroups**).
+
+.. note:: The total number of unique times (i.e., correlator dumps) are divided evenly between the input FITS images which are simulated into the column indicated by
+ the parameter *ms_datacolumn* in the input JSON file (see `input/settings.json`_). Since **WSClean** can predict visibilities only into the MODEL_DATA column, MeqSilhouette will retain
+ them in MODEL_DATA, while copying the same into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*. Hence, the uncorrupted visibilities are available
+ in MODEL_DATA column.
+
+If the input is a *.txt/.lsm.html* file, it must be compatible with **MeqTrees**.
+
+.. image:: LSM.png
+    :width: 764px
+    :align: center
+    :height: 579px
+    :alt: MeqTrees compatible LSM format
+
+.. note:: It is recommended to use FITS images as inputs. ASCII sky models are only used for testing and specific experiments. 
+ MeqTrees can potentially offset the sources by +/-1 uas due to precision errors which is an outstanding issue as of now.
+
+input/station_info
+------------------
+
+This directory contains *.txt* files that correspond to the arrays found in *input/antenna_tables*, with information on the following instrument/site/weather parameters
+corresponding to each antenna in the array.
+
+* **station** Station name/code
+* **sefd[Jy]** System Equivalent Flux Density (SEFD) in Jansky
+* **pwv[mm]** Precipitable water vapour in mm
+* **gpress[mb]** Ground pressure at site in millibars
+* **gtemp[K]** Ground temperature at site in Kelvin
+* **c_time[sec]** atmospheric coherence time in seconds
+* **ptg_rms[arcsec]** RMS error in pointing in arcseconds
+* **PB_FWHM230[arcsec]** FWHM of the primary beam in arcseconds
+* **PB_model** Geometric model to be used for the primary beam (hardwired to *gaussian* for now in the code regardless of the value of this parameter)
+* **ap_eff** Aperture efficiency
+* **g[RL]_mean, g[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-varying real/imag parts of the G-Jones terms for R and L feeds
+* **d[RL]_mean, d[RL]_std** Mean and standard deviation of the normal distribution from which to draw time-and-frequency-varying real/imag parts of the D-Jones terms for R and L feeds
+* **feed_angle[deg]** Initial feed angle offset in degrees
+* **mount** Mount type of each station; valid values are ALT-AZ, ALT-AZ+NASMYTH-R, ALT-AZ+NASMYTH-L
+
 
 Outputs
 #######

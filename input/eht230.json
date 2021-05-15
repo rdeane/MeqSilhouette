@@ -1,6 +1,6 @@
 {
 "outdirname":"output/EHT_test",
-"input_fitsimage":"input/sky_models/polpoint",
+"input_fitsimage":"input/sky_models/old_grmhd_pol",
 "input_fitspol":1,
 "input_changroups":1,
 "output_to_logfile":0,
@@ -16,7 +16,7 @@
 "corr_quantbits":2,
 "predict_oversampling":8191,
 "predict_seed":42,
-"ms_antenna_table":"input/antenna_tables/EHT2017_Freekv4",
+"ms_antenna_table":"input/antenna_tables/EHT2017",
 "ms_datacolumn":"DATA",
 "ms_RA":187.70591666666667,
 "ms_DEC":12.391122222222222,
