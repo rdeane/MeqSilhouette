@@ -46,10 +46,7 @@ if (1):
     ### set directory paths ###
     v.CODEDIR = os.environ['MEQS_DIR']
     v.FRAMEWORKDIR = os.path.dirname(framework.__file__)
-    if os.path.isabs(parameters['outdirname']):
-        v.OUTDIR = parameters['outdirname']
-    else:
-        v.OUTDIR = os.path.join(v.CODEDIR,parameters['outdirname']) # full output path of current simulation
+    v.OUTDIR = os.path.join(v.CODEDIR,parameters['outdirname']) # full output path of current simulation
     v.PLOTDIR = os.path.join(v.OUTDIR,'plots')
     v.MS = os.path.join(v.OUTDIR, ms_config_string \
                         + '.MS')  # name of output Measurement Set

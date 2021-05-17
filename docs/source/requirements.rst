@@ -2,7 +2,8 @@
 Requirements & Installation
 ===========================
 
-.. note:: The following instructions pertain to Ubuntu 18.04 and Python 2.7
+Ubuntu 18.04 + Python 2.7:
+--------------------------
   
 It is recommended to install the `KERN-5 <https://kernsuite.info>`_ software suite which makes it easy to install many dependencies of MeqSilhouette::
 
@@ -16,7 +17,16 @@ Install the following dependencies via **apt-get**::
 
    $ sudo apt-get install meqtrees casalite wsclean simms pyxis python-casacore
 
-`Download <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_ and build AATM v0.5.
+`Download <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_ and build AATM v0.5::
+
+   $ cd /path/to/aatm-0.5-source-code
+   $ ./configure --prefix=/path/to/aatm-0.5-installation
+   $ make
+   $ make install
+
+Add the built executables to PATH::
+
+   $ export PATH=$PATH:/path/to/install/aatm-0.5-installation/bin
 
 Install Latex (for creating paper-quality plots)::
 
