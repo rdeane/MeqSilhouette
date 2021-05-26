@@ -17,10 +17,8 @@ from framework.SimCoordinator import SimCoordinator
 from framework.meqtrees_funcs import make_dirty_image_lwimager
 from framework.comm_functions import *
 
-
-config = sys.argv[1]
-#def run_vlbi_sim(config):
-if (1):
+def run_meqsilhouette(config):
+#if (1):
     """
     Standard VLBI simulation script to perform interferometric simulation,
     variables prefixed by v. indicate new global variables.
@@ -161,7 +159,7 @@ if (1):
                                parameters["predict_seed"], aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
-                               gR_mean, gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle)
+                               gR_mean, gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle, parameters['add_thermal_noise'])
 
     sim_coord.interferometric_sim()
 
@@ -283,10 +281,9 @@ if (1):
 # add later
 """
     return finish_string
-
+"""
 
 if __name__ == '__main__':
-
     conf = sys.argv[1]
     run_meqsilhouette(conf)
-"""
+#"""

@@ -35,7 +35,7 @@ class SimCoordinator():
     def __init__(self, msname, output_column, input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, \
                  corr_eff, predict_oversampling, predict_seed, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, \
                  gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gR_mean, \
-                 gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle):
+                 gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle, thermal_noise_enabled):
         info('Generating MS attributes based on input parameters')
         self.msname = msname
         tab = pt.table(msname, readonly=True,ack=False)
@@ -104,6 +104,7 @@ class SimCoordinator():
         if predict_seed != -1: np.random.seed(predict_seed)
 
         ### INI: populate WEIGHT and SIGMA columns
+        self.thermal_noise_enabled = thermal_noise_enabled
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
 
         self.compute_weights()
@@ -1243,12 +1244,17 @@ class SimCoordinator():
             ampbins[b] = np.nanmean(abs(self.data[mask, :, :])[:, :, corrs])  # average amplitude in bin "b"
             #stdbins[b] = np.nanstd(abs(self.data[mask, :, :])[:, :, corrs]) / Nvisperbin[b]**0.5  # rms of that bin
 
-            if (self.trop_enabled):
+            if (self.trop_enabled) and (self.thermal_noise_enabled):
                 stdbins[b] = np.nanmean(abs(np.add(self.thermal_noise[mask, :, :][:, :, corrs], \
                                                    self.sky_noise[mask, :, :][:, :, corrs]))) / Nvisperbin[b] ** 0.5
-            else:
+            elif (not self.trop_enabled) and (self.thermal_noise_enabled):
                 stdbins[b] = np.nanmean(abs(self.thermal_noise[mask, :, :][:, :, corrs])) \
                                         / Nvisperbin[b] ** 0.5
+            elif (self.trop_enabled) and (not self.thermal_noise_enabled):
+                stdbins[b] = np.nanmean(abs(self.sky_noise[mask, :, :][:, :, corrs])) \
+                                        / Nvisperbin[b] ** 0.5
+            else:
+                stdbins[b] = np.nanstd(abs(self.data[mask, :, :])[:, :, corrs]) / Nvisperbin[b]**0.5  # rms of that bin
             # next few lines if a comparison array is desired (e.g. EHT minus ALMA)
             #mask_minus1ant = (uvdist > uvbins_edges[b])&(uvdist< uvbins_edges[b+1])&(np.logical_not(flag_col[:,0,0]))& \
             # (ant1 != station_name.index('ALMA'))&(ant2 != station_name.index('ALMA'))
