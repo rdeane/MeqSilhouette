@@ -33,7 +33,7 @@ Any relative paths are assumed to be relative to MEQS_DIR.
    * - *input_fitsimage*
      - string
      - 
-     - Directory containing sky models in FITS image format or ASCII/Tigger-LSM file containing the source list with absolute or relative path. See :ref:`sky-models`.
+     - Directory containing sky models in FITS image format or ASCII/Tigger-LSM file containing the source list with absolute or relative path. Must be writable. See :ref:`sky-models`.
    * - *input_fitspol*
      - bool
      - 
@@ -245,7 +245,7 @@ The parameter *input_fitsimage* points to sky models in two formats that are rec
 
 FITS format
 -----------
-Sky models in FITS formats are forward-modelled using *WSClean* under the hood. The directory pointed to by *input_fitsimage* must contain all FITS files that constitute the sky model.
+Sky models in FITS formats are forward-modelled using *WSClean* under the hood. The directory pointed to by *input_fitsimage* must be writable and contain all FITS files that constitute the sky model.
 The following naming convention applies to the individual FITS files:
 
 * If there is no time-variability or polarisation, then *input_fitsimage* contains only one FITS image named *t0000-model.fits*.
