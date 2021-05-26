@@ -2,8 +2,8 @@
 RIME Components
 ===============
 
-The various components of the Radio Interferometer Measurement Equation (RIME) (`Smirnov 2011 <https://arxiv.org/abs/1101.1764>`_, and references therein) are
-implemented manually in MeqSilhouette. The generic RIME is given by
+The various components of the Radio Interferometer Measurement Equation (RIME) (`Smirnov 2011 <https://arxiv.org/abs/1101.1764>`_,
+and references therein) are implemented in MeqSilhouette. The generic RIME is given by
 
 .. math::
 
@@ -12,4 +12,4 @@ implemented manually in MeqSilhouette. The generic RIME is given by
 where for source :math:`s` and antenna :math:`p`, :math:`G_{p}` and :math:`E_{ps}` represent the direction-independent effects (DIEs) and direction-dependent effects (DDEs) respectively,
 :math:`K_{ps}` represents the scalar phase delay matrix, and :math:`B_{s}` represents the brightness matrix.
 
-.. todo:: Describe the various Jones matrices that are implemented in MeqSilhouette. For now, refer to Natarajan et al., in prep.
+For more details, refer to Natarajan et al., (in prep).

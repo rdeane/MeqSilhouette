@@ -10,9 +10,12 @@ Welcome to MeqSilhouette's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   intro
    requirements
    usage
-   io
+   inputs
+   example
+   outputs
    components
    pipelines
    contributors

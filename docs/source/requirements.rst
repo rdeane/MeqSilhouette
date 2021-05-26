@@ -2,80 +2,74 @@
 Requirements & Installation
 ===========================
 
-Ubuntu 18.04 + Python 2.7:
---------------------------
+Ubuntu 18.04 + Python 2.7
+-------------------------
   
-It is recommended to install the `KERN-5 <https://kernsuite.info>`_ software suite which makes it easy to install many dependencies of MeqSilhouette::
+It is recommended to install the dependencies via the `KERN-6 <https://kernsuite.info>`_ software suite::
 
    $ sudo apt-get install software-properties-common
-   $ sudo add-apt-repository -s ppa:kernsuite/kern-5
+   $ sudo add-apt-repository -s ppa:kernsuite/kern-6
    $ sudo apt-add-repository multiverse
    $ sudo apt-add-repository restricted
    $ sudo apt-get update
 
-Install the following dependencies via **apt-get**::
+Install the following dependencies via *apt-get*::
 
-   $ sudo apt-get install meqtrees casalite wsclean simms pyxis python-casacore
+   $ sudo apt-get install meqtrees meqtrees-timba tigger tigger-lsm python-astro-tigger \
+   python-astro-tigger-lsm casalite wsclean pyxis python-casacore
 
-`Download <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_ and build AATM v0.5::
+Install the following non-standard python libraries::
 
-   $ cd /path/to/aatm-0.5-source-code
-   $ ./configure --prefix=/path/to/aatm-0.5-installation
+   $ pip install mpltools seaborn astLib astropy termcolor numpy matplotlib pyfits simms
+
+*AATM v0.5* can be obtained from `here <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 18.04, ensure that the packages *libboost-program-options-dev*, *libboost-program-options1.65-dev*, and *libboost-program-options1.65.1* are installed. Once these are installed, proceed as follows::
+
+   $ cd /path/to/aatm-source-code
+   $ ./configure --prefix=/path/to/aatm-installation
    $ make
    $ make install
+   $ export PATH=$PATH:/path/to/install/aatm-installation/bin
 
-Add the built executables to PATH::
+Optionally, install Latex (for creating paper-quality plots)::
 
-   $ export PATH=$PATH:/path/to/install/aatm-0.5-installation/bin
+  $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng
 
-Install Latex (for creating paper-quality plots)::
+Check out MeqSilhouette `version 2.6.2 <https://github.com/rdeane/MeqSilhouette/tree/v2.6.2>`_ from GitHub::
 
-  $ sudo apt-get install texlive-fonts-recommended texlive-fonts-extra dvipng
+   $ git clone --branch v2.6.2 https://github.com/rdeane/MeqSilhouette.git
+   
+Add the following to PYTHONPATH and define MEQS_DIR::
 
-The following non-standard python libraries are required and can be installed via **pip**:
+   $ export PYTHONPATH=/path/to/MeqSilhouette/driver:/path/to/MeqSilhouette/framework:$PYTHONPATH
+   $ export MEQS_DIR=/path/to/MeqSilhouette
 
-  * mpltools
-  * seaborn
-  * astLib
-  * astropy
-  * termcolor
-  * numpy
-  * matplotlib
-  * pyfits
+The *turbo-sim.py* script from MeqTrees is included in the *framework* directory. If you do not have it, add a symbolic link to the copy in your *meqtrees-cattery* installation::
 
-Add the following to the PATH enviroment variable (if they are not installed in standard locations)::
+   $ ln -s /path/to/meqtrees-cattery/Cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
 
-    export PATH=/path/to/simms/simms/bin:/path/to/CASA/bin:$PATH
+Building Singularity & Docker images
+------------------------------------
 
-And the following to the PYTHONPATH environment variable::
+MeqSilhouette can be run via *Singularity* and *Docker*, which ensures portability and reproducibility.
 
-    export PYTHONPATH=/path/to/MeqSilhouette/framework:$PYTHONPATH
+The singularity definition file *singularity.def* is shipped with the repository. If you do not have Singularity installed on your system, follow the installation instructions on the `Singularity website <https://sylabs.io/guides/3.5/admin-guide/installation.html>`_. Once Singularity is installed, the singularity image file (SIF) can be created as follows::
 
-Add the following environment variable to point to your MeqSilhouette directory::
+   $ sudo singularity build meqsilhouette.sif singularity.def
 
-    export MEQS_DIR=/path/to/MeqSilhouette
+.. todo:: Add instructions for Docker
 
-The **turbo-sim.py** script from MeqTrees is included in the *framework* directory. If you do not have it, add a symbolic link to the original file in your MeqTrees installation::
+Known installation issues
+-------------------------
 
-    ln -s /path/to/meqtrees-cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
+1. If MeqTrees cannot see the *TiggerSkyModel* module that ought to load when *turbo-sim.py* is run (i.e. when an ASCII sky model is used), the parent directory of *Tigger* must be added to PYTHONPATH. Bear in mind that this may cause python version conflicts with other packages. In that case, it is recommended to have Tigger installed in a separate directory such as /opt/Tigger. For manual installation of `Tigger <https://github.com/ska-sa/tigger>`_ and `tigger-lsm <https://github.com/ska-sa/tigger-lsm>`_, refer to their respective repositories. Without this, MeqSilhouette will still work with FITS images as input sky models.
 
-.. todo:: MeqSilhouette + Docker/Singularity
-
-Commonly encountered problems
------------------------------
-
-The following is a collection of the list of errors encountered while installing/running MeqSilhouette.
-
-1. If MeqSilhouette cannot find aatm, add the following paths to the following environment variables::
+2. If MeqSilhouette cannot find aatm, modify LD_LIBRARY_PATH as follows::
 
     export LD_LIBRARY_PATH=/path/to/aatm-0.5/lib:$LD_LIBRARY_PATH
-    export PATH=/path/to/aatm-0.5/bin:$PATH
-
-2. AATM will not compile without *boost* libraries. In Ubuntu 18.04, the relevant packages are **libboost-program-options-dev**, **libboost-program-options1.65-dev**, and **libboost-program-options1.65.1**.
 
 3. If the error *Incorrect qhull library called* is thrown, ensure **scipy==0.17** is installed.
 
-4. If an ImportError is thrown by **pyfits** for the modules *gdbm/winreg*, a quick and dirty fix is to open the file::
+4. MeqSilhouette will soon be ported to *astropy.fits* and *pyfits* will no longer be a dependency. As of now though, *pyfits* is still required. If *pyfits* throws an ImportError for the modules *gdbm/winreg*, a quick and dirty fix is to open the following file::
 
     /path-to-virtualenv/lib/python2.7/site-packages/pyfits/extern/six.py
 
@@ -83,5 +77,3 @@ The following is a collection of the list of errors encountered while installing
 
     MovedModule("dbm_gnu", "gdbm", "dbm.gnu")
     MovedModule("winreg", "_winreg")
-
-.. note:: MeqSilhouette will soon be ported to astropy.fits and pyfits will no longer be a dependency. As of now, pyfits is still being used.

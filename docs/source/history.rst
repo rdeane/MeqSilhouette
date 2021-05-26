@@ -2,23 +2,29 @@
 History
 =======
 
-2.6.1 (2021):
--------------
+2.6.2 (2021)
+------------
+
+* Singularity/Docker containerisation
+* Extensive updates to documentation
+
+2.6.1 (2021)
+------------
 
 * Improve output path handling
 * Synchronize sample input files and default input settings
 * Update documentation
 
-2.6 (2021):
------------
+2.6 (2021)
+----------
 
 * Implement frequency-dependent polarization leakage and remove time dependence
 * Improve error handling for memory errors
 * Chunk data to fit in memory
 * Add paper-friendly plots
 
-2.5 (2020):
------------
+2.5 (2020)
+----------
 
 * Generate real and imaginary parts of orthogonal polarization feeds independently for time-varying antenna gains and polarization leakage
 * Generate interpolated bandpass gains independently for orthogonal polarization feeds
@@ -57,9 +63,6 @@ History
 
 1.0 (2016)
 ----------
-
 * Tropospheric corruptions
 * Basic pointing error module
-* Interstellar scattering
-  
-(Blecher et al. 2017)
+* ISM scattering
