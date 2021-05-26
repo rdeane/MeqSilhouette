@@ -5,8 +5,8 @@ History
 2.6.2 (2021)
 ------------
 
-* Singularity/Docker containerisation
 * Extensive updates to documentation
+* Singularity containerisation
 
 2.6.1 (2021)
 ------------

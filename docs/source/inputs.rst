@@ -287,7 +287,7 @@ participating stations and the site weather parameters for generating the Jones 
 Each row corresponds to one station. The details of each column are given below.
 
 .. list-table:: Station and site information
-   :widths: 60 60 60 120
+   :widths: auto
    :header-rows: 1
 
    * - Column
