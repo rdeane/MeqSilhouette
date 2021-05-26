@@ -19,7 +19,7 @@ The input parset file is in JSON format with parameters that are loosely grouped
 Any relative paths are assumed to be relative to MEQS_DIR.
 
 .. list-table:: Parameters in JSON parset file
-   :widths: 50 30 50 150
+   :widths: auto
    :header-rows: 1
 
    * - Parameter
