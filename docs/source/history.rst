@@ -7,6 +7,10 @@ History
 
 * Extensive updates to documentation
 * Singularity containerisation
+* Add option to run with Jupyter notebook
+* Add license
+* Update ms plotting module
+* Ensure uncorrupted vis are copied to MODEL_DATA always
 
 2.6.1 (2021)
 ------------

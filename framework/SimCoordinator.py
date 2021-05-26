@@ -155,15 +155,15 @@ class SimCoordinator():
             self.input_fitsimage = self.input_fitsimage+'.txt'
             info('Input sky model is assumed static, given single input ASCII LSM file. Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
-            #if self.output_column != 'MODEL_DATA':
-            #    copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
+            if self.output_column != 'MODEL_DATA':
+                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy uncorrupted vis to MODEL_DATA
 
         elif os.path.exists(self.input_fitsimage+'.html') == True:
             self.input_fitsimage = self.input_fitsimage+'.html'
             info('Input sky model is assumed static, given single input Tigger LSM file (MeqTrees-specific). Using MeqTrees for predicting visibilities.')
             run_turbosim(self.input_fitsimage,self.output_column,'')
-            #if self.output_column != 'MODEL_DATA':
-            #    copy_between_cols('MODEL_DATA', self.output_column) # INI: copy to MODEL_DATA so that CASA sm.corrupt() can access the visibilities
+            if self.output_column != 'MODEL_DATA':
+                copy_between_cols('MODEL_DATA', self.output_column) # INI: copy uncorrupted vis to MODEL_DATA
 
         ### INI: if fits image(s), input a directory. Follow conventions for time and polarisation variability.
         elif os.path.isdir(self.input_fitsimage):
