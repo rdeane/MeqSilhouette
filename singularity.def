@@ -53,7 +53,7 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     apt-add-repository multiverse
     apt-add-repository restricted
 
-    # install required packages in order specified by documentation (simms manual install in the middle)
+    # install required packages in order specified by documentation
     apt-get install -y \
         meqtrees \
         meqtrees-timba \

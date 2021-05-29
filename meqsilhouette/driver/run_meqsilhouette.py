@@ -10,20 +10,26 @@ import re
 import os
 import sys
 import pyrap.tables as pt
-import framework
-from framework.process_input_config import setup_keyword_dictionary, load_json_parameters_into_dictionary
-from framework.create_ms import create_ms
-from framework.SimCoordinator import SimCoordinator
-from framework.meqtrees_funcs import make_dirty_image_lwimager
-from framework.comm_functions import *
+import meqsilhouette.framework
+from meqsilhouette.framework.process_input_config import setup_keyword_dictionary, load_json_parameters_into_dictionary
+from meqsilhouette.framework.create_ms import create_ms
+from meqsilhouette.framework.SimCoordinator import SimCoordinator
+from meqsilhouette.framework.meqtrees_funcs import make_dirty_image_lwimager
+from meqsilhouette.framework.comm_functions import *
 
-def run_meqsilhouette(config):
-#if (1):
+def run_meqsilhouette(config=None):
     """
     Standard VLBI simulation script to perform interferometric simulation,
     variables prefixed by v. indicate new global variables.
     """
     start = time.time()
+    
+    # Check for input file
+    if config==None:
+        if len(sys.argv) != 2:
+            abort('MeqSilhouette needs an input JSON parset file. Aborting...')
+        else:
+            config = sys.argv[1]
 
     ### load input configuration file parameters ###
     config_abspath = os.path.abspath(config)
@@ -42,13 +48,42 @@ def run_meqsilhouette(config):
     
     
     ### set directory paths ###
-    v.CODEDIR = os.environ['MEQS_DIR']
-    v.FRAMEWORKDIR = os.path.dirname(framework.__file__)
-    v.OUTDIR = os.path.join(v.CODEDIR,parameters['outdirname']) # full output path of current simulation
+    #v.CODEDIR = os.environ['MEQS_DIR']
+    #v.FRAMEWORKDIR = os.path.dirname(framework.__file__)
+    #v.OUTDIR = os.path.join(v.CODEDIR,parameters['outdirname']) # full output path of current simulation
+    v.FRAMEWORKDIR = os.path.dirname(meqsilhouette.framework.__file__)
+    v.OUTDIR = parameters['outdirname']
     v.PLOTDIR = os.path.join(v.OUTDIR,'plots')
-    v.MS = os.path.join(v.OUTDIR, ms_config_string \
-                        + '.MS')  # name of output Measurement Set
-    input_fitsimage = os.path.join(v.CODEDIR,parameters['input_fitsimage'])
+    v.MS = os.path.join(v.OUTDIR, ms_config_string + '.MS')  # name of output Measurement Set
+
+    #input_fitsimage = os.path.join(v.CODEDIR,parameters['input_fitsimage'])
+    input_copy_path = v.OUTDIR+'/inputs' # directory in which to copy all the input files
+    input_fitsimage = os.path.join(input_copy_path, parameters['input_fitsimage'].split('/')[-1]) # use this path for input_fitsimage since this directory must be writable
+
+    # Check if input sky model exists
+    if not os.path.exists(parameters['input_fitsimage']+'.txt') and not os.path.exists(parameters['input_fitsimage']+'.lsm.html') and not os.path.isdir(parameters['input_fitsimage']):
+        abort("NO INPUT LSM FOUND. Verify if 'input_fitsimage' in input .json configuration file \n"+"is the prefix of a sky model ending with '.txt'/'.html', or a dir containing fits image(s).\n")
+
+    # Create output directory if it does not exist
+    if not os.path.exists(v.OUTDIR):
+        os.makedirs(v.PLOTDIR)
+        os.makedirs(input_copy_path)
+    else:
+        info('%s exists; overwriting contents.'%(v.OUTDIR))
+
+    # INI: Copy all input files to the output directory
+    os.system('cp -r %s %s'%(config_abspath, input_copy_path))
+    if os.path.isdir(parameters['input_fitsimage']):
+        os.system('cp -r %s %s'%(parameters['input_fitsimage'], input_copy_path))
+    else:
+        if os.path.exists(parameters['input_fitsimage']+'.txt'):
+            os.system('cp -r %s %s'%(parameters['input_fitsimage']+'.txt', input_copy_path))
+        elif os.path.exists(parameters['input_fitsimage']+'.lsm.html'):
+            os.system('cp -r %s %s'%(parameters['input_fitsimage']+'.lsm.html', input_copy_path))
+    os.system('cp -r %s %s'%(parameters['station_info'], input_copy_path))
+    os.system('cp -r %s %s'%(parameters['bandpass_table'], input_copy_path))
+    os.system('cp -r %s %s'%(ms_dict['antenna_table'], input_copy_path))
+
     input_fitspol = parameters['input_fitspol']
     input_changroups = parameters['input_changroups']
     
@@ -56,28 +91,15 @@ def run_meqsilhouette(config):
     info('Input FITS image: \n%s'%input_fitsimage)
     print_simulation_summary(ms_dict,im_dict)
 
-    time.sleep(3) # brief pause for visual review
-                            
-    
-### catch input parameter user errors 
-    if not os.path.exists(v.PLOTDIR):
-        os.makedirs(v.PLOTDIR)
-    else:
-        info('%s exists; overwriting contents.'%(v.OUTDIR))
-
 #    else:
 #        abort('Selected output directory exists! \n\t[%s]'%OUTDIR + \
 #              '\n\tChange parameter <outdirname> in input configuration file:'+\
-#              '\n\t[%s]'%config_abspath)
-
-    if os.path.exists(input_fitsimage+'.txt') == False and os.path.exists(input_fitsimage+'.html') == False and os.path.isdir(input_fitsimage) == False:
-        abort("NO INPUT LSM FOUND. Verify if 'input_fitsimage' in input .json configuration file \n"+
-              "is the prefix of a sky model ending with '.txt'/'.html', or a dir containing fits image(s).\n")
+#              '\n\t[%s]'%config_abspath)'''
     
     info('Input sky model: %s'%input_fitsimage)
 
     if (parameters['output_to_logfile']):
-        v.LOG = OUTDIR + "/logfile.txt" 
+        v.LOG = OUTDIR + "/meqsilhouette_logfile.txt" 
     else:
         info('All output will be printed to terminal.')
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
@@ -85,7 +107,7 @@ def run_meqsilhouette(config):
     info('Loading station info table %s'%parameters['station_info'])
     sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gR_mean, gR_std,\
     gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle = \
-    np.swapaxes(np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),\
+    np.swapaxes(np.loadtxt(parameters['station_info'],\
     skiprows=1, usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], dtype=np.complex128), 0, 1)
     # extract real parts
     sefd = sefd.real
@@ -98,11 +120,9 @@ def run_meqsilhouette(config):
     aperture_eff = aperture_eff.real
     feed_angle = feed_angle.real
     
-    #sefd = np.loadtxt(os.path.join(v.CODEDIR,parameters['station_info']),skiprows=1,usecols=1)
-    station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
-                                parameters['station_info']),\
+    station_names_txt = np.loadtxt(parameters['station_info'],\
                                 usecols=[0],dtype=str,skiprows=1).tolist()
-    anttab = pt.table(os.path.join(v.CODEDIR,ms_dict['antenna_table']),ack=False)
+    anttab = pt.table(ms_dict['antenna_table'],ack=False)
     station_names_anttab = anttab.getcol('STATION')
     anttab.close()
     if (len(station_names_txt) != len(station_names_anttab)):
@@ -120,10 +140,9 @@ def run_meqsilhouette(config):
          %(parameters['station_info'],ms_dict['antenna_table']))
 
     if parameters['bandpass_enabled']:
-        if not os.path.isfile(os.path.join(v.CODEDIR,parameters['bandpass_table'])):
+        if not os.path.isfile(parameters['bandpass_table']):
             abort("File '%s' does not exist. Aborting..."%(parameters['bandpass_table']))
-        station_names_txt = np.loadtxt(os.path.join(v.CODEDIR,\
-                                    parameters['bandpass_table']),\
+        station_names_txt = np.loadtxt(parameters['bandpass_table'],\
                                     usecols=[0],dtype=str,skiprows=1).tolist()
         if (len(station_names_txt) != len(station_names_anttab)):
             abort('Mis-matched number of antennas in %s and %s'\
@@ -135,7 +154,7 @@ def run_meqsilhouette(config):
                 print("%s\t\t%s" % (c1, c2))
             abort('Correct input station_info file and/or antenna table')
 
-    bandpass_table = os.path.join(v.CODEDIR,parameters['bandpass_table'])
+    bandpass_table = parameters['bandpass_table']
     bandpass_freq_interp_order = parameters['bandpass_freq_interp_order']
 
     # INI: Determine correlator efficiency based on the number of bits used for quantization (refer TMS (2017) sec 8.3)
@@ -147,7 +166,7 @@ def run_meqsilhouette(config):
     create_ms(MS, input_fitsimage, ms_dict)
 
     # INI: Write mount types into the MOUNT column in the empty MS prior to generating synthetic data.
-    station_mount_types = np.loadtxt(os.path.join(v.CODEDIR, parameters['station_info']), usecols=[19], dtype=str, skiprows=1)
+    station_mount_types = np.loadtxt(parameters['station_info'], usecols=[19], dtype=str, skiprows=1)
     tab = pt.table(v.MS)
     anttab = pt.table(tab.getkeyword('ANTENNA'), readonly=False)
     anttab.putcol('MOUNT', station_mount_types)
@@ -273,17 +292,12 @@ def run_meqsilhouette(config):
     # #Cleanup
     info('Cleaning up...')
     if (os.path.exists('./core')): x.sh('rm core')
-    finish_string = "Pipeline finished after %.1f seconds" % (time.time()-start)
+    finish_string = "Pipeline finished in %.1f seconds" % (time.time()-start)
     info(finish_string)
 
-
-
-# add later
-"""
-    return finish_string
-"""
-
 if __name__ == '__main__':
-    conf = sys.argv[1]
-    run_meqsilhouette(conf)
-#"""
+    if len(sys.argv) != 2:
+        abort('MeqSilhouette needs an input JSON parset file. Aborting...')
+    else:
+        conf = sys.argv[1]
+        run_meqsilhouette(conf)

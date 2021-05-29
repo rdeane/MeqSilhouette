@@ -1,8 +1,8 @@
 from Pyxis.ModSupport import *
-from meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols
+from meqsilhouette.framework.meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
-from framework.comm_functions import *
+from meqsilhouette.framework.comm_functions import *
 import pickle
 import subprocess
 import os
