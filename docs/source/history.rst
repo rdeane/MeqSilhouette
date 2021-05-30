@@ -2,6 +2,13 @@
 History
 =======
 
+2.7 (2021)
+----------
+
+* Package MeqSilhouette
+* Update casa data in singularity recipe
+* Update documentation
+
 2.6.2 (2021)
 ------------
 

@@ -18,6 +18,8 @@ Install the following dependencies via *apt-get*::
    $ sudo apt-get install meqtrees meqtrees-timba tigger tigger-lsm python-astro-tigger \
    python-astro-tigger-lsm casalite wsclean pyxis python-casacore
 
+.. note:: The casacore data must be kept up-to-date. This can be done by following the instructions on the `CASA website <https://casaguides.nrao.edu/index.php/Fixing_out_of_date_TAI_UTC_tables_(missing_information_on_leap_seconds)>`_.
+
 Install the following non-standard python libraries::
 
    $ pip install mpltools seaborn astLib astropy termcolor numpy matplotlib pyfits simms
@@ -40,7 +42,7 @@ If using a virtual environment, the following steps are necessary (skip if not u
    $ source /path/to/env/bin/activate
    $ pip install -U pip setuptools wheel # recommended
 
-  .. note:: If --system-site-packages is not passed to virtualenv, the global packages installed via apt-get above will not be available and must be installed manually from source.
+.. note:: If --system-site-packages is not passed to virtualenv, the global packages installed via apt-get above will not be available and must be installed manually from source.
 
 Now, check out MeqSilhouette `version 2.7 <https://github.com/rdeane/MeqSilhouette/tree/v2.7>`_ from GitHub::
 
@@ -60,6 +62,8 @@ MeqSilhouette can be run via *Singularity* and *Docker*, which ensures portabili
 The singularity definition file *singularity.def* is shipped with the repository. If you do not have Singularity installed on your system, follow the installation instructions on the `Singularity website <https://sylabs.io/guides/3.5/admin-guide/installation.html>`_. Once Singularity is installed, the singularity image file (SIF) can be created as follows::
 
    $ sudo singularity build meqsilhouette.sif singularity.def
+
+Note that if leap second information is missing, and if you do not have a working casa installation from which to obtain this information, simply rebuilding the container will take care of updating casacore data and eliminate this warning.
 
 .. todo:: Add instructions for Docker
 
