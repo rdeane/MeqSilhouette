@@ -99,7 +99,7 @@ def run_meqsilhouette(config=None):
     info('Input sky model: %s'%input_fitsimage)
 
     if (parameters['output_to_logfile']):
-        v.LOG = OUTDIR + "/meqsilhouette_logfile.txt" 
+        v.LOG = OUTDIR + "/meqsilhouette-logfile.txt" 
     else:
         info('All output will be printed to terminal.')
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
@@ -164,6 +164,9 @@ def run_meqsilhouette(config=None):
 
     info('Creating empty MS with simms')
     create_ms(MS, input_fitsimage, ms_dict)
+
+    # Move simms log into the output directory
+    os.system('mv %s %s'%('log-simms.txt', input_copy_path.rsplit('/',1)[0]))
 
     # INI: Write mount types into the MOUNT column in the empty MS prior to generating synthetic data.
     station_mount_types = np.loadtxt(parameters['station_info'], usecols=[19], dtype=str, skiprows=1)

@@ -2,26 +2,28 @@
 Usage
 =====
 
-To run MeqSilhouette, a driver script (e.g. *driver/run_meqsilouette.py*) and a JSON configuration file (e.g. *input/eht230.json*) are needed. Scripts and input files necessary for a basic MeqSilhouette run are provided with the source code. There are multiple ways to run MeqSilhouette.
+MeqSilhouette can be run in a number of ways. They all require that a JSON parset file is passed as the sole argument.
 
-.. note:: When passing FITS images as input sky models, ensure that the sky model directory (the value of the parameter *input_fitsimage* in *obs_settings.json*) is writable.
+1. If installed via pip::
 
-1. Via the terminal::
-
-    $ python driver/run_meqsilhouette.py input/eht230.json
+   $ meqsilhouette obs_settings.json
 
 2. Via Singularity.
 
 Interactively using the *shell* option::
 
    $ singularity shell meqsilhouette.sif # drops the user inside the container
-   $ python /opt/MeqSilhouette/driver/run_meqsilhouette.py obs_settings.json
+   > meqsilhouette obs_settings.json
 
 By invoking the *run* option::
 
    $ singularity run meqsilhouette.sif obs_settings.json
 
-3. In a Juypter (ipython) Notebook::
+3. Interactive mode (IPython/Jupyter Notebook)::
 
-    from driver.run_meqsilhouette import *
-    config = '/path/to/config.json' sim = run_meqsilhouette(config)
+    from meqsilhouette.driver import run_meqsilhouette
+    run_meqsilhouette('/path/to/JSON/parset/file')
+
+For advanced users
+------------------
+By default, the *driver* script included with the source code will be used to parse the JSON file and generate the synthetic data. Advanced users can construct their own version of the driver script by importing the *framework* module in their code directly. For instance, additional operations on the Measurement Set such as flagging or averaging can be performed by an enhanced driver script tailored to the needs of the user.

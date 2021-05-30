@@ -1,5 +1,5 @@
 ==========================
-Integration with Pipelines
+Integration with pipelines
 ==========================
 
 MeqSilhouette can be used in tandem with other radio astronomy simulation/calibration software packages in software pipelines for data synthesis/reduction/analysis.

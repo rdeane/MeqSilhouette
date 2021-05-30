@@ -34,14 +34,19 @@ Optionally, install Latex (for creating paper-quality plots)::
 
   $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng
 
-Check out MeqSilhouette `version 2.6.2 <https://github.com/rdeane/MeqSilhouette/tree/v2.6.2>`_ from GitHub::
+If using a virtual environment, the following steps are necessary (skip if not using virtualenv)::
 
-   $ git clone --branch v2.6.2 https://github.com/rdeane/MeqSilhouette.git
-   
-Add the following to PYTHONPATH and define MEQS_DIR::
+   $ virtualenv /path/to/env
+   $ source /path/to/env/bin/activate
+   $ pip install -U pip setuptools wheel # recommended
 
-   $ export PYTHONPATH=/path/to/MeqSilhouette/driver:/path/to/MeqSilhouette/framework:$PYTHONPATH
-   $ export MEQS_DIR=/path/to/MeqSilhouette
+  .. note:: If --system-site-packages is not passed to virtualenv, the global packages installed via apt-get above will not be available and must be installed manually from source.
+
+Now, check out MeqSilhouette `version 2.7 <https://github.com/rdeane/MeqSilhouette/tree/v2.7>`_ from GitHub::
+
+   $ git clone --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+   $ cd MeqSilhouette
+   $ pip install .   
 
 The *turbo-sim.py* script from MeqTrees is included in the *framework* directory. If you do not have it, add a symbolic link to the copy in your *meqtrees-cattery* installation::
 
