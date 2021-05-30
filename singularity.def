@@ -42,18 +42,13 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     tar -xzf aatm-0.5.tar.gz
     cd aatm-0.5 && ./configure && make && make install
 
-    # clone meqSil repo
-    cd
-    cd /opt
-    git clone --depth 1 --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
-
     # install kern 6
     apt-get install -y software-properties-common
     add-apt-repository -s ppa:kernsuite/kern-6
     apt-add-repository multiverse
     apt-add-repository restricted
 
-    # install required packages in order specified by documentation
+    # install required packages
     apt-get install -y \
         meqtrees \
         meqtrees-timba \
@@ -64,24 +59,19 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
         casalite \
         wsclean \
         pyxis \
-        python-casacore \
+        python-casacore
 
     apt-get clean
 
     # update casa data
     casa-config --exec update-data
-    
-    # install non-standard python libraries
-    pip install --no-cache-dir --upgrade \
-        mpltools \
-        seaborn \
-        astLib \
-        astropy \
-        termcolor \
-        numpy \
-        matplotlib \
-        pyfits \
-        simms
+
+    # download and install MeqSilhouette
+    cd
+    cd /opt
+    git clone --depth 1 --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+    cd MeqSilhouette && pip install .
+    cd
     
 %environment    
     export MEQTREES_CATTERY_PATH=/usr/lib/python2.7/dist-packages/Cattery

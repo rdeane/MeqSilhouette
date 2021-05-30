@@ -9,7 +9,7 @@ sky model and corrupts the complex visibilities with SEFD-based thermal noise.
 
   {
    "outdirname":"EHTsim",
-   "input_fitsimage":"sky_models/old_grmhd_pol",
+   "input_fitsimage":"old_grmhd_pol",
    "input_fitspol":1,
    "input_changroups":1,
    "output_to_logfile":0,
@@ -25,7 +25,7 @@ sky model and corrupts the complex visibilities with SEFD-based thermal noise.
    "corr_quantbits":2,
    "predict_oversampling":8191,
    "predict_seed":42,
-   "ms_antenna_table":"EHT2017",
+   "ms_antenna_table":"ANTENNA_EHT2017",
    "ms_datacolumn":"DATA",
    "ms_RA":187.70591666666667,
    "ms_DEC":12.391122222222222,
