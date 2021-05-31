@@ -2,7 +2,7 @@
 from Pyxis.ModSupport import *
 import pyrap.tables as pt
 import os
-from framework.comm_functions import *
+from meqsilhouette.framework.comm_functions import *
 from astropy.time import Time
 
 

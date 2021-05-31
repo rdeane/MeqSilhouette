@@ -1,52 +1,68 @@
-FROM kernsuite/base:dev 
+FROM ubuntu:18.04 AS spython-base
 
-RUN docker-apt-install  casalite python-numpy python-casacore \ 
-			meqtrees \
-			python-pyxis \
-			python-scatterbrane \			
-			time\
-			vim
+LABEL "APPLICATION_NAME_BASE"="Ubuntu LTS + MeqSilhouette + dependencies"
+LABEL "OS_VERSION"="18.04"
+LABEL "SYSTEM_NAME"="MeqSv2"
+LABEL "SYSTEM_URL"="https://github.com/rdeane/MeqSilhouette"
+LABEL "AUTHOR_NAME"="Iniyan Natarajan, Robin Hall"
+LABEL "AUTHOR_EMAIL"="iniyan.natarajan@wits.ac.za, robin@idia.ac.za"
 
-#took out simms because installing it manually below
+# make opt directory for installs
+RUN mkdir -p /opt
 
-RUN pip install --upgrade pip
+# ensure no interaction for tzdata in casa install
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV LD_LIBRARY_CONFIG=/usr/local/lib
+# install utility packages and repositories
+RUN apt-get update -y
+RUN apt-get install -y wget vim python-pip gcc python unzip git time
+RUN pip uninstall -y enum34
+RUN apt-get install -y build-essential cmake gfortran g++ libncurses5-dev \
+    libreadline-dev flex bison libblas-dev liblapacke-dev libcfitsio-dev \
+    wcslib-dev libfftw3-dev libhdf5-serial-dev rsync \
+    libboost-python-dev libboost-program-options-dev libboost-program-options1.65.1 \
+    libboost-program-options1.65-dev libpython2.7-dev libxml2-dev libxslt1-dev \
+    texlive-latex-extra texlive-fonts-recommended dvipng
 
-#ADD downloaded_files /downloaded_files
-#RUN tar -xzf /downloaded_files/boost_1_64_0.tar.gz --directory / && rm /downloaded_files/boost_1_64_0.tar.gz
-#RUN tar -xzf /downloaded_files/aatm-0.5.tar.gz --directory / && rm /downloaded_files/aatm-0.5.tar.gz
-#RUN tar -xzf /downloaded_files/MeqSilhouette.tar.gz --directory / && rm /downloaded_files/MeqSilhouette.tar.gz
+# build aatm manually
+RUN cd
+RUN cd /opt
+RUN wget -c https://launchpad.net/aatm/trunk/0.5/+download/aatm-0.5.tar.gz
+RUN tar -xzf aatm-0.5.tar.gz
+RUN cd aatm-0.5 && ./configure && make && make install
 
-ADD downloaded_files/boost_1_64_0.tar.gz /
-RUN cd /boost_1_64_0 && ./bootstrap.sh --with-libraries=program_options && ./b2 --prefix=/usr/local install
+# install kern 6
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository -s ppa:kernsuite/kern-6
+RUN apt-add-repository multiverse
+RUN apt-add-repository restricted
 
-ADD downloaded_files/aatm-0.5.tar.gz /
-RUN cd /aatm-0.5 && ./configure && make && make install
+# install required packages
+RUN apt-get install -y \
+    meqtrees \
+    meqtrees-timba \
+    tigger \
+    tigger-lsm \
+    python-astro-tigger \
+    python-astro-tigger-lsm \
+    casalite \
+    wsclean \
+    pyxis \
+    python-casacore
 
-ADD downloaded_files/simms.tar.gz /
-RUN cd /simms && python setup.py install
+RUN apt-get clean
 
-RUN ldconfig
+# update casa data
+RUN casa-config --exec update-data
 
-RUN pip install termcolor 
+# download and install MeqSilhouette v2.7
+RUN cd
+RUN cd /opt
+RUN git clone --depth 1 --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+RUN cd MeqSilhouette && pip install .
+RUN cd
 
-ARG BUID=1001
-RUN useradd -l -m -s /bin/bash -N -u $BUID mequser
-
-ENV MEQTREES_CATTERY_PATH=/usr/lib/python2.7/dist-packages/Cattery/
-
-ENV CODE_DIR=/vlbi-sim/
-ADD /downloaded_files/vlbi-sim.tar.gz ${CODE_DIR}/..
-RUN cd ${CODE_DIR}/framework/ && pip install -e .
-RUN ln -sf $MEQTREES_CATTERY_PATH/Siamese/turbo-sim.py ${CODE_DIR}/framework/framework/turbo-sim.py 
-
-RUN chown -R mequser ${CODE_DIR} 
-USER mequser
-
-# to complete initialization:
-RUN echo -e "\nexit" | casa 
-RUN python -c "import matplotlib.pyplot"
-
-WORKDIR ${CODE_DIR}
-CMD ["/bin/bash"] 
+ENV MEQTREES_CATTERY_PATH=/usr/lib/python2.7/dist-packages/Cattery
+ENV PATH=/usr/local/bin:$PATH
+ENV PYTHONPATH=/usr/lib/python2.7/dist-packages
+ENV LC_ALL=C

@@ -16,8 +16,6 @@ The input parset file is in JSON format with parameters that are loosely grouped
 *    Antenna pointing error parameters (prefixed *pointing_*)
 *    Bandpass corruption parameters (prefixed *bandpass_*)
 
-Any relative paths are assumed to be relative to MEQS_DIR.
-
 .. list-table:: Parameters in JSON parset file
    :widths: auto
    :header-rows: 1
@@ -33,7 +31,7 @@ Any relative paths are assumed to be relative to MEQS_DIR.
    * - *input_fitsimage*
      - string
      - 
-     - Directory containing sky models in FITS image format or ASCII/Tigger-LSM file containing the source list with absolute or relative path. Must be writable. See :ref:`sky-models`.
+     - Directory containing sky models in FITS image format or ASCII/Tigger-LSM file containing the source list with absolute or relative path. See :ref:`sky-models`.
    * - *input_fitspol*
      - bool
      - 
@@ -241,12 +239,11 @@ Any relative paths are assumed to be relative to MEQS_DIR.
 
 Sky models
 ##########
-The parameter *input_fitsimage* points to sky models in two formats that are recognisable by MeqSilhouette.
+The parameter *input_fitsimage* points to sky models in one of three formats that are recognisable by MeqSilhouette.
 
 FITS format
 -----------
-Sky models in FITS formats are forward-modelled using *WSClean* under the hood. The directory pointed to by *input_fitsimage* must be writable and contain all FITS files that constitute the sky model.
-The following naming convention applies to the individual FITS files:
+Sky models in FITS format are forward-modelled using *WSClean* under the hood. The directory pointed to by *input_fitsimage* must contain all FITS files that constitute the sky model, named according to the following convention:
 
 * If there is no time-variability or polarisation, then *input_fitsimage* contains only one FITS image named *t0000-model.fits*.
 
@@ -262,7 +259,7 @@ and each FITS image along the frequency axis will be used to predict visibilitie
 Putting all of the above together, a time and frequency varible polarised sky model will consist of a series of FITS files named *txxxx-yyyy-[I,Q,U,V]-model.fits*,
 where xxxx=0000, 0001, .... (as many as needed to replicate intrinsic source variability) and yyyy=0000, 0001, .... (must be equal to *input_changroups*).
 
-.. note:: *WSClean* can predict visibilities only into the MODEL_DATA column. MeqSilhouette will copy them into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*. Hence, the uncorrupted visibilities are available in MODEL_DATA column for inspection.
+.. note:: *WSClean* can predict visibilities only into the MODEL_DATA column. MeqSilhouette will copy them into *ms_datacolumn*, after which the signal corruptions are applied only to *ms_datacolumn*. Hence, the uncorrupted visibilities are available in MODEL_DATA column for inspection. If *MeqTrees* is used instead, the uncorrupted visibilities from *ms_datacolumn* are copied to MODEL_DATA.
 
 
 ASCII / Tigger LSM format
@@ -275,7 +272,7 @@ The ASCII / Tigger LSM file with extensions *.txt* / *.lsm.html* respectively, a
     :height: 579px
     :alt: MeqTrees compatible LSM format
 
-.. note:: It is recommended to use FITS images as inputs (in which case *WSClean* is used for predicting visibilities). MeqTrees has been observed to occasionally give rise to precision errors of up to ~1 micro-arcsecond. Hence, when using ASCII / Tigger LSM files, additional sanity checks must be performed to ensure that the source positions are not offset from the expected values. This is an outstanding issue with MeqTrees and will be resolved in a future version.
+.. note:: It is recommended to use FITS images as inputs (in which case *WSClean* is used for predicting visibilities) for EHT simulations. MeqTrees has been observed to occasionally give rise to precision errors of up to ~1 micro-arcsecond. Hence, when using ASCII / Tigger LSM files, additional sanity checks must be performed to ensure that the source positions are not offset from the expected values. This is an outstanding issue with MeqTrees and will be resolved in a future version.
 
 .. _station-info:
 

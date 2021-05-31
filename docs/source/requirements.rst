@@ -18,9 +18,11 @@ Install the following dependencies via *apt-get*::
    $ sudo apt-get install meqtrees meqtrees-timba tigger tigger-lsm python-astro-tigger \
    python-astro-tigger-lsm casalite wsclean pyxis python-casacore
 
-Install the following non-standard python libraries::
+.. note:: The casacore data must be kept up-to-date. This can be done by following the instructions on the `CASA website <https://casaguides.nrao.edu/index.php/Fixing_out_of_date_TAI_UTC_tables_(missing_information_on_leap_seconds)>`_.
 
-   $ pip install mpltools seaborn astLib astropy termcolor numpy matplotlib pyfits simms
+Optionally, install Latex (for creating paper-quality plots)::
+
+  $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng
 
 *AATM v0.5* can be obtained from `here <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 18.04, ensure that the packages *libboost-program-options-dev*, *libboost-program-options1.65-dev*, and *libboost-program-options1.65.1* are installed. Once these are installed, proceed as follows::
 
@@ -30,33 +32,49 @@ Install the following non-standard python libraries::
    $ make install
    $ export PATH=$PATH:/path/to/install/aatm-installation/bin
 
-Optionally, install Latex (for creating paper-quality plots)::
+If using a virtual environment, the following steps are necessary (skip ahead if not using *virtualenv*)::
 
-  $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng
+   $ virtualenv /path/to/env
+   $ source /path/to/env/bin/activate
+   $ pip install -U pip setuptools wheel # recommended
 
-Check out MeqSilhouette `version 2.6.2 <https://github.com/rdeane/MeqSilhouette/tree/v2.6.2>`_ from GitHub::
+.. note:: If --system-site-packages is not passed to virtualenv, the global packages installed via apt-get above will not be available and must be installed manually from source.
 
-   $ git clone --branch v2.6.2 https://github.com/rdeane/MeqSilhouette.git
-   
-Add the following to PYTHONPATH and define MEQS_DIR::
+Now, check out MeqSilhouette `version 2.7 <https://github.com/rdeane/MeqSilhouette/tree/v2.7>`_ from GitHub and install using pip::
 
-   $ export PYTHONPATH=/path/to/MeqSilhouette/driver:/path/to/MeqSilhouette/framework:$PYTHONPATH
-   $ export MEQS_DIR=/path/to/MeqSilhouette
+   $ git clone --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+   $ cd MeqSilhouette
+   $ pip install .   
 
 The *turbo-sim.py* script from MeqTrees is included in the *framework* directory. If you do not have it, add a symbolic link to the copy in your *meqtrees-cattery* installation::
 
    $ ln -s /path/to/meqtrees-cattery/Cattery/Siamese/turbo-sim.py /path/to/MeqSilhouette/framework/turbo-sim.py
 
-Building Singularity & Docker images
-------------------------------------
+Building Singularity image
+--------------------------
 
-MeqSilhouette can be run via *Singularity* and *Docker*, which ensures portability and reproducibility.
-
-The singularity definition file *singularity.def* is shipped with the repository. If you do not have Singularity installed on your system, follow the installation instructions on the `Singularity website <https://sylabs.io/guides/3.5/admin-guide/installation.html>`_. Once Singularity is installed, the singularity image file (SIF) can be created as follows::
+The recommended way to run MeqSilhouette is via *Singularity*. 
+The Singularity definition file *singularity.def* is shipped with the repository. 
+If you do not have Singularity installed on your system, follow the installation instructions 
+on the `Singularity website <https://sylabs.io/guides/3.5/admin-guide/installation.html>`_. 
+Once Singularity is installed, the singularity image file (SIF) can be created as follows::
 
    $ sudo singularity build meqsilhouette.sif singularity.def
 
-.. todo:: Add instructions for Docker
+Note that the build process automatically ensures that *casacore* data are up-to-date. If these data
+are missing, and if you do not have a working casa installation from which to obtain this
+information, simply rebuild the image to eliminate this warning thrown by *CASA*.
+
+Building Docker image
+---------------------
+
+*Docker* is also supported. Docker can be installed on your system via *apt-get*. Once installed,
+build the docker image as follows::
+
+   $ cd /path/to/Dockerfile
+   $ docker build -t meqsilhouette .
+
+As before, the build process ensures that *casacore* data are up-to-date.
 
 Known installation issues
 -------------------------

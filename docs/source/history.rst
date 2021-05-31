@@ -2,6 +2,14 @@
 History
 =======
 
+2.7 (2021)
+----------
+
+* Package MeqSilhouette
+* Update singularity recipe and Dockerfile
+* Update casa data while building images
+* Update documentation
+
 2.6.2 (2021)
 ------------
 
