@@ -62,7 +62,7 @@ This will drop the user into the shell from which MeqSilhouette can be run as fo
    $ meqsilhouette /meqsdata/obs_settings.json
 
 Since */meqsdata* is where *~/data* is mounted, any output files must be written to */meqsdata*
-for them to be persist after the container is stopped. If the output files are written elsewhere,
+for them to persist after the container is stopped. If the output files are written elsewhere,
 the execution will still be successful, but the files will not persist in host storage.
 To avoid this, the data generated must be manually copied into */meqsdata*.
 
