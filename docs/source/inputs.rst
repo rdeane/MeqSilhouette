@@ -2,7 +2,7 @@
 Inputs
 ======
 
-MeqSilhouette accepts as inputs various telescope, sky, and observation parameters in different formats. The master input file is a JSON parset containing many input parameters. Sample input files and settings can be found in the *input* subdirectory. Each input file type is explained in detail below.
+MeqSilhouette accepts as inputs various telescope, sky, and observation parameters in different formats. The master input file is a JSON parset containing many input parameters. Sample input files and settings can be found in the *data* subdirectory. Each input file type is explained in detail below.
 
 JSON parset file
 ################
