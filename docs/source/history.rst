@@ -2,6 +2,11 @@
 History
 =======
 
+2.7.1 (xxxx)
+------------
+
+* New tropospheric turbulence module
+
 2.7 (2021)
 ----------
 

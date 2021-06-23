@@ -377,7 +377,6 @@ class SimCoordinator():
         tab.close()
 
 
-
     def trop_opacity_attenuate(self):
         transmission_matrix = np.exp(-1 * self.opacity / np.sin(self.elevation_tropshape))
         np.save(II('$OUTDIR')+'/transmission_timestamp_%d'%(self.timestamp), transmission_matrix)
@@ -392,8 +391,6 @@ class SimCoordinator():
 
         self.data = np.multiply(self.data, transmission_column)
         self.save_data()
-
-
 
 
     def trop_return_opacity_sky_temp(self):
@@ -444,9 +441,6 @@ class SimCoordinator():
         return opacity, sky_temp
 
 
-
-
-
     def trop_add_sky_noise(self, load=None):
         """ for non-zero tropospheric opacity, calc sky noise"""
 
@@ -480,26 +474,26 @@ class SimCoordinator():
         return sky_sigma_estimator
         
 
-
-
-    def trop_generate_turbulence_phase_errors(self):  ## was calc_phase_errors(self)
+    def trop_generate_turbulence_phase_errors(self):
         turb_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
-        beta = 5/3.
-        stddevs = np.sqrt(1/(beta**2 + 3 * beta + 2) * (self.tint/self.coherence_time)**beta)
-        np.save(II('$OUTDIR')+'/turbulence_phase_std_devs_timestamp_%d'%(self.timestamp), np.array(stddevs))
-        for ant in range(self.Nant):
-            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * \
-                                np.cumsum(np.random.normal(0, stddevs[ant], self.time_unique.shape[0]))
+        beta = 5/3. # power law index
 
-            turb_phase_errors[:, :, ant] = np.multiply(turb_phase_errors[:, 0, ant].reshape((self.time_unique.shape[0], 1)),
-                                            (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
+        time_indices = np.arange(self.time_unique.shape[0]) # INI: to index the autocorrelation function
+        time_in_secs = self.time_unique - self.time_unique[0] # to compute the structure function
+        (x,y) = np.meshgrid(time_indices, time_indices)
 
-
-        np.save(II('$OUTDIR')+'/turbulent_phase_errors_timestamp_%d'%(self.timestamp), turb_phase_errors)
+        for ant in np.arange(self.Nant):
+            structD = np.power((time_in_secs/self.coherence_time[ant]), beta) # compute structure function
+            autocorrC = np.abs(0.5*(structD[-1]-structD)) # compute autocorrelation function, clipped at largest mode
+            covmatS = autocorrC[np.abs(x-y)] # compute covariance matrix
+            L = np.linalg.cholesky(covmatS) # Cholesky factorise the covariance matrix
+            
+            # INI: generate random walk error term
+            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(np.random.randn(self.time_unique.shape[0]))
+            turb_phase_errors[:, :, ant] = np.multiply(turb_phase_errors[:, 0, ant].reshape((self.time_unique.shape[0], 1)), (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
 
         self.turb_phase_errors = turb_phase_errors
-
-
+        np.save(II('$OUTDIR')+'/turbulent_phase_errors_timestamp_%d'%(self.timestamp), turb_phase_errors)
 
     def trop_calc_fixdelay_phase_offsets(self):
         """insert constant delay for each station for all time stamps. 
@@ -517,7 +511,6 @@ class SimCoordinator():
         self.fixdelay_phase_errors = phasedelay_alltimes
 
     
-
     def trop_ATM_dispersion(self):
         """ calculate extra path length per frequency channel """
         extra_path_length = np.zeros((self.chan_freq.shape[0], self.Nant))
@@ -552,11 +545,6 @@ class SimCoordinator():
         return extra_path_length
     
 
-
-
-
-
-
     def trop_calc_mean_delays(self):
         """ insert mean delays (i.e. non-turbulent) due to dry and wet components"""
         delay = self.trop_ATM_dispersion() / speed_of_light
@@ -567,9 +555,6 @@ class SimCoordinator():
 
         self.phasedelay_alltimes = phasedelay_alltimes 
 
-
-
-        
 
     def trop_phase_corrupt(self, normalise=True, percentage_turbulence=100, load=None):
         ### REPLACE WITH A GENERATE TROP SIM COORDINATOR, THAT COLLECTS ALL TROP COORUPTIONS """
@@ -600,9 +585,6 @@ class SimCoordinator():
         info('Kolmogorov turbulence-induced phase fluctuations applied')
 
 
-
-
-
     def apply_phase_errors(self,combined_phase_errors):
         for a0 in range(self.Nant):
             for a1 in range(self.Nant):
@@ -617,7 +599,6 @@ class SimCoordinator():
         self.save_data()
 
         
-
     def trop_plots(self):
 
         ### plot zenith opacity vs frequency (subplots)
@@ -667,8 +648,6 @@ class SimCoordinator():
             pl.savefig(os.path.join(v.PLOTDIR,'transmission_vs_freq_%s.png'%self.station_names[i]))
             pl.clf()
 
-
-
         ### plot zenith sky temp vs frequency
         pl.figure(figsize=(10,6.8))
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
@@ -683,7 +662,6 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
                                                                                             
-
         ### plot tubulent phase on time/freq grid? 
 
         pl.figure() #figsize=(10,6.8))
@@ -719,8 +697,6 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
 
-
-
         ### plot delays vs time
         pl.figure(figsize=(10,6.8))
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
@@ -739,9 +715,6 @@ class SimCoordinator():
         pl.savefig(os.path.join(v.PLOTDIR,'mean_delay_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
-
-
-
 
 
         ################################
@@ -816,8 +789,6 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
                                                                                                 
-
-
         ### plot pointing amp error vs pointing epoch
         pl.figure(figsize=(10,6.8))
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
@@ -830,7 +801,6 @@ class SimCoordinator():
         pl.savefig(os.path.join(v.PLOTDIR,'pointing_amp_error_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
-
 
         ### plot pointing amp error vs pointing offset
         pl.figure(figsize=(10,6.8))
@@ -901,7 +871,6 @@ class SimCoordinator():
         self.save_data()
 
 
-        ### plot bandpasses
     def make_bandpass_plots(self):
         ''' Make plots of bandpass amplitudes and phases vs frequency'''
         fig, ax1 = pl.subplots()
@@ -1142,7 +1111,6 @@ class SimCoordinator():
         pl.savefig(os.path.join(v.PLOTDIR, 'uv-coverage_legend.png'), \
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
 
-
         ### uv-coverage plot, colorize by minimun elevation, uv-annuli ###
         self.calculate_baseline_min_elevation() # calc min elevation in the two e for every baseline and every timestep
         self.calculate_baseline_mean_elevation()# as above, but for mean
@@ -1185,8 +1153,6 @@ class SimCoordinator():
         pl.savefig(os.path.join(v.PLOTDIR, 'uv-coverage_colorize_min_elevation.png'), \
                     bbox_inches='tight')
 
-
-
         pl.figure(figsize=(16,16))
         #from mpltools import color
         cmap = pl.cm.Set1
@@ -1224,10 +1190,6 @@ class SimCoordinator():
         ax.set_aspect('equal')
         pl.savefig(os.path.join(v.PLOTDIR, 'uv-coverage_colorize_mean_elevation.png'), \
                     bbox_inches='tight')
-
-
-
-
 
         ampbins = np.zeros([numuvbins])
         stdbins = np.zeros([numuvbins])
@@ -1282,9 +1244,6 @@ class SimCoordinator():
         ### this is for a top x-axis labels, showing corresponding angular scale for a uv-distance
         angular_tick_locations = [25, 50, 100, 200]  # specify which uvdist locations you want a angular scale
 
-
-
-
         ### amp vs uvdist, with uncertainties
         fig = pl.figure(figsize=(10,6.8))
         ax1 = fig.add_subplot(111)
@@ -1310,8 +1269,6 @@ class SimCoordinator():
         #np.savetxt('uvdistplot_ampdatapts.txt',np.vstack([uvbins_centre,xerr,ampbins,yerr]))
         pl.savefig(os.path.join(v.PLOTDIR,'amp_uvdist.png'), \
                    bbox_inches='tight')
-
-
 
         ### percent of visibilties per bin
         percentVisperbin = Nvisperbin/Nvisperbin.sum()*100
@@ -1340,8 +1297,6 @@ class SimCoordinator():
         #pl.legend()
         pl.savefig(os.path.join(v.PLOTDIR,'num_vis_perbin.png'), \
                    bbox_inches='tight')
-
-
 
         ### averaged sensitivity per bin
         fig = pl.figure(figsize=(10,6.8))
@@ -1372,7 +1327,6 @@ class SimCoordinator():
         #ax1.legend(loc='upper left',fontsize=16)
         pl.savefig(os.path.join(v.PLOTDIR, 'sensitivity_perbin.png'), \
              bbox_inches = 'tight')
-
 
         ### elevation vs time ###
         pl.figure(figsize=(10,6.8))
