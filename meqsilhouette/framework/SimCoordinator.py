@@ -123,6 +123,12 @@ class SimCoordinator():
             self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
             self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
             self.transmission = np.exp(-1*self.opacity)
+
+            # Set some optional arrays to None. These will be filled later depending upon the user request.
+            self.transmission_matrix = None
+            self.turb_phase_errors = None
+            self.delay_alltimes = None
+            self.sky_noise = None
         
         ### bandpass information
         self.bandpass_table = bandpass_table
@@ -632,8 +638,9 @@ class SimCoordinator():
         pl.close()
 
         ### plot elevation-dependent transmission vs frequency
-        pl.figure() #figsize=(10,6.8))
-        for i in range(self.Nant):
+        if self.transmission_matrix is not None:
+          pl.figure() #figsize=(10,6.8))
+          for i in range(self.Nant):
             pl.imshow(self.transmission_matrix[:,:,i,0],origin='lower',aspect='auto',\
                       extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.])
             pl.xlabel('Frequency / GHz', fontsize=16)
@@ -662,10 +669,10 @@ class SimCoordinator():
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
         pl.close()
                                                                                             
-        ### plot tubulent phase on time/freq grid? 
-
-        pl.figure() #figsize=(10,6.8))
-        for i in range(self.Nant):
+        ### plot tubulent phase on time/freq grid?
+        if self.turb_phase_errors is not None:
+          pl.figure() #figsize=(10,6.8))
+          for i in range(self.Nant):
             pl.imshow( (self.turb_phase_errors[:,:,i] * 180. / np.pi) ,origin='lower',aspect='auto',\
                       extent=[(self.chan_freq[0]-(self.chan_width/2.))/1e9,(self.chan_freq[-1]+(self.chan_width/2.))/1e9,0,self.obslength/3600.]) #vmin=-180,180
             pl.xlabel('Frequency / GHz', fontsize=FSIZE)
@@ -680,41 +687,43 @@ class SimCoordinator():
             pl.clf()
                                                                                                                             
         ### plot turbulent phase errors vs time
-        pl.figure(figsize=(10,6.8))
-        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
-        for i in range(self.Nant):
+        if self.turb_phase_errors is not None:
+          pl.figure(figsize=(10,6.8))
+          #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
+          for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
                     (self.turb_phase_errors[:,0,i]*180./np.pi),\
                     label=self.station_names[i],alpha=1)
-        pl.xlabel('Relative time / hr', fontsize=FSIZE)
-        pl.ylabel('Turbulent phase / degrees', fontsize=FSIZE)
-        pl.xticks(fontsize=18)
-        pl.yticks(fontsize=18)        
-        #pl.ylim(-180,180)
-        #lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
-        lgd = pl.legend()
-        pl.savefig(os.path.join(v.PLOTDIR,'turbulent_phase_vs_time.png'),\
-                   bbox_extra_artists=(lgd,), bbox_inches='tight')
-        pl.close()
+          pl.xlabel('Relative time / hr', fontsize=FSIZE)
+          pl.ylabel('Turbulent phase / degrees', fontsize=FSIZE)
+          pl.xticks(fontsize=18)
+          pl.yticks(fontsize=18)        
+          #pl.ylim(-180,180)
+          #lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+          lgd = pl.legend()
+          pl.savefig(os.path.join(v.PLOTDIR,'turbulent_phase_vs_time.png'),\
+                     bbox_extra_artists=(lgd,), bbox_inches='tight')
+          pl.close()
 
         ### plot delays vs time
-        pl.figure(figsize=(10,6.8))
-        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
-        try:
+        if self.delay_alltimes is not None:
+          pl.figure(figsize=(10,6.8))
+          #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
+          try:
             delay_temp = fixdelay_phase_errors # checks if fixdelays are set
-        except NameError:
+          except NameError:
             delay_temp = self.delay_alltimes
-        for i in range(self.Nant):
+          for i in range(self.Nant):
             pl.plot(np.linspace(0,self.obslength,len(self.time_unique))/(60*60.),\
                     np.nanmean(delay_temp[:,:,i],axis=1) * 1e9,label=self.station_names[i])
-        pl.xlabel('Relative time / hr', fontsize=FSIZE)
-        pl.ylabel('Delay / ns', fontsize=FSIZE)
-        pl.xticks(fontsize=18)
-        pl.yticks(fontsize=18)        
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
-        pl.savefig(os.path.join(v.PLOTDIR,'mean_delay_vs_time.png'),\
+          pl.xlabel('Relative time / hr', fontsize=FSIZE)
+          pl.ylabel('Delay / ns', fontsize=FSIZE)
+          pl.xticks(fontsize=18)
+          pl.yticks(fontsize=18)        
+          lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+          pl.savefig(os.path.join(v.PLOTDIR,'mean_delay_vs_time.png'),\
                    bbox_extra_artists=(lgd,), bbox_inches='tight')
-        pl.close()
+          pl.close()
 
 
         ################################
@@ -1213,8 +1222,9 @@ class SimCoordinator():
                 stdbins[b] = np.nanmean(abs(self.thermal_noise[mask, :, :][:, :, corrs])) \
                                         / Nvisperbin[b] ** 0.5
             elif (self.trop_enabled) and (not self.thermal_noise_enabled):
-                stdbins[b] = np.nanmean(abs(self.sky_noise[mask, :, :][:, :, corrs])) \
-                                        / Nvisperbin[b] ** 0.5
+                if self.sky_noise is not None:
+                    stdbins[b] = np.nanmean(abs(self.sky_noise[mask, :, :][:, :, corrs])) \
+                                            / Nvisperbin[b] ** 0.5
             else:
                 stdbins[b] = np.nanstd(abs(self.data[mask, :, :])[:, :, corrs]) / Nvisperbin[b]**0.5  # rms of that bin
             # next few lines if a comparison array is desired (e.g. EHT minus ALMA)

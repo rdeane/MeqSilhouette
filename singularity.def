@@ -69,7 +69,7 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     # download and install MeqSilhouette
     cd
     cd /opt
-    git clone --depth 1 --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+    git clone --depth 1 --branch v2.7.1 https://github.com/rdeane/MeqSilhouette.git
     cd MeqSilhouette && pip install .
     cd
     

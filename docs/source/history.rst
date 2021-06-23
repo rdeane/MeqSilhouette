@@ -2,9 +2,10 @@
 History
 =======
 
-2.7.1 (xxxx)
+2.7.1 (2021)
 ------------
 
+* Update how plotting modules handle non-existent arrays
 * New tropospheric turbulence module
 
 2.7 (2021)
