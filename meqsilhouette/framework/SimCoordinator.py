@@ -153,6 +153,10 @@ class SimCoordinator():
         # Get timestamp at the start of the data generation
         self.timestamp = int(time.time())
 
+        # save zenith transmission
+        if (self.trop_enabled):
+            np.save(II('$OUTDIR')+'/zenith_transmission_timestamp_%d'%(self.timestamp), self.transmission)
+
     def interferometric_sim(self):
         """FFT + UV sampling via the MeqTrees run function"""
 
@@ -409,10 +413,8 @@ class SimCoordinator():
             if not os.path.exists(II('$OUTDIR')+'/atm_output/'):
                 os.makedirs(II('$OUTDIR')+'/atm_output/')
 
-            #ATM_abs_string = './absorption --fmin %f --fmax %f --fstep %f --pwv %f --gpress %f --gtemp %f' %\
-                                                 #(fmin, fmax, fstep, pwv, gpress, gtemp)
             fmin,fmax,fstep = (self.chan_freq[0]-(self.chan_width)) / 1e9,\
-                              (self.chan_freq[-1] + (self.chan_width*0/2.)) / 1e9, \
+                              (self.chan_freq[-1]) / 1e9, \
                               self.chan_width/1e9    # note that fmin output != self.chan_freq
             ATM_abs_string = 'absorption --fmin %f --fmax %f --fstep %f --pwv %f --gpress %f --gtemp %f' %\
                              (fmin, fmax, fstep, self.average_pwv[ant], \
@@ -424,8 +426,10 @@ class SimCoordinator():
             print>>atmfile,ATM_abs_string
             atmfile.close()
             atm_abs = file(II('$OUTDIR')+'/atm_output/%satm_abs.txt' % ant, 'w'); atm_abs.write(output); atm_abs.close()
-            freq_atm,dry, wet, temp_atm = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3],
-                                                        delimiter=', \t'), 0, 1)
+            if self.num_chan == 1:
+                freq_atm, dry, wet, temp_atm = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), axis=0), 0, 1)
+            else:
+                freq_atm,dry, wet, temp_atm = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), 0, 1)
             # the following catch is due to a bug in the ATM package
             # which results in an incorrect number of channels returned.
             # The following section just checks and corrects for that. 
@@ -525,20 +529,22 @@ class SimCoordinator():
 
         for ant in range(self.Nant):
 
-            fmin,fmax,fstep = (self.chan_freq[0]-(self.chan_width/2.)) / 1e9,\
-                              (self.chan_freq[-1] + (self.chan_width/2.)) / 1e9, \
-                              self.chan_width/1e9
+            fmin,fmax,fstep = (self.chan_freq[0]-(self.chan_width)) / 1e9,\
+                              (self.chan_freq[-1]) / 1e9, \
+                              self.chan_width/1e9 # note that fmin output != self.chan_freq
             ATM_disp_string = 'dispersive --fmin %f --fmax %f --fstep %f --pwv %f --gpress %f --gtemp %f' %\
                              (fmin, fmax, fstep, self.average_pwv[ant], \
                               self.average_gpress[ant],self.average_gtemp[ant])
             
             output = subprocess.check_output(ATM_disp_string,shell=True)
-
-                #output = subprocess.check_output(self.ATM_dispersive_string(self.chan_freq[0]-self.chan_width, self.chan_freq[-1], self.chan_width,
-                #  self.average_pwv[ant], self.average_gpress[ant], self.average_gtemp[ant]),shell=True)
+            atmfile = open(II('$OUTDIR')+'/atm_output/ATMstring_ant%i.txt'%ant,'a')
+            print>>atmfile,ATM_disp_string
+            atmfile.close()
             atm_disp = file(II('$OUTDIR')+'/atm_output/%satm_disp.txt' % ant, 'w'); atm_disp.write(output); atm_disp.close()
-            wet_non_disp, wet_disp, dry_non_disp = np.swapaxes(np.genfromtxt(II('$OUTDIR')+'/atm_output/%satm_disp.txt'%ant, skip_header=1, usecols=[1, 2, 3],
-                                                              delimiter=',',autostrip=True), 0, 1)
+            if self.num_chan == 1:
+                wet_non_disp, wet_disp, dry_non_disp = np.swapaxes(np.expand_dims(np.genfromtxt(II('$OUTDIR')+'/atm_output/%satm_disp.txt'%ant, skip_header=1, usecols=[1, 2, 3], delimiter=',',autostrip=True), axis=0), 0, 1)
+            else:
+                wet_non_disp, wet_disp, dry_non_disp = np.swapaxes(np.genfromtxt(II('$OUTDIR')+'/atm_output/%satm_disp.txt'%ant, skip_header=1, usecols=[1, 2, 3], delimiter=',',autostrip=True), 0, 1)
             if (self.trop_wetonly):
                 extra_path_length[:, ant] = wet_disp + wet_non_disp
             else:
@@ -610,7 +616,7 @@ class SimCoordinator():
     def trop_plots(self):
 
         ### plot zenith opacity vs frequency (subplots)
-        fig,axes = pl.subplots(self.Nant,1,figsize=(10,16))
+        '''fig,axes = pl.subplots(self.Nant,1,figsize=(10,16))
         #color.cycle_cmap(self.Nant,cmap=cmap) # INI: deprecated
         #colors = [pl.cm.Set1(i) for i in np.linspace(0, 1, self.nbl)]
         #axes.set_prop_cycle(cycler('color', colors))
@@ -622,22 +628,23 @@ class SimCoordinator():
         pl.xlabel('Frequency / GHz', fontsize=FSIZE)
         pl.ylabel('Transmission', fontsize=FSIZE)
         pl.tight_layout()
-        pl.savefig(os.path.join(v.PLOTDIR,'transmission_vs_freq_subplots.png'),bbox_inches='tight')
-        pl.close()
+        pl.savefig(os.path.join(v.PLOTDIR,'zenith_transmission_vs_freq_subplots.png'),bbox_inches='tight')
+        pl.close()'''
 
         ### plot zenith opacity vs frequency
-        pl.figure(figsize=(10,6.8))
-        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
-        for i in range(self.Nant):
-            pl.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
-        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
-        pl.ylabel('Zenith transmission', fontsize=FSIZE)
-        pl.xticks(fontsize=18)
-        pl.yticks(fontsize=18)
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
-        pl.savefig(os.path.join(v.PLOTDIR,'zenith_transmission_vs_freq.png'),\
-                   bbox_extra_artists=(lgd,), bbox_inches='tight')
-        pl.close()
+        if self.num_chan > 1:
+            pl.figure(figsize=(10,6.8))
+            #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
+            for i in range(self.Nant):
+                pl.plot(self.chan_freq/1e9,self.transmission[0,:,i],label=self.station_names[i])
+            pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+            pl.ylabel('Zenith transmission', fontsize=FSIZE)
+            pl.xticks(fontsize=18)
+            pl.yticks(fontsize=18)
+            lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+            pl.savefig(os.path.join(v.PLOTDIR,'zenith_transmission_vs_freq.png'),\
+                       bbox_extra_artists=(lgd,), bbox_inches='tight')
+            pl.close()
 
         ### plot elevation-dependent transmission vs frequency
         if self.transmission_matrix is not None:
@@ -658,18 +665,19 @@ class SimCoordinator():
             pl.clf()
 
         ### plot zenith sky temp vs frequency
-        pl.figure(figsize=(10,6.8))
-        #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
-        for i in range(self.Nant):
-            pl.plot(self.chan_freq/1e9,self.sky_temp[0,:,i],label=self.station_names[i])
-        pl.xlabel('Frequency / GHz', fontsize=FSIZE)
-        pl.ylabel('Zenith sky temperature / K', fontsize=FSIZE)
-        pl.xticks(fontsize=18)
-        pl.yticks(fontsize=18)        
-        lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
-        pl.savefig(os.path.join(v.PLOTDIR,'zenith_skytemp_vs_freq.png'),\
-                   bbox_extra_artists=(lgd,), bbox_inches='tight')
-        pl.close()
+        if self.num_chan > 1:
+            pl.figure(figsize=(10,6.8))
+            #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
+            for i in range(self.Nant):
+                pl.plot(self.chan_freq/1e9,self.sky_temp[0,:,i],label=self.station_names[i])
+            pl.xlabel('Frequency / GHz', fontsize=FSIZE)
+            pl.ylabel('Zenith sky temperature / K', fontsize=FSIZE)
+            pl.xticks(fontsize=18)
+            pl.yticks(fontsize=18)        
+            lgd = pl.legend(bbox_to_anchor=(1.02,1),loc=2,shadow=True)
+            pl.savefig(os.path.join(v.PLOTDIR,'zenith_skytemp_vs_freq.png'),\
+                       bbox_extra_artists=(lgd,), bbox_inches='tight')
+            pl.close()
                                                                                             
         ### plot tubulent phase on time/freq grid?
         if self.turb_phase_errors is not None:
