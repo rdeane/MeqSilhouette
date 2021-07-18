@@ -233,8 +233,6 @@ The input parset file is in JSON format with parameters that are loosely grouped
      - 
      - Indicate if the correction for parallactic angle rotation has already been made. If True, rotate the visibilities by twice the field angle. If False, perform parallactic angle rotation correction before introducing polarisation leakage (D-Jones) (`Leppanen et al. 1995 <https://ui.adsabs.harvard.edu/abs/1995AJ....110.2479L/abstract>`_).
 
-.. note:: Ensure that *ms_nchan* != 1 when *trop_enabled* = True. AATM may fail while when there is only one frequency channel present in the MS. If only one (e.g. averaged) frequency channel is desired, the tropospheric corruptions must be calculated at a higher frequency resolution and the channels manually averaged at the end of the simulation run.
-
 .. _sky-models:
 
 Sky models
