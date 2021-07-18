@@ -242,9 +242,11 @@ class SimCoordinator():
 
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
-        tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
+        if 'SIGMA_SPECTRUM' in tab.colnames():
+            tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
         tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
-        tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
+        if 'WEIGHT_SPECTRUM' in tab.colnames():
+            tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
         tab.close()
 
 
