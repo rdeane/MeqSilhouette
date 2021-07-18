@@ -2,6 +2,13 @@
 History
 =======
 
+2.8 (xxxx)
+----------
+
+* Add ability to read in an existing MS and regularize it
+* Update tropospheric plotting modules 
+* Apply tropospheric corruptions to single channel datasets
+
 2.7.1 (2021)
 ------------
 
