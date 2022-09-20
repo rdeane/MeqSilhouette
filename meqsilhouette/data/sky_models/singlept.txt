@@ -1,0 +1,2 @@
+#format: name ra_h ra_m ra_s dec_d dec_m dec_s i q u v emaj_s emin_s pa_d
+Pt1 12.000000 30.000000 49.000000 +12.000000 23.000000 28.000000 1.000000 0 0 0 0.0000 0.0000 0.0

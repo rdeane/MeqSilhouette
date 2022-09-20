@@ -1,47 +1,42 @@
-#!/usr/bin/env python
-
-
 from setuptools import setup, find_packages
-from framework import __version__
+from meqsilhouette import __version__
 
+with open("README.rst") as tmp:
+    readme = tmp.read()
 
-setup(name='framework')
-
-scripts = [
-    "driver/run_meqsilhouette.py"
-]
-
-
-package_data = {'MeqSilhouette': [
-    'input/antenna_tables/*',
-    'input/source_models/*',
-    'framework/*',
-    'input/eht230.json',
-]}
-
-
-requires = [
-    "numpy",
-    "python_casacore",
-    "meqtrees",
-    "simms",
-    "ATM"
-    "matplotlib",
-    "seaborn",
-    "astropy"
-]
-
-
-setup(name="framework",
-      version=__version__,
-      description="EHT synthetic data generator",
-      author="Roger Deane",
-      author_email="roger.deane@up.ac.za",
-      url="https://github.com/rdeane/MeqSilhouette",
-      packages=find_packages(),
-      package_data=package_data,
-      install_requires=requires,
-      scripts=scripts,
-      license="limited to EHT Consortium members",
-      classifiers=[],
+setup(
+    author='Iniyan Natarajan',
+    author_email='iniyan.natarajan@wits.ac.za',
+    name='meqsilhouette',
+    version=__version__,
+    description='VLBI Observation Simulator',
+    long_description=readme,
+    long_description_content_type="text/x-rst",
+    url='https://github.com/rdeane/MeqSilhouette',
+    license='GNU GPL v2',
+    packages=find_packages(include=['meqsilhouette','meqsilhouette.*']),
+    package_data={
+        'meqsilhouette': ['data/*','data/ANTENNA_EHT2017/*','framework/tdlconf.profiles'],
+        },
+    entry_points={
+        'console_scripts': ['meqsilhouette=meqsilhouette.driver.run_meqsilhouette:run_meqsilhouette']
+    },
+    install_requires=[
+        'mpltools',
+        'seaborn',
+        'astLib',
+        'astropy',
+        'termcolor',
+        'numpy',
+        'matplotlib',
+        'pyfits',
+        'simms',
+        ],
+    keywords='meqsilhouette',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Programming Language :: Python :: 2.7',
+        ],
 )

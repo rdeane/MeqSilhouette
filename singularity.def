@@ -1,0 +1,90 @@
+BootStrap: docker
+From: ubuntu:18.04
+
+%labels
+
+    APPLICATION_NAME_BASE Ubuntu LTS + MeqSilhouette + dependencies
+    OS_VERSION 18.04 
+
+    SYSTEM_NAME MeqSv2
+    SYSTEM_SINGULARITY_VERSION 3.5.2
+    SYSTEM_URL https://github.com/rdeane/MeqSilhouette
+
+    AUTHOR_NAME Iniyan Natarajan, Robin Hall
+    AUTHOR_EMAIL iniyan.natarajan@wits.ac.za, robin@idia.ac.za
+
+%help
+A base Ubuntu 18 Singularity container with MeqSilhoutte software as per documentation specified at 
+https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
+
+%post
+    # make opt directory for installs
+    mkdir -p /opt
+
+    # ensures no interaction for tzdata in casa install
+    export DEBIAN_FRONTEND=noninteractive
+
+    # install utility packages and repositories
+    apt-get update -y
+    apt-get install -y wget vim python-pip gcc python unzip git time
+     
+    apt-get install -y build-essential cmake gfortran g++ libncurses5-dev \
+        libreadline-dev flex bison libblas-dev liblapacke-dev libcfitsio-dev \
+        wcslib-dev libfftw3-dev libhdf5-serial-dev rsync \
+        libboost-python-dev libboost-program-options-dev libboost-program-options1.65.1 \
+        libboost-program-options1.65-dev libpython2.7-dev libxml2-dev libxslt1-dev \
+        texlive-latex-extra texlive-fonts-recommended dvipng
+
+    # build aatm manually
+    cd
+    cd /opt
+    wget -c https://launchpad.net/aatm/trunk/0.5/+download/aatm-0.5.tar.gz
+    tar -xzf aatm-0.5.tar.gz
+    cd aatm-0.5 && ./configure && make && make install
+
+    # install kern 6
+    apt-get install -y software-properties-common
+    add-apt-repository -s ppa:kernsuite/kern-6
+    apt-add-repository multiverse
+    apt-add-repository restricted
+
+    # install required packages
+    apt-get install -y \
+        meqtrees \
+        meqtrees-timba \
+        tigger \
+        tigger-lsm \
+        python-astro-tigger \
+        python-astro-tigger-lsm \
+        casalite \
+        wsclean \
+        pyxis \
+        python-casacore
+
+    apt-get clean
+
+    # update casa data
+    casa-config --exec update-data
+
+    # download and install MeqSilhouette
+    cd
+    cd /opt
+    git clone --depth 1 --branch v2.7.1 https://github.com/rdeane/MeqSilhouette.git
+    cd MeqSilhouette && pip install .
+    cd
+    
+%environment    
+    export MEQTREES_CATTERY_PATH=/usr/lib/python2.7/dist-packages/Cattery
+    export PATH=/usr/local/bin:$PATH
+    export PYTHONPATH=/usr/lib/python2.7/dist-packages # for Tigger
+    export LC_ALL=C
+
+%runscript
+    echo "Arguments received: $*"
+    meqsilhouette "$@"
+
+%test
+    # Sanity check that the container is operating
+    # make sure that a python import is working
+    echo $(which python)
+    /usr/bin/python -c "import numpy as np;np.__config__.show()"
