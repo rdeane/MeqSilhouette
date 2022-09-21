@@ -55,10 +55,10 @@ RUN apt-get clean
 # update casa data
 RUN casa-config --exec update-data
 
-# download and install MeqSilhouette v2.7
+# download and install MeqSilhouette from master
 RUN cd
 RUN cd /opt
-RUN git clone --depth 1 --branch v2.7.1 https://github.com/rdeane/MeqSilhouette.git
+RUN git clone --depth 1 https://github.com/rdeane/MeqSilhouette.git
 RUN cd MeqSilhouette && pip install .
 RUN cd
 

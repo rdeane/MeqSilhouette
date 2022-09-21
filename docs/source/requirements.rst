@@ -40,9 +40,9 @@ If using a virtual environment, the following steps are necessary (skip ahead if
 
 .. note:: If --system-site-packages is not passed to virtualenv, the global packages installed via apt-get above will not be available and must be installed manually from source.
 
-Now, check out MeqSilhouette `version 2.7 <https://github.com/rdeane/MeqSilhouette/tree/v2.7>`_ from GitHub and install using pip::
+Now, check out MeqSilhouette from GitHub and install using pip::
 
-   $ git clone --branch v2.7 https://github.com/rdeane/MeqSilhouette.git
+   $ git clone https://github.com/rdeane/MeqSilhouette.git
    $ cd MeqSilhouette
    $ pip install .   
 
