@@ -68,8 +68,15 @@ information, simply rebuild the image to eliminate this warning thrown by *CASA*
 Building Docker image
 ---------------------
 
-*Docker* is also supported. Docker can be installed on your system via *apt-get*. Once installed,
-build the docker image as follows::
+*Docker* is also supported. Docker can be installed on your system via *apt-get*. 
+
+Docker images for MeqSilhouette v2 are available on Docker Hub::
+
+    $ docker pull iniyannatarajan/meqsilhouette:<tagname>
+
+where *tagname* is the required tag/version name from Docker Hub.
+
+Alternately, build the docker image as follows::
 
    $ cd /path/to/Dockerfile
    $ docker build -t meqsilhouette .
