@@ -102,14 +102,14 @@ class SimCoordinator():
         ### INI: Oversampling factor to use for visibility prediction
         self.oversampling = predict_oversampling
         if predict_seed != -1:
-            rng_predict = np.random.RandomState(predict_seed)
+            self.rng_predict = np.random.RandomState(predict_seed)
         else:
-            rng_predict = np.random.RandomState()
+            self.rng_predict = np.random.RandomState()
 
         if atm_seed != -1:
-            rng_atm = np.random.RandomState(atm_seed)
+            self.rng_atm = np.random.RandomState(atm_seed)
         else:
-            rng_atm = np.random.RandomState()
+            self.rng_atm = np.random.RandomState()
 
         ### INI: populate WEIGHT and SIGMA columns
         self.thermal_noise_enabled = thermal_noise_enabled
@@ -275,7 +275,7 @@ class SimCoordinator():
                     if a1 > a0:
                         rms = self.receiver_rms[self.baseline_dict[(a0,a1)]]
                         #self.thermal_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms, size=size) + 1j * np.random.normal(0.0, rms, size=size)
-                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = rng_predict.normal(0.0, rms, size=size) + 1j * rng_predict.normal(0.0, rms, size=size)
+                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = self.rng_predict.normal(0.0, rms, size=size) + 1j * self.rng_predict.normal(0.0, rms, size=size)
 
             np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
         try:
@@ -483,7 +483,7 @@ class SimCoordinator():
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
                         #self.sky_noise[self.baseline_dict[(a0, a1)]] = np.random.normal(0.0, rms) + 1j * np.random.normal(0.0, rms)
-                        self.sky_noise[self.baseline_dict[(a0, a1)]] = rng_atm.normal(0.0, rms) + 1j * rng_atm.normal(0.0, rms)
+                        self.sky_noise[self.baseline_dict[(a0, a1)]] = self.rng_atm.normal(0.0, rms) + 1j * self.rng_atm.normal(0.0, rms)
                         sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
         try:
@@ -512,7 +512,7 @@ class SimCoordinator():
             
             # INI: generate random walk error term
             #turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(np.random.randn(self.time_unique.shape[0]))
-            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(rng_atm.randn(self.time_unique.shape[0]))
+            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(self.rng_atm.randn(self.time_unique.shape[0]))
             turb_phase_errors[:, :, ant] = np.multiply(turb_phase_errors[:, 0, ant].reshape((self.time_unique.shape[0], 1)), (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
 
         self.turb_phase_errors = turb_phase_errors
@@ -764,7 +764,7 @@ class SimCoordinator():
                 self.mjd_ptg_epoch_timecentroid = self.mjd_ptg_epoch_timecentroid[:-1]
 
             #self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * np.random.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
-            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * rng_predict.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
+            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
                     | (self.mjd_ptg_epoch_timecentroid > self.mjd_ant_set[ant])
@@ -885,8 +885,8 @@ class SimCoordinator():
             temp_amplitudes_l = spl_l(self.chan_freq)
             #temp_phases_r = np.deg2rad(60*np.random.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
             #temp_phases_l = np.deg2rad(60*np.random.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            temp_phases_r = np.deg2rad(60*rng_predict.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            temp_phases_l = np.deg2rad(60*rng_predict.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_r = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_l = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
             self.bjones_interpolated[ant,:,0,0] = np.array(map(cmath.rect, temp_amplitudes_r, temp_phases_r))
             self.bjones_interpolated[ant,:,1,1] = np.array(map(cmath.rect, temp_amplitudes_l, temp_phases_l))
 
@@ -958,8 +958,8 @@ class SimCoordinator():
         for ant in range(self.Nant):
           #self.djones_mat[ant,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
           #self.djones_mat[ant,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
-          self.djones_mat[ant,:,0,1] = rng_predict.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*rng_predict.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
-          self.djones_mat[ant,:,1,0] = rng_predict.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*rng_predict.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,0,1] = self.rng_predict.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*self.rng_predict.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,1,0] = self.rng_predict.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*self.rng_predict.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
 
           if self.mount[ant] == 'ALT-AZ':
             self.pjones_mat[ant,:,0,0] = np.exp(-1j*(self.feed_angle[ant]+self.parallactic_angle[ant,:])) # INI: opposite of feed angle i.e. parang +/- elev
@@ -1000,8 +1000,8 @@ class SimCoordinator():
         for ant in range(self.Nant):
           #self.djones_mat[ant,:,0,1] = np.random.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
           #self.djones_mat[ant,:,1,0] = np.random.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*np.random.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
-          self.djones_mat[ant,:,0,1] = rng_predict.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*rng_predict.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
-          self.djones_mat[ant,:,1,0] = rng_predict.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*rng_predict.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,0,1] = self.rng_predict.normal(self.dR_mean.real[ant],self.dR_std.real[ant],size=(self.num_chan)) + 1j*self.rng_predict.normal(self.dR_mean.imag[ant],self.dR_std.imag[ant],size=(self.num_chan))
+          self.djones_mat[ant,:,1,0] = self.rng_predict.normal(self.dL_mean.real[ant],self.dL_std.real[ant],size=(self.num_chan)) + 1j*self.rng_predict.normal(self.dL_mean.imag[ant],self.dL_std.imag[ant],size=(self.num_chan))
 
         # Set up D = D_N = D_C, Rot(theta = parallactic_angle +/- elevation). Notation following Dodson 2005, 2007.
         for ant in range(self.Nant):
@@ -1079,8 +1079,8 @@ class SimCoordinator():
         for ant in range(self.Nant):
             #self.gain_mat[ant,:,0,0] = np.random.normal(self.gR_mean.real[ant], self.gR_std.real[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gR_mean.imag[ant], self.gR_std.imag[ant], size=(self.time_unique.shape[0]))
             #self.gain_mat[ant,:,1,1] = np.random.normal(self.gL_mean.real[ant], self.gL_std.real[ant], size=(self.time_unique.shape[0])) + 1j*np.random.normal(self.gL_mean.imag[ant], self.gL_std.imag[ant], size=(self.time_unique.shape[0]))
-            self.gain_mat[ant,:,0,0] = rng_predict.normal(self.gR_mean.real[ant], self.gR_std.real[ant], size=(self.time_unique.shape[0])) + 1j*rng_predict.normal(self.gR_mean.imag[ant], self.gR_std.imag[ant], size=(self.time_unique.shape[0]))
-            self.gain_mat[ant,:,1,1] = rng_predict.normal(self.gL_mean.real[ant], self.gL_std.real[ant], size=(self.time_unique.shape[0])) + 1j*rng_predict.normal(self.gL_mean.imag[ant], self.gL_std.imag[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,0,0] = self.rng_predict.normal(self.gR_mean.real[ant], self.gR_std.real[ant], size=(self.time_unique.shape[0])) + 1j*self.rng_predict.normal(self.gR_mean.imag[ant], self.gR_std.imag[ant], size=(self.time_unique.shape[0]))
+            self.gain_mat[ant,:,1,1] = self.rng_predict.normal(self.gL_mean.real[ant], self.gL_std.real[ant], size=(self.time_unique.shape[0])) + 1j*self.rng_predict.normal(self.gL_mean.imag[ant], self.gL_std.imag[ant], size=(self.time_unique.shape[0]))
 
         np.save(II('$OUTDIR')+'/gterms_timestamp_%d'%(self.timestamp), self.gain_mat) # INI: Add timestamps to the output gain files so that SYMBA has access to them.
 
