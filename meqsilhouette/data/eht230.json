@@ -16,6 +16,7 @@
 "corr_quantbits":2,
 "predict_oversampling":8191,
 "predict_seed":42,
+"atm_seed":256,
 "ms_antenna_table":"/home/itachi/software/dev/saiyanprince-meqs-leakage/meqsilhouette/data/ANTENNA_EHT2017",
 "ms_datacolumn":"DATA",
 "ms_RA":187.70591666666667,
