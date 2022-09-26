@@ -885,8 +885,8 @@ class SimCoordinator():
             temp_amplitudes_l = spl_l(self.chan_freq)
             #temp_phases_r = np.deg2rad(60*np.random.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
             #temp_phases_l = np.deg2rad(60*np.random.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            temp_phases_r = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            temp_phases_l = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_r = np.deg2rad(60*self.rng_predict.random_sample(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_l = np.deg2rad(60*self.rng_predict.random_sample(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
             self.bjones_interpolated[ant,:,0,0] = np.array(map(cmath.rect, temp_amplitudes_r, temp_phases_r))
             self.bjones_interpolated[ant,:,1,1] = np.array(map(cmath.rect, temp_amplitudes_l, temp_phases_l))
 
