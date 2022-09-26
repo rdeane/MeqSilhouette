@@ -102,14 +102,14 @@ class SimCoordinator():
         ### INI: Oversampling factor to use for visibility prediction
         self.oversampling = predict_oversampling
         if predict_seed != -1:
-            rng_predict = np.random.default_rng(predict_seed)
+            rng_predict = np.random.RandomState(predict_seed)
         else:
-            rng_predict = np.random.default_rng()
+            rng_predict = np.random.RandomState()
 
         if atm_seed != -1:
-            rng_atm = np.random.default_rng(atm_seed)
+            rng_atm = np.random.RandomState(atm_seed)
         else:
-            rng_atm = np.random.default_rng()
+            rng_atm = np.random.RandomState()
 
         ### INI: populate WEIGHT and SIGMA columns
         self.thermal_noise_enabled = thermal_noise_enabled
