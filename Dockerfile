@@ -58,7 +58,7 @@ RUN casa-config --exec update-data
 # download and install MeqSilhouette from master
 RUN cd
 RUN cd /opt
-RUN git clone --depth 1 https://github.com/rdeane/MeqSilhouette.git
+RUN git clone --depth 1 https://github.com/saiyanprince/MeqSilhouette.git
 RUN cd MeqSilhouette && pip install .
 RUN cd
 
