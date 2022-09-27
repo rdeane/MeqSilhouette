@@ -178,7 +178,7 @@ def run_meqsilhouette(config=None):
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
     sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, parameters['predict_oversampling'], \
-                               parameters["predict_seed"], aperture_eff,\
+                               parameters["predict_seed"], parameters["atm_seed"], aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
                                gR_mean, gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle, parameters['add_thermal_noise'])
