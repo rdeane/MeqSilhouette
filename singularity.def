@@ -1,21 +1,21 @@
 BootStrap: docker
-From: ubuntu:18.04
+From: ubuntu:20.04
 
 %labels
 
     APPLICATION_NAME_BASE Ubuntu LTS + MeqSilhouette + dependencies
-    OS_VERSION 18.04 
+    OS_VERSION 20.04 
 
     SYSTEM_NAME MeqSv2
-    SYSTEM_SINGULARITY_VERSION 3.5.2
+    SYSTEM_SINGULARITY_VERSION 3.10.2
     SYSTEM_URL https://github.com/rdeane/MeqSilhouette
 
     AUTHOR_NAME Iniyan Natarajan, Robin Hall
     AUTHOR_EMAIL iniyan.natarajan@wits.ac.za, robin@idia.ac.za
 
 %help
-A base Ubuntu 18 Singularity container with MeqSilhoutte software as per documentation specified at 
-https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
+A base Ubuntu 20 Singularity container with MeqSilhoutte software as per documentation specified at 
+https://meqsilhouette.readthedocs.io/en/master/requirements.html§
 
 %post
     # make opt directory for installs
@@ -26,14 +26,10 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
 
     # install utility packages and repositories
     apt-get update -y
-    apt-get install -y wget vim python-pip gcc python unzip git time
+    apt-get install -y wget vim python3-pip gcc python3 unzip git time
      
-    apt-get install -y build-essential cmake gfortran g++ libncurses5-dev \
-        libreadline-dev flex bison libblas-dev liblapacke-dev libcfitsio-dev \
-        wcslib-dev libfftw3-dev libhdf5-serial-dev rsync \
-        libboost-python-dev libboost-program-options-dev libboost-program-options1.65.1 \
-        libboost-program-options1.65-dev libpython2.7-dev libxml2-dev libxslt1-dev \
-        texlive-latex-extra texlive-fonts-recommended dvipng
+    apt-get install -y build-essential cmake g++ rsync libboost-python-dev \
+    libboost-program-options-dev texlive-latex-extra texlive-fonts-recommended dvipng cm-super
 
     # build aatm manually
     cd
@@ -42,9 +38,9 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     tar -xzf aatm-0.5.tar.gz
     cd aatm-0.5 && ./configure && make && make install
 
-    # install kern 6
+    # install kern 7
     apt-get install -y software-properties-common
-    add-apt-repository -s ppa:kernsuite/kern-6
+    add-apt-repository -s ppa:kernsuite/kern-7
     apt-add-repository multiverse
     apt-add-repository restricted
 
@@ -52,14 +48,15 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     apt-get install -y \
         meqtrees \
         meqtrees-timba \
-        tigger \
         tigger-lsm \
-        python-astro-tigger \
-        python-astro-tigger-lsm \
+        python3-astro-tigger \
+        python3-astro-tigger-lsm \
         casalite \
         wsclean \
         pyxis \
-        python-casacore
+        python3-casacore
+
+    pip install numpy==1.21
 
     apt-get clean
 
@@ -69,14 +66,14 @@ https://meqsilhouette.readthedocs.io/en/leakage/requirements.html§
     # download and install MeqSilhouette from master
     cd
     cd /opt
-    git clone --depth 1 https://github.com/rdeane/MeqSilhouette.git
+    git clone --branch focalpy38 --depth 1 https://github.com/rdeane/MeqSilhouette.git
     cd MeqSilhouette && pip install .
     cd
     
 %environment    
-    export MEQTREES_CATTERY_PATH=/usr/lib/python2.7/dist-packages/Cattery
+    export MEQTREES_CATTERY_PATH=/usr/lib/python3/dist-packages/Cattery
     export PATH=/usr/local/bin:$PATH
-    export PYTHONPATH=/usr/lib/python2.7/dist-packages # for Tigger
+    export PYTHONPATH=/usr/local/lib/python3.8/dist-packages:/usr/lib/python3/dist-packages # for Tigger
     export LC_ALL=C
 
 %runscript
