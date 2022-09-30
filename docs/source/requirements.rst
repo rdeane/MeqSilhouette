@@ -2,9 +2,11 @@
 Requirements & Installation
 ===========================
 
+.. note:: This is the documentation for the default (master) branch of MeqSv2. For the Python 3 version `click here <https://meqsilhouette.readthedocs.io/en/focalpy38/>`_. For the older Python 2 version, `click here <https://meqsilhouette.readthedocs.io/en/v2.7.1/>`_.
+
 Ubuntu 18.04 + Python 2.7
 -------------------------
-  
+
 It is recommended to install the dependencies via the `KERN-6 <https://kernsuite.info>`_ software suite::
 
    $ sudo apt-get install software-properties-common

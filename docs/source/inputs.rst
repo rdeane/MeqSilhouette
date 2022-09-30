@@ -87,7 +87,11 @@ The input parset file is in JSON format with parameters that are loosely grouped
    * - *predict_seed*
      - int
      - 
-     - Seed for random number generation with numpy. Set to -1 will disable seeding.
+     - Seed for random number generation for realising corruptions, except the atmosphere. Set to -1 to disable reproducible realisations.
+   * - *atm_seed*
+     - int
+     - 
+     - Seed for random number generation for realising the atmosphere. Set to -1 to disable reproducible realisations.
    * - *ms_antenna_table*
      - string
      - 
