@@ -25,7 +25,7 @@ sky model and corrupts the complex visibilities with SEFD-based thermal noise.
    "corr_quantbits":2,
    "predict_oversampling":8191,
    "predict_seed":42,
-   "atm_seed":42,
+   "atm_seed":300,
    "ms_antenna_table":"ANTENNA_EHT2017",
    "ms_datacolumn":"DATA",
    "ms_RA":187.70591666666667,
