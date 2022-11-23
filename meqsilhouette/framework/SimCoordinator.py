@@ -511,7 +511,7 @@ class SimCoordinator():
             L = np.linalg.cholesky(covmatS) # Cholesky factorise the covariance matrix
             
             # INI: generate random walk error term
-            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(self.rng_atm.randn(self.time_unique.shape[0]))
+            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(self.rng_atm.standard_normal(self.time_unique.shape[0]))
             turb_phase_errors[:, :, ant] = np.multiply(turb_phase_errors[:, 0, ant].reshape((self.time_unique.shape[0], 1)), (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
 
         self.turb_phase_errors = turb_phase_errors
@@ -765,7 +765,7 @@ class SimCoordinator():
             if self.num_mispoint_epochs != len(self.mjd_ptg_epoch_timecentroid):
                 self.mjd_ptg_epoch_timecentroid = self.mjd_ptg_epoch_timecentroid[:-1]
 
-            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
+            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.standard_normal(self.Nant,self.num_mispoint_epochs) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
                     | (self.mjd_ptg_epoch_timecentroid > self.mjd_ant_set[ant])
