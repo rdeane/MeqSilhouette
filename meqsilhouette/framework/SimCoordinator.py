@@ -765,7 +765,7 @@ class SimCoordinator():
             if self.num_mispoint_epochs != len(self.mjd_ptg_epoch_timecentroid):
                 self.mjd_ptg_epoch_timecentroid = self.mjd_ptg_epoch_timecentroid[:-1]
 
-            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.standard_normal(self.Nant,self.num_mispoint_epochs) # units: arcsec
+            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.standard_normal((self.Nant,self.num_mispoint_epochs)) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
                     | (self.mjd_ptg_epoch_timecentroid > self.mjd_ant_set[ant])
