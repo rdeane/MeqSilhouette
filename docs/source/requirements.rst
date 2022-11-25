@@ -2,6 +2,15 @@
 Requirements & Installation
 ===========================
 
+The easiest way to run MeqSilhouette (focalpy38 -- Ubuntu 20.04 + Python 3.8) is to pull the docker image from Docker Hub.
+
+Once you have `Docker <https://www.docker.com/>`_ installed on your Ubuntu system, run::
+
+   $ docker pull iniyannatarajan/meqsilhouette:focalpy38
+
+Instructions for building a new Docker image from the Dockerfile provided with the source can be found in the relevant section below.
+If you do not have/want Docker, try one of the other options below.
+
 Ubuntu 20.04 + Python 3.8
 -------------------------
   

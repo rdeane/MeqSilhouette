@@ -54,7 +54,7 @@ RUN pip install numpy==1.21
 RUN apt-get clean
 
 # update casa data
-#RUN casa-config --exec update-data
+RUN casa-config --exec update-data
 
 # download and install MeqSilhouette from master
 RUN cd
