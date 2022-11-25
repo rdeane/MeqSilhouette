@@ -84,17 +84,9 @@ def genms(msname, input_fits, antenna_table, starttime, obslength_in_sec, RA, DE
 
     # set obs fields
     sourcename = input_fits.split('/')[-1].split('.')[0]
-    info("RA %s"%RA)
-    info("DEC %s"%DEC)
-    # TODO: convert RA and DEC properly here
     RAstr = convertra(RA)
     DECstr = convertdec(DEC)
-    #RAstr = "17h45m40.08" #convertra(RA)
-    #DECstr = "-29.00.36" #convertdec(DEC)
-    info("RA %s"%RAstr)
-    info("DEC %s"%DECstr)
     dir0 = me.direction("J2000", RAstr, DECstr)
-    #sm.setfield(sourcename=sourcename, sourcedirection=["J2000", RA, DEC])
     sm.setfield(sourcename=sourcename, sourcedirection=dir0)
 
     # set obs times
