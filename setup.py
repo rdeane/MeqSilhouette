@@ -31,8 +31,8 @@ setup(
         'matplotlib',
         'pyfits',
         'simms',
-        'casatools',
-        'casadata'
+        'casatools==6.5.5.21',
+        'casadata==6.5.5.21'
         ],
     keywords='meqsilhouette',
     classifiers=[
