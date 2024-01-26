@@ -235,7 +235,7 @@ def run_meqsilhouette(config=None):
             sim_coord.trop_calc_fixdelay_phase_offsets()
             combined_phase_errors += sim_coord.fixdelay_phase_errors
 
-        if combined_phase_errors != 0:
+        if not isinstance(combined_phase_errors, int):
             info('TROPOSPHERE: applying desired combination of phase errors...')
             sim_coord.apply_phase_errors(combined_phase_errors) 
 
