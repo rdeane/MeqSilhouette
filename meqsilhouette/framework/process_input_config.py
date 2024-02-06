@@ -15,7 +15,7 @@ def read_json_files(config):
 
     # Remove empty strings and convert unicode characters to strings
     params = {}
-    for key, val in jparams.iteritems():
+    for key, val in jparams.items():
         # Make sure all keys are strings
         _key = str(key)
 
@@ -23,7 +23,7 @@ def read_json_files(config):
         if val == "" or _key == "#":
             pass
         # convert unicode values to strings
-        elif isinstance(val, unicode):
+        elif isinstance(val, str):
             params[_key] = str(val)
         else:
             params[_key] = val

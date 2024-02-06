@@ -12,7 +12,7 @@ import sys
 import pyrap.tables as pt
 import meqsilhouette.framework
 from meqsilhouette.framework.process_input_config import setup_keyword_dictionary, load_json_parameters_into_dictionary
-from meqsilhouette.framework.create_ms import create_ms
+from meqsilhouette.framework.create_ms import create_ms, create_msv2
 from meqsilhouette.framework.SimCoordinator import SimCoordinator
 from meqsilhouette.framework.meqtrees_funcs import make_dirty_image_lwimager
 from meqsilhouette.framework.comm_functions import *
@@ -162,11 +162,12 @@ def run_meqsilhouette(config=None):
     elif parameters['corr_quantbits'] == 2: corr_eff = 0.88
     else: abort('Invalid number of bits used for quantization. Value of "corr_quantbits" in input json file must be 1 or 2')
 
-    info('Creating empty MS with simms')
-    create_ms(MS, input_fitsimage, ms_dict)
+    info('Creating empty MS')
+    #create_ms(MS, input_fitsimage, ms_dict)
+    create_msv2(MS, input_fitsimage, ms_dict)
 
     # Move simms log into the output directory
-    os.system('mv %s %s'%('log-simms.txt', input_copy_path.rsplit('/',1)[0]))
+    #os.system('mv %s %s'%('log-simms.txt', input_copy_path.rsplit('/',1)[0]))
 
     # INI: Write mount types into the MOUNT column in the empty MS prior to generating synthetic data.
     station_mount_types = np.loadtxt(parameters['station_info'], usecols=[19], dtype=str, skiprows=1)
@@ -234,8 +235,9 @@ def run_meqsilhouette(config=None):
             sim_coord.trop_calc_fixdelay_phase_offsets()
             combined_phase_errors += sim_coord.fixdelay_phase_errors
 
-        info('TROPOSPHERE: applying desired combination of phase errors...')
-        sim_coord.apply_phase_errors(combined_phase_errors) 
+        if not isinstance(combined_phase_errors, int):
+            info('TROPOSPHERE: applying desired combination of phase errors...')
+            sim_coord.apply_phase_errors(combined_phase_errors) 
 
         info('All selected tropospheric corruptions applied.')
 

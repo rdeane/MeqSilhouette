@@ -31,12 +31,14 @@ setup(
         'matplotlib',
         'pyfits',
         'simms',
+        'casatools==6.5.5.21',
+        'casadata==6.5.5.21' 
         ],
     keywords='meqsilhouette',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.8',
         ],
 )

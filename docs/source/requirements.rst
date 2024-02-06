@@ -2,31 +2,38 @@
 Requirements & Installation
 ===========================
 
-.. note:: This is the documentation for the default (master) branch of MeqSv2. For the Python 3 version `click here <https://meqsilhouette.readthedocs.io/en/focalpy38/>`_. For the older Python 2 version, `click here <https://meqsilhouette.readthedocs.io/en/v2.7.1/>`_.
+The easiest way to run MeqSilhouette (focalpy38 -- Ubuntu 20.04 + Python 3.8) is to pull the docker image from Docker Hub.
 
-Ubuntu 18.04 + Python 2.7
+Once you have `Docker <https://www.docker.com/>`_ installed on your Ubuntu system, run::
+
+   $ docker pull iniyannatarajan/meqsilhouette:focalpy38
+
+Instructions for building a new Docker image from the Dockerfile provided with the source can be found in the relevant section below.
+If you do not have/want Docker, try one of the other options below.
+
+Ubuntu 20.04 + Python 3.8
 -------------------------
-
-It is recommended to install the dependencies via the `KERN-6 <https://kernsuite.info>`_ software suite::
+  
+It is recommended to install the dependencies via the `KERN-7 <https://kernsuite.info>`_ software suite::
 
    $ sudo apt-get install software-properties-common
-   $ sudo add-apt-repository -s ppa:kernsuite/kern-6
+   $ sudo add-apt-repository -s ppa:kernsuite/kern-7
    $ sudo apt-add-repository multiverse
    $ sudo apt-add-repository restricted
    $ sudo apt-get update
 
 Install the following dependencies via *apt-get*::
 
-   $ sudo apt-get install meqtrees meqtrees-timba tigger tigger-lsm python-astro-tigger \
-   python-astro-tigger-lsm casalite wsclean pyxis python-casacore
+   $ sudo apt-get install meqtrees meqtrees-timba tigger-lsm python3-astro-tigger \
+   python3-astro-tigger-lsm casalite wsclean pyxis python3-casacore
 
 .. note:: The casacore data must be kept up-to-date. This can be done by following the instructions on the `CASA website <https://casaguides.nrao.edu/index.php/Fixing_out_of_date_TAI_UTC_tables_(missing_information_on_leap_seconds)>`_.
 
 Optionally, install Latex (for creating paper-quality plots)::
 
-  $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng
+  $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng cm-super
 
-*AATM v0.5* can be obtained from `here <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 18.04, ensure that the packages *libboost-program-options-dev*, *libboost-program-options1.65-dev*, and *libboost-program-options1.65.1* are installed. Once these are installed, proceed as follows::
+*AATM v0.5* can be obtained from `here <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 20.04 install *libboost-program-options-dev* using apt-get. Once this is installed, proceed as follows::
 
    $ cd /path/to/aatm-source-code
    $ ./configure --prefix=/path/to/aatm-installation
@@ -70,15 +77,7 @@ information, simply rebuild the image to eliminate this warning thrown by *CASA*
 Building Docker image
 ---------------------
 
-*Docker* is also supported. Docker can be installed on your system via *apt-get*. 
-
-Docker images for MeqSilhouette v2 are available on Docker Hub::
-
-    $ docker pull iniyannatarajan/meqsilhouette:<tagname>
-
-where *tagname* is the required tag/version name from Docker Hub.
-
-Alternately, build the docker image as follows::
+*Docker* is also supported. Docker can be installed on your system via *apt-get* and the docker image can be built as follows::
 
    $ cd /path/to/Dockerfile
    $ docker build -t meqsilhouette .
@@ -87,6 +86,8 @@ As before, the build process ensures that *casacore* data are up-to-date.
 
 Known installation issues
 -------------------------
+
+.. note:: One or more of the following issues were originally encountered with Ubuntu 18.04 + Python 2.7 and may possibly be never encountered in the future.
 
 1. If MeqTrees cannot see the *TiggerSkyModel* module that ought to load when *turbo-sim.py* is run (i.e. when an ASCII sky model is used), the parent directory of *Tigger* must be added to PYTHONPATH. Bear in mind that this may cause python version conflicts with other packages. In that case, it is recommended to have Tigger installed in a separate directory such as /opt/Tigger. For manual installation of `Tigger <https://github.com/ska-sa/tigger>`_ and `tigger-lsm <https://github.com/ska-sa/tigger-lsm>`_, refer to their respective repositories. Without this, MeqSilhouette will still work with FITS images as input sky models.
 

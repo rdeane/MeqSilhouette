@@ -102,14 +102,13 @@ class SimCoordinator():
         ### INI: Oversampling factor to use for visibility prediction
         self.oversampling = predict_oversampling
         if predict_seed != -1:
-            self.rng_predict = np.random.RandomState(predict_seed)
+            self.rng_predict = np.random.default_rng(predict_seed)
         else:
-            self.rng_predict = np.random.RandomState()
-
+            self.rng_predict = np.random.default_rng()
         if atm_seed != -1:
-            self.rng_atm = np.random.RandomState(atm_seed)
+            self.rng_atm = np.random.default_rng(atm_seed)
         else:
-            self.rng_atm = np.random.RandomState()
+            self.rng_atm = np.random.default_rng()
 
         ### INI: populate WEIGHT and SIGMA columns
         self.thermal_noise_enabled = thermal_noise_enabled
@@ -197,7 +196,7 @@ class SimCoordinator():
             startvis = 0
             endvis = self.vis_per_image
             # INI: cycle through images and simulate including polarisation info, if present.
-            for img_ind in range(self.num_images):
+            for img_ind in range(int(self.num_images)):
                 temp_input_fits = '%s/t%04d'%(self.input_fitsimage,img_ind)
                 info('Simulating visibilities (corr dumps) from %d to %d using input sky model %s'%(startvis,endvis,temp_input_fits))
                 run_wsclean(temp_input_fits, self.input_fitspol, self.input_changroups, startvis, endvis, self.oversampling)
@@ -431,9 +430,12 @@ class SimCoordinator():
             #output = subprocess.check_output(self.ATM_absorption_string(self.chan_freq[0]-self.chan_width, self.chan_freq[-1], self.chan_width,self.average_pwv[ant], self.average_gpress[ant],self.average_gtemp[ant]),shell=True)
             output = subprocess.check_output(ATM_abs_string,shell=True)
             atmfile = open(II('$OUTDIR')+'/atm_output/ATMstring_ant%i.txt'%ant,'w')
-            print>>atmfile,ATM_abs_string
+            print(ATM_abs_string, file=atmfile)
             atmfile.close()
-            atm_abs = file(II('$OUTDIR')+'/atm_output/%satm_abs.txt' % ant, 'w'); atm_abs.write(output); atm_abs.close()
+
+            with open(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, 'wb') as atm_abs:
+                atm_abs.write(output)
+
             if self.num_chan == 1:
                 freq_atm, dry, wet, temp_atm = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), axis=0), 0, 1)
             else:
@@ -509,7 +511,7 @@ class SimCoordinator():
             L = np.linalg.cholesky(covmatS) # Cholesky factorise the covariance matrix
             
             # INI: generate random walk error term
-            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(self.rng_atm.randn(self.time_unique.shape[0]))
+            turb_phase_errors[:, 0, ant] = np.sqrt(1/np.sin(self.elevation_tropshape[:, 0, ant])) * L.dot(self.rng_atm.standard_normal(self.time_unique.shape[0]))
             turb_phase_errors[:, :, ant] = np.multiply(turb_phase_errors[:, 0, ant].reshape((self.time_unique.shape[0], 1)), (self.chan_freq/self.chan_freq[0]).reshape((1, self.chan_freq.shape[0])))
 
         self.turb_phase_errors = turb_phase_errors
@@ -546,9 +548,12 @@ class SimCoordinator():
             
             output = subprocess.check_output(ATM_disp_string,shell=True)
             atmfile = open(II('$OUTDIR')+'/atm_output/ATMstring_ant%i.txt'%ant,'a')
-            print>>atmfile,ATM_disp_string
+            print(ATM_disp_string, file=atmfile)
             atmfile.close()
-            atm_disp = file(II('$OUTDIR')+'/atm_output/%satm_disp.txt' % ant, 'w'); atm_disp.write(output); atm_disp.close()
+
+            with open(II('$OUTDIR')+'/atm_output/%satm_disp.txt'%ant, 'wb') as atm_disp:
+                atm_disp.write(output)
+
             if self.num_chan == 1:
                 wet_non_disp, wet_disp, dry_non_disp = np.swapaxes(np.expand_dims(np.genfromtxt(II('$OUTDIR')+'/atm_output/%satm_disp.txt'%ant, skip_header=1, usecols=[1, 2, 3], delimiter=',',autostrip=True), axis=0), 0, 1)
             else:
@@ -760,7 +765,7 @@ class SimCoordinator():
             if self.num_mispoint_epochs != len(self.mjd_ptg_epoch_timecentroid):
                 self.mjd_ptg_epoch_timecentroid = self.mjd_ptg_epoch_timecentroid[:-1]
 
-            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.randn(self.Nant,self.num_mispoint_epochs) # units: arcsec
+            self.pointing_offsets = pointing_rms.reshape(self.Nant,1) * self.rng_predict.standard_normal((self.Nant,self.num_mispoint_epochs)) # units: arcsec
             for ant in range(self.Nant):
                 ind = (self.mjd_ptg_epoch_timecentroid < self.mjd_ant_rise[ant]) \
                     | (self.mjd_ptg_epoch_timecentroid > self.mjd_ant_set[ant])
@@ -834,7 +839,7 @@ class SimCoordinator():
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         marker = itertools.cycle(('.', 'o', 'v', '^', 's', '+', '*', 'h', 'D'))
         for i in range(self.Nant):
-            pl.plot(abs(self.pointing_offsets[i,:]),self.pointing_amp_errors[i,:], marker=marker.next(), linestyle='', alpha=1,label=self.station_names[i])
+            pl.plot(abs(self.pointing_offsets[i,:]),self.pointing_amp_errors[i,:], marker=next(marker), linestyle='', alpha=1,label=self.station_names[i])
         pl.xlim(0,np.nanmax(abs(self.pointing_offsets))*1.1)
         pl.ylim(np.nanmin(self.pointing_amp_errors[i,:])*0.8,1.04)
         pl.xlabel(r'Pointing offset, $\rho$ / arcsec', fontsize=FSIZE)
@@ -879,10 +884,10 @@ class SimCoordinator():
             #bjones_interpolated[ant] = spl(self.chan_freq)
             temp_amplitudes_r = spl_r(self.chan_freq)
             temp_amplitudes_l = spl_l(self.chan_freq)
-            temp_phases_r = np.deg2rad(60*self.rng_predict.random_sample(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            temp_phases_l = np.deg2rad(60*self.rng_predict.random_sample(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
-            self.bjones_interpolated[ant,:,0,0] = np.array(map(cmath.rect, temp_amplitudes_r, temp_phases_r))
-            self.bjones_interpolated[ant,:,1,1] = np.array(map(cmath.rect, temp_amplitudes_l, temp_phases_l))
+            temp_phases_r = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_r.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            temp_phases_l = np.deg2rad(60*self.rng_predict.random(temp_amplitudes_l.shape[0]) - 30) # add random phases between -30 deg to +30 deg
+            self.bjones_interpolated[ant,:,0,0] = np.array(list(map(cmath.rect, temp_amplitudes_r, temp_phases_r)))
+            self.bjones_interpolated[ant,:,1,1] = np.array(list(map(cmath.rect, temp_amplitudes_l, temp_phases_l)))
 
         # INI: Write the bandpass gains
         np.save(II('$OUTDIR')+'/bterms_timestamp_%d'%(self.timestamp), self.bjones_interpolated)
@@ -1099,7 +1104,7 @@ class SimCoordinator():
         #from mpltools import color
         #cmap = pl.cm.Set1
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated; use prop_cycle
-        colors = [pl.cm.Set1(i) for i in np.linspace(0, 1, self.nbl)]
+        colors = [pl.cm.Set1(i) for i in np.linspace(0, 1, int(self.nbl))]
         fig, ax = pl.subplots()
         ax.set_prop_cycle(cycler('color', colors))
         for ant0 in range(self.Nant):
@@ -1331,8 +1336,8 @@ class SimCoordinator():
         ax1 = fig.add_subplot(111)
         ax2 = ax1.twiny()
         #x_vlba,y_vlba = np.loadtxt('/home/deane/git-repos/vlbi-sim/output/XMM-LSS/vlba_xmmlss_sigma_vs_uvbin.txt').T #/home/deane/git-repos/vlbi-sim/output/VLBA_COSMOS/vlba_sigma_vs_uvbin.txt',comments='#').T
-        x = np.ravel(zip(uvbins_edges[:-1],uvbins_edges[1:]))
-        y = np.ravel(zip(stdbins,stdbins))
+        x = np.ravel(list(zip(uvbins_edges[:-1],uvbins_edges[1:])))
+        y = np.ravel(list(zip(stdbins,stdbins)))
         #y_minus1ant = np.ravel(zip(stdbins_minus1ant,stdbins_minus1ant))
 
         #ax1.plot(x_vlba,y_vlba*1e6,color='grey',alpha=1,label='VLBA',lw=3)

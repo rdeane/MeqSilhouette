@@ -1,7 +1,7 @@
 {
-"outdirname":"/meqsdata/output/ehttest",
-"input_fitsimage":"/meqsdata/sky_models/singlept",
-"input_fitspol":1,
+"outdirname":"/meqsdata/output/wsclean_timevar_point_allcorrupt",
+"input_fitsimage":"/meqsdata/sky_models/timevar_point",
+"input_fitspol":0,
 "input_changroups":1,
 "output_to_logfile":0,
 "add_thermal_noise":1,
