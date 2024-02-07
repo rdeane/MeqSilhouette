@@ -2,12 +2,17 @@
 History
 =======
 
-2.8 (xxxx)
+3.0.0-alpha (07 Feb 2024)
 ----------
 
-* Add ability to read in an existing MS and regularize it
-* Update tropospheric plotting modules 
-* Apply tropospheric corruptions to single channel datasets
+* Merge leakage with master by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/19
+* Update container definition files by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/20
+* Update docker installation instructions by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/21
+* Generate atmosphere independently by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/22
+* Minor updates to docs by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/23
+* Port to python 3
+* Generate reproducible stochastic atmospheric corruptions independently from other corruptions
+* Merge focalpy38 with master by @iniyannatarajan
 
 2.7.1 (2021)
 ------------
