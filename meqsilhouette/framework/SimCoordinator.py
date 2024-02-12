@@ -116,23 +116,23 @@ class SimCoordinator():
 
         tab.close() # close main MS table
 
+        ### troposphere information
         self.trop_enabled = trop_enabled
-        if (self.trop_enabled):
-            self.trop_wetonly = trop_wetonly
-            self.average_pwv = pwv
-            self.average_gpress = gpress
-            self.average_gtemp = gtemp
-            self.coherence_time = coherence_time
-            self.fixdelay_max_picosec = fixdelay_max_picosec
-            self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
-            self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
-            self.transmission = np.exp(-1*self.opacity)
+        self.trop_wetonly = trop_wetonly
+        self.average_pwv = pwv
+        self.average_gpress = gpress
+        self.average_gtemp = gtemp
+        self.coherence_time = coherence_time
+        self.fixdelay_max_picosec = fixdelay_max_picosec
+        self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
+        self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
+        self.transmission = np.exp(-1*self.opacity)
 
-            # Set some optional arrays to None. These will be filled later depending upon the user request.
-            self.transmission_matrix = None
-            self.turb_phase_errors = None
-            self.delay_alltimes = None
-            self.sky_noise = None
+        # Set some optional arrays to None. These will be filled later depending upon the user request.
+        self.transmission_matrix = None
+        self.turb_phase_errors = None
+        self.delay_alltimes = None
+        self.sky_noise = None
         
         ### bandpass information
         self.bandpass_table = bandpass_table
