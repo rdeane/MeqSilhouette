@@ -114,10 +114,7 @@ class SimCoordinator():
         self.thermal_noise_enabled = thermal_noise_enabled
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
 
-        self.compute_weights()
-
         tab.close() # close main MS table
-
 
         self.trop_enabled = trop_enabled
         if (self.trop_enabled):
@@ -1090,6 +1087,76 @@ class SimCoordinator():
         self.data = data_reshaped.reshape(self.data.shape)
 
         self.save_data()
+
+    ##################################
+    # Add noise components
+    def add_noise(self, tropnoise, thermalnoise):
+        """ Add sky and receiver noise components to the visibilities and populate weight columns"""
+
+        # compute receiver rms noise
+        for a0 in range(self.Nant):
+            for a1 in range(self.Nant):
+                if a1 > a0:
+                    self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * \
+                                                                        self.SEFD[a1] / float(2 * self.tint * self.chan_width))
+
+        # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
+        if tropnoise:
+            sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape))))
+            self.sky_noise = np.zeros(self.data.shape, dtype='complex')
+            sky_sigma_estimator = np.zeros(self.data.shape)
+
+            for a0 in range(self.Nant):
+                for a1 in range(self.Nant):
+                    if a1 > a0:
+                        rms = (1/self.corr_eff) * np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / (float(2 * self.tint * self.chan_width)))
+                        self.temp_rms = rms
+                        rms = np.expand_dims(rms, 2)
+                        rms = rms * np.ones((1, 1, 4))
+                        self.sky_noise[self.baseline_dict[(a0, a1)]] = self.rng_atm.normal(0.0, rms) + 1j * self.rng_atm.normal(0.0, rms)
+                        sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
+            np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
+
+            # add sky noise rms to receiver rms if tropnoise is set
+            try:
+              for tind in range(self.nchunks):
+                self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] = np.sqrt(np.power(self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize], 2) + \
+                                                                               np.power(sky_sigma_estimator[tind*self.chunksize:(tind+1)*self.chunksize], 2))
+            except MemoryError:
+              abort("Arrays too large to be held in memory. Aborting execution.")
+
+        # use the receiver rms to realise thermal noise
+        if thermalnoise:
+            info('Realise thermal noise from receiver rms...')
+            self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
+            size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
+            for a0 in range(self.Nant):
+                for a1 in range(self.Nant):
+                    if a1 > a0:
+                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]]
+                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = self.rng_predict.normal(0.0, rms, size=size) + 1j * self.rng_predict.normal(0.0, rms, size=size)
+
+            np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
+
+        # add both the noise components to the data
+        try:
+          info('Applying thermal noise to data...')
+          for tind in range(self.nchunks):
+            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.thermal_noise[tind*self.chunksize:(tind+1)*self.chunksize] + \
+                                                                        self.sky_noise[tind*self.chunksize:(tind+1)*self.chunksize]
+          self.save_data()
+        except MemoryError:
+          abort("Arrays too large to be held in memory. Aborting execution.")
+
+        # populate MS weight and sigma columns using the receiver rms (with or without sky noise)
+        tab = pt.table(self.msname, readonly=False,ack=False)
+        tab.putcol("SIGMA", self.receiver_rms[:,0,:])
+        if 'SIGMA_SPECTRUM' in tab.colnames():
+            tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
+        tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
+        if 'WEIGHT_SPECTRUM' in tab.colnames():
+            tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
+        tab.close()
 
     #############################
     ##### General MS plots  #####
