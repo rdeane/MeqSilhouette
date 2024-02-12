@@ -203,7 +203,7 @@ def run_meqsilhouette(config=None):
         
     ### TROPOSPHERE COMPONENTS ###
     combined_phase_errors = 0 #init for trop combo choice
-    additive_noises       = None
+
     if parameters['trop_enabled']:
         info('Tropospheric module is enabled, applying corruptions...')
         if parameters['trop_wetonly']:
@@ -215,16 +215,11 @@ def run_meqsilhouette(config=None):
             info('TROPOSPHERE ATTENUATE: attenuating signal using PWV-derived opacity...')
             sim_coord.trop_opacity_attenuate() 
 
-        if parameters['trop_noise']:
-            info('TROPOSPHERE NOISE: adding sky noise from non-zero PWV...')
-            additive_noises = sim_coord.trop_add_sky_noise()
-
         if parameters['trop_mean_delay']:
             info('TROPOSPHERE DELAY: computing mean delay (time-variability from elevation changes)...')
             sim_coord.trop_calc_mean_delays()
             combined_phase_errors += sim_coord.phasedelay_alltimes
     
-            
         if parameters['trop_turbulence']:
             info('TROPOSPHERE TURBULENCE: computing Kolmogorov turbulence phase errors...')
             sim_coord.trop_generate_turbulence_phase_errors()
@@ -244,9 +239,6 @@ def run_meqsilhouette(config=None):
         if parameters['trop_makeplots']:
             sim_coord.trop_plots()
             info('Generated troposphere plots')
-
-    ### POPULATE MS WITH SIGMA AND WEIGHT ESTIMATORS ###
-    sim_coord.add_weights(additive_noises)
 
     ### PARALLACTIC ANGLE AND POLARIZATION LEAKAGE ###
     if parameters['uvjones_d_on']:
@@ -271,11 +263,9 @@ def run_meqsilhouette(config=None):
             info('Generating bandpass plots...')
             sim_coord.make_bandpass_plots()
 
-    ### THERMAL NOISE ###
-    if parameters['add_thermal_noise']:
-        info('Adding thermal noise...')
-        sim_coord.add_receiver_noise()
-        info('Thermal noise added.')
+    ### Add all noise components and fill in the weight columns
+    # TODO must do the job of trop_add_sky_noise(), add_weights(additive_noises), add_receiver_noise() here
+    sim_coord.add_noise(parameters['trop_noise'], parameters['add_thermal_noise'])
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
