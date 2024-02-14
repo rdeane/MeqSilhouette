@@ -3,7 +3,7 @@ History
 =======
 
 3.0.0-alpha (07 Feb 2024)
-----------
+-------------------------
 
 * Merge leakage with master by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/19
 * Update container definition files by @iniyannatarajan in https://github.com/rdeane/MeqSilhouette/pull/20
