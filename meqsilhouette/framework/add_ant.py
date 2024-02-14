@@ -77,9 +77,9 @@ def AddAnt(inputAntTableName,outputAntTableName, newAntDict):
     info('new antenna row parameter values:')
     for colname in tab.colnames():
         col=tab.getcol(colname)
-        print colname + '='
-        print newAntDict[colname]
-        print ''
+        print (colname + '=')
+        print (newAntDict[colname])
+        print ('')
         col[-1] = newAntDict[colname]
         tab.putcol(colname,col)
     tab.close() 
