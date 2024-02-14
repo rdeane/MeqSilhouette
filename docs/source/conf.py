@@ -26,7 +26,7 @@ author = u'Iniyan Natarajan, Roger Deane'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0.0-alpha'
+release = u'3.0-alpha'
 
 
 # -- General configuration ---------------------------------------------------
@@ -78,7 +78,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'default'#'default', 'alabaster'
+html_theme = 'sphinx_rtd_theme' #'default', 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
