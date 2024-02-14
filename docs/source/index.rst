@@ -20,6 +20,7 @@ Welcome to MeqSilhouette's documentation!
    pipelines
    contributors
    history
+   modules
 
 Indices and tables
 ==================
