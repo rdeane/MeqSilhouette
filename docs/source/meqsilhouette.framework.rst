@@ -68,14 +68,6 @@ Regularize MS with missing rows
    :undoc-members:
    :show-inheritance:
 
-Plot uv-coverage
-----------------
-
-.. automodule:: meqsilhouette.framework.uvdistplot_EHT_v2
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
