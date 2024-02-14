@@ -29,7 +29,6 @@ setup(
         'termcolor',
         'numpy',
         'matplotlib',
-        'pyfits',
         'simms',
         'casatools==6.5.5.21',
         'casadata', 
