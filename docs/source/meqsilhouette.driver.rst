@@ -1,29 +1,18 @@
-Pipeline/Driver Scripts
-=======================
+Example pipeline scripts
+========================
 
-Submodules
-----------
-
-Read MS and generate synthetic data
------------------------------------
+Run pipeline on existing MS
+---------------------------
 
 .. automodule:: meqsilhouette.driver.readms_runmeqs
    :members:
    :undoc-members:
    :show-inheritance:
 
-Run MeqSilhouette as a pipeline
--------------------------------
+Run pipeline from scratch
+-------------------------
 
 .. automodule:: meqsilhouette.driver.run_meqsilhouette
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: meqsilhouette.driver
    :members:
    :undoc-members:
    :show-inheritance:

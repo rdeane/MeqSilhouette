@@ -1,8 +1,5 @@
-Synthetic data generation components
-====================================
-
-Submodules
-----------
+Synthetic data generation framework
+===================================
 
 SimCoordinator
 --------------
@@ -56,14 +53,6 @@ Regularize MS with missing rows
 -------------------------------
 
 .. automodule:: meqsilhouette.framework.regularize_ms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: meqsilhouette.framework
    :members:
    :undoc-members:
    :show-inheritance:
