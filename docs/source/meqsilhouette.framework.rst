@@ -4,8 +4,8 @@ Synthetic data generation components
 Submodules
 ----------
 
-SimCoordinator class
---------------------
+SimCoordinator
+--------------
 
 .. automodule:: meqsilhouette.framework.SimCoordinator
    :members:
@@ -28,18 +28,10 @@ Print functions
    :undoc-members:
    :show-inheritance:
 
-Measurement Set creation
-------------------------
+Create Measurement Set
+----------------------
 
 .. automodule:: meqsilhouette.framework.create_ms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Create sky models
------------------
-
-.. automodule:: meqsilhouette.framework.make_skymodel
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,8 +44,8 @@ MeqTrees helper functions
    :undoc-members:
    :show-inheritance:
 
-Process input configuration JSON file
--------------------------------------
+Process configuration file
+--------------------------
 
 .. automodule:: meqsilhouette.framework.process_input_config
    :members:

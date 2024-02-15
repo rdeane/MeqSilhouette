@@ -37,9 +37,23 @@ import sys
 
 
 def latlonh_2_xyz(lat_deg,lon_deg,h_metres):
-    """ convert input Lat,Lon,height to XYZ coordinates, assuming WGS84 geoid
-    Input units: deg, deg, metres respectively
-    Output units: metres"""
+    """
+    Convert input Lat,Lon,height to XYZ coordinates, assuming WGS84 geoid
+
+    Parameters
+    ----------
+    lat_deg : float
+        Latitude in degrees
+    lon_deg : float
+        Longitude in degrees
+    h_metres : float
+        Height in metres
+
+    Returns
+    -------
+    list
+        XYZ coordinates in metres
+    """
     degrad = np.pi/180.
     #WGS84 
     a = 6378137.
@@ -67,8 +81,18 @@ def latlonh_2_xyz(lat_deg,lon_deg,h_metres):
 
 
 def AddAnt(inputAntTableName,outputAntTableName, newAntDict):
-    """ add a single row to existing CASA antenna table.
-    Use antenna dict as input, see AMT example below"""
+    """
+    Add a single row to existing CASA antenna table and write to a new table.
+
+    Parameters
+    ----------
+    inputAntTableName : str
+        Name of input antenna table
+    outputAntTableName : str
+        Name of output antenna table
+    newAntDict : dict
+        Dictionary containing new antenna parameters
+    """
     if (os.path.exists(outputAntTableName)):
         abort('Antenna table %s exists!'%outputAntTableName)
     os.system('cp -r %s %s'%(inputAntTableName,outputAntTableName))
@@ -87,48 +111,51 @@ def AddAnt(inputAntTableName,outputAntTableName, newAntDict):
           and written out to new antenna table '%s'"\
           %(newAntDict['NAME'],inputAntTableName,outputAntTableName))
     
-    
-AMT_LatLonh = [ -23. - (20/60.) - (31.90)/3600.,  16 + (13/60.) + (31.78)/3600., 2350]
-AMT_xyz = latlonh_2_xyz(AMT_LatLonh[0],AMT_LatLonh[1],AMT_LatLonh[2])
-AMTAntDict = {'OFFSET'  : [0,0,0],\
-              'POSITION': AMT_xyz,\
-              'TYPE'    : 'GROUND-BASED',\
-              'DISH_DIAMETER': 15,\
-              'FLAG_ROW':  0,\
-              'MOUNT'   : 'alt-az',\
-              'NAME'    : 'AMT',\
-              'STATION' : 'AMT'}
-#AddAnt('EHT','EHT_AMT',AMTAntDict)
-
-MeerKAT_LatLonh = [-30 - (42./60) - (47.41/3600),    -21 - (26./60) - (38./3600), 1050]
-MeerKAT_xyz = latlonh_2_xyz(MeerKAT_LatLonh[0],MeerKAT_LatLonh[1],MeerKAT_LatLonh[2])
-MeerKATAntDict = {'OFFSET'  : [0,0,0],\
-              'POSITION': MeerKAT_xyz,\
-              'TYPE'    : 'GROUND-BASED',\
-              'DISH_DIAMETER': 13.5,\
-              'FLAG_ROW':  0,\
-              'MOUNT'   : 'alt-az',\
-              'NAME'    : 'MK',\
-              'STATION' : 'MK'}
 
 
-APEX_LatLonh = [-23 - (00./60) - (21.0/3600),    -67 - (45./60) - (33./3600), 5100]
-APEX_xyz = latlonh_2_xyz(APEX_LatLonh[0],APEX_LatLonh[1],APEX_LatLonh[2])
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        abort('Not enough inputs found. Aborting...')
+    else:
+        tabin = sys.argv[1]
+        tabout = sys.argv[2]
 
-APEXAntDict = {'OFFSET'  : [0,0,0],\
-                  'POSITION': APEX_xyz,\
-                  'TYPE'    : 'GROUND-BASED',\
-                  'DISH_DIAMETER': 12.0,\
-                  'FLAG_ROW':  0,\
-                  'MOUNT'   : 'alt-az',\
-                  'NAME'    : 'APEX',\
-                  'STATION' : 'APEX'}
+        AMT_LatLonh = [ -23. - (20/60.) - (31.90)/3600.,  16 + (13/60.) + (31.78)/3600., 2350]
+        AMT_xyz = latlonh_2_xyz(AMT_LatLonh[0],AMT_LatLonh[1],AMT_LatLonh[2])
+        AMTAntDict = {'OFFSET'  : [0,0,0],\
+                    'POSITION': AMT_xyz,\
+                    'TYPE'    : 'GROUND-BASED',\
+                    'DISH_DIAMETER': 15,\
+                    'FLAG_ROW':  0,\
+                    'MOUNT'   : 'alt-az',\
+                    'NAME'    : 'AMT',\
+                    'STATION' : 'AMT'}
+        #AddAnt('EHT','EHT_AMT',AMTAntDict)
+
+        MeerKAT_LatLonh = [-30 - (42./60) - (47.41/3600),    -21 - (26./60) - (38./3600), 1050]
+        MeerKAT_xyz = latlonh_2_xyz(MeerKAT_LatLonh[0],MeerKAT_LatLonh[1],MeerKAT_LatLonh[2])
+        MeerKATAntDict = {'OFFSET'  : [0,0,0],\
+                    'POSITION': MeerKAT_xyz,\
+                    'TYPE'    : 'GROUND-BASED',\
+                    'DISH_DIAMETER': 13.5,\
+                    'FLAG_ROW':  0,\
+                    'MOUNT'   : 'alt-az',\
+                    'NAME'    : 'MK',\
+                    'STATION' : 'MK'}
 
 
+        APEX_LatLonh = [-23 - (00./60) - (21.0/3600),    -67 - (45./60) - (33./3600), 5100]
+        APEX_xyz = latlonh_2_xyz(APEX_LatLonh[0],APEX_LatLonh[1],APEX_LatLonh[2])
 
-tabin = sys.argv[1]
-tabout = sys.argv[2]
-
-AddAnt(tabin,tabout,AMTAntDict) #MeerKATAntDict)
+        APEXAntDict = {'OFFSET'  : [0,0,0],\
+                        'POSITION': APEX_xyz,\
+                        'TYPE'    : 'GROUND-BASED',\
+                        'DISH_DIAMETER': 12.0,\
+                        'FLAG_ROW':  0,\
+                        'MOUNT'   : 'alt-az',\
+                        'NAME'    : 'APEX',\
+                        'STATION' : 'APEX'}
+        
+        AddAnt(tabin,tabout,AMTAntDict) #MeerKATAntDict)
 
 

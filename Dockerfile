@@ -5,7 +5,7 @@ LABEL "OS_VERSION"="20.04"
 LABEL "SYSTEM_NAME"="MeqSv2"
 LABEL "SYSTEM_URL"="https://github.com/rdeane/MeqSilhouette"
 LABEL "AUTHOR_NAME"="Iniyan Natarajan, Robin Hall"
-LABEL "AUTHOR_EMAIL"="iniyan.natarajan@wits.ac.za, robin@idia.ac.za"
+LABEL "AUTHOR_EMAIL"="iniyannatarajan@gmail.com, robin@idia.ac.za"
 
 # make opt directory for installs
 RUN mkdir -p /opt
