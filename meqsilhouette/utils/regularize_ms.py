@@ -3,10 +3,9 @@
 # Iniyan Natarajan: Some parts adapted from casacore.tables.msutil.msregularize.
 # Improves on casacore by accounting for antennas missing in the MAIN table but present in the ANTENNA table
 
-import sys
 import numpy as np
 import pyrap.tables as pt
-from meqsilhouette.framework.comm_functions import info
+from meqsilhouette.utils.comm_functions import info
 
 def regularize_ms(msname):
     """ Regularize an MS
