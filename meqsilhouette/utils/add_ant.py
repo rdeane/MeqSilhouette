@@ -32,7 +32,7 @@ Ouputs: new antenna table
 import numpy as np
 import pyrap.tables as pt
 import os
-from framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 import sys
 
 
