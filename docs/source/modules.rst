@@ -6,3 +6,4 @@ API
 
    meqsilhouette.driver
    meqsilhouette.framework
+   meqsilhouette.utils
