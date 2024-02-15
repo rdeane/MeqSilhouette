@@ -6,7 +6,7 @@ from meqsilhouette import __version__
 on_rtd = os.environ.get("READTHEDOCS") == "True"
 
 if on_rtd:
-    INSTALL_REQUIRES = []
+    INSTALL_REQUIRES = ['sphinx-rtd-theme']
 else:
     INSTALL_REQUIRES = [
         'mpltools',
