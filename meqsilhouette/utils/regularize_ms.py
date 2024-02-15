@@ -8,15 +8,28 @@ import pyrap.tables as pt
 from meqsilhouette.utils.comm_functions import info
 
 def regularize_ms(msname):
-    """ Regularize an MS
+    """
+    Regularize an MS
 
-    The output MS will have the same number of baselines for each time stamp.
-    All new rows are fully flagged. First, missing rows are written into a 
-    separate MS <msname>_missing.MS, which is concatenated with the original
-    MS and sorted in order of TIME, DATADESC_ID, ANTENNA1, ANTENNA2 to form
-    a new regular MS. This MS is a 'deep' copy copy of the original MS.
+    Parameters
+    ----------
+    msname : str
+        Name of the MS to be regularized
 
-    If no rows were missing, no new MS is created.
+    Returns
+    -------
+    outmsname : str
+        Name of the regularized MS
+
+    Notes
+    -----
+        The output MS will have the same number of baselines (rows) for each time stamp.
+        All new rows are fully flagged. First, missing rows are written into a 
+        separate MS <msname>_missing.MS, which is concatenated with the original
+        MS and sorted in order of TIME, DATADESC_ID, ANTENNA1, ANTENNA2 to form
+        a new regular MS. This MS is a 'deep' copy copy of the original MS.
+
+        If no rows are missing, no new MS is created and outmsname = msname.
     """
 
     msprefix = msname.rsplit('.',1)[0]
