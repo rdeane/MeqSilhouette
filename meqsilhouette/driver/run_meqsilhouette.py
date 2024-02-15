@@ -15,7 +15,7 @@ from meqsilhouette.framework.process_input_config import setup_keyword_dictionar
 from meqsilhouette.framework.create_ms import create_ms, create_msv2
 from meqsilhouette.framework.SimCoordinator import SimCoordinator
 from meqsilhouette.framework.meqtrees_funcs import make_dirty_image_lwimager
-from meqsilhouette.framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 
 def run_meqsilhouette(config=None):
     """

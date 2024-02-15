@@ -15,8 +15,8 @@ import meqsilhouette.framework
 from meqsilhouette.framework.process_input_config import setup_keyword_dictionary, load_json_parameters_into_dictionary
 from meqsilhouette.framework.SimCoordinator import SimCoordinator
 from meqsilhouette.framework.meqtrees_funcs import make_dirty_image_lwimager
-from meqsilhouette.framework.comm_functions import *
-from meqsilhouette.framework.regularize_ms import regularize_ms
+from meqsilhouette.utils.comm_functions import *
+from meqsilhouette.utils.regularize_ms import regularize_ms
 
 def create_parser():
     p = argparse.ArgumentParser()

@@ -2,7 +2,7 @@ from Pyxis.ModSupport import *
 from meqsilhouette.framework.meqtrees_funcs import run_turbosim, run_wsclean, copy_between_cols
 import pyrap.tables as pt
 import pyrap.measures as pm, pyrap.quanta as qa
-from meqsilhouette.framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 import pickle
 import subprocess
 import os

@@ -3,7 +3,7 @@ from Pyxis.ModSupport import *
 import pyrap.tables as pt
 import numpy as np
 import os
-from meqsilhouette.framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 from astropy.time import Time
 from casatools import simulator, table, measures
 

@@ -7,23 +7,23 @@ Inputs:
 - input antenna table name
 - output antenna table name
 - new antenna dictionary, includes:
-    -- Position: Lat [deg], Long [deg, east +ve], height [metres]
-    converts to XYZ assuming WGS84 ellipsoid, formulas from Seeber, Satellite Geodesy (2003 ed, sect.2.1.4)
-    
-    -- antenna mount type (will become important as MeqSilhouette accounts for this)
+-- Position: Lat [deg], Long [deg, east +ve], height [metres]
+converts to XYZ assuming WGS84 ellipsoid, formulas from Seeber, Satellite Geodesy (2003 ed, sect.2.1.4)
 
-    -- DISH_DIAMETER [metres]
+-- antenna mount type (will become important as MeqSilhouette accounts for this)
 
-    -- etc.
+-- DISH_DIAMETER [metres]
 
-    e.g. newAntDict = {'OFFSET'  : [0,0,0],\
-              'POSITION': [5627893.7450699108, 1637770.1989314035, -2512490.219404601],\
-              'TYPE'    : 'GROUND-BASED',\
-              'DISH_DIAMETER': 12,\
-              'FLAG_ROW':  0,\
-              'MOUNT'   : 'alt-az',\
-              'NAME'    : 'AMT',\
-              'STATION' : 'AMT'}
+-- etc.
+
+e.g. newAntDict = {'OFFSET'  : [0,0,0],\
+            'POSITION': [5627893.7450699108, 1637770.1989314035, -2512490.219404601],\
+            'TYPE'    : 'GROUND-BASED',\
+            'DISH_DIAMETER': 12,\
+            'FLAG_ROW':  0,\
+            'MOUNT'   : 'alt-az',\
+            'NAME'    : 'AMT',\
+            'STATION' : 'AMT'}
 
 Ouputs: new antenna table
 
@@ -32,7 +32,7 @@ Ouputs: new antenna table
 import numpy as np
 import pyrap.tables as pt
 import os
-from framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 import sys
 
 

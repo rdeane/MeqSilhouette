@@ -4,4 +4,6 @@ API
 .. toctree::
    :maxdepth: 4
 
-   meqsilhouette
+   meqsilhouette.driver
+   meqsilhouette.framework
+   meqsilhouette.utils
