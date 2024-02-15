@@ -1,15 +1,35 @@
 from setuptools import setup, find_packages
 from meqsilhouette import __version__
 
+# Import requirements
+# requirements
+on_rtd = os.environ.get("READTHEDOCS") == "True"
+
+if on_rtd:
+    INSTALL_REQUIRES = []
+else:
+    INSTALL_REQUIRES = [
+        'mpltools',
+        'seaborn',
+        'astLib',
+        'astropy',
+        'termcolor',
+        'numpy',
+        'matplotlib',
+        'simms',
+        'casatools==6.5.5.21',
+        'casadata', 
+        ]
+
 with open("README.rst") as tmp:
     readme = tmp.read()
 
 setup(
     author='Iniyan Natarajan',
-    author_email='iniyan.natarajan@wits.ac.za',
+    author_email='iniyannatarajan@gmail.com',
     name='meqsilhouette',
     version=__version__,
-    description='VLBI Observation Simulator',
+    description='Synthetic Data Generation for mm-VLBI Observations',
     long_description=readme,
     long_description_content_type="text/x-rst",
     url='https://github.com/rdeane/MeqSilhouette',
@@ -21,18 +41,7 @@ setup(
     entry_points={
         'console_scripts': ['meqsilhouette=meqsilhouette.driver.run_meqsilhouette:run_meqsilhouette']
     },
-    install_requires=[
-        'mpltools',
-        'seaborn',
-        'astLib',
-        'astropy',
-        'termcolor',
-        'numpy',
-        'matplotlib',
-        'simms',
-        'casatools==6.5.5.21',
-        'casadata', 
-        ],
+    install_requires=INSTALL_REQUIRES,
     keywords='meqsilhouette',
     classifiers=[
         'Development Status :: 4 - Beta',
