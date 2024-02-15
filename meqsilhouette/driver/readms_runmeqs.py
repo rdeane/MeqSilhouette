@@ -26,8 +26,21 @@ def create_parser():
 
 def readms_runmeqs(jsonfile, msname):
     """
-    Standard VLBI simulation script to perform interferometric simulation,
-    variables prefixed by v. indicate new global variables.
+    Standard script to perform radio interferometric synthetic data generation.
+    Variables prefixed by "v" indicate new global variables.
+
+    Parameters
+    ----------
+    jsonfile : str
+        Name of the input JSON parset file.
+    msname : str
+        Input Measurement Set (MS) name.
+
+    Raises
+    ------
+    Exception
+        If no input JSON parset file is provided or if the input MS does not exist,
+        an exception is raised and the function aborts.
     """
     start = time.time()
     

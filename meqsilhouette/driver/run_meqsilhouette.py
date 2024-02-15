@@ -19,8 +19,22 @@ from meqsilhouette.framework.comm_functions import *
 
 def run_meqsilhouette(config=None):
     """
-    Standard VLBI simulation script to perform interferometric simulation,
-    variables prefixed by v. indicate new global variables.
+    Standard script to perform radio interferometric synthetic data generation.
+    Variables prefixed by "v" indicate new global variables.
+
+    Parameters
+    ----------
+    config : str, optional
+        Path to the input JSON parset file. If not provided, the function will
+        check command line arguments for the file. If still not found, the
+        function will abort.
+
+    Raises
+    ------
+    Exception
+        If no input JSON parset file is provided and none is found in command
+        line arguments, an exception is raised and the function aborts.
+
     """
     start = time.time()
     
