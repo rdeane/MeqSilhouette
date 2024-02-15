@@ -46,6 +46,10 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
+# mock imports
+autodoc_mock_imports = ["numpy", "pyrap", "termcolor", "Pyxis", "mqt", "im", "framework", "astropy", "scipy", "casatools",
+                        "pylab", "seaborn", "matplotlib", "mpltools", "cycler"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['ntemplates']
 
