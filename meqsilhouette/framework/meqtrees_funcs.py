@@ -8,7 +8,7 @@ import pyrap.tables as pt
 from im import lwimager 
 import subprocess
 import glob
-from meqsilhouette.framework.comm_functions import *
+from meqsilhouette.utils.comm_functions import *
 
 def run_wsclean(input_fitsimage, input_fitspol, input_changroups, startvis, endvis, oversampling):
     msname = II('$MS')
