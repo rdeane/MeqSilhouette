@@ -162,7 +162,18 @@ class SimCoordinator():
             np.save(II('$OUTDIR')+'/zenith_transmission_timestamp_%d'%(self.timestamp), self.transmission)
 
     def interferometric_sim(self):
-        """FFT + UV sampling via the MeqTrees run function"""
+        """
+        Performs an interferometric simulation.
+
+        This method checks for the format of the sky model and generates the forward model (i.e. sky to visibilities)
+        using either MeqTrees or WSClean. It also populates the data array which will be used for the rest of the
+        synthetic data generation.
+
+        Raises
+        ------
+        Exception
+            If 'input_fitspol' is set to True but not all polarisation images are present.
+        """
 
         ### for static sky - single input FITS image, ASCII file or Tigger LSM ###
         if os.path.exists(self.input_fitsimage+'.txt') == True:
@@ -215,16 +226,33 @@ class SimCoordinator():
         tab.close()
 
     def copy_MS(self, new_name):
+        """
+        Copies a Measurement Set (MS) to a new location.
+
+        Parameters
+        ----------
+        new_name : str
+            Path to the new Measurement Set.
+        
+        Raises
+        ------
+        Exception
+            If the copy operation fails for any reason.
+        """
         x.sh('cp -r %s %s' % (self.msname, new_name))
 
     def save_data(self):
-        """All saving of data goes through this function"""
+        """
+        Saves the contents of data array to the output column specified by the user.
+        """
         tab = pt.table(self.msname, readonly=False,ack=False)
         tab.putcol(self.output_column, self.data)
         tab.close()
         
-    def compute_weights(self):
-        """ Compute thermal noise """
+    def compute_receiver_rms(self):
+        """
+        Populate the RMS receiver noise array. This will be later used to realise thermal noise.
+        """
         #if rms.shape != self.data.shape:
         #    abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
         #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
@@ -236,19 +264,31 @@ class SimCoordinator():
 
 
     def add_weights(self, additional_noise_terms=None):
-        """ Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS """
+        """
+        Populate SIGMA, SIGMA_SPECTRUM, WEIGHT, WEIGHT_SPECTRUM columns in the MS.
+
+        Parameters
+        ----------
+        additional_noise_terms : (ndarray, optional)
+            Additional noise terms to be added to the receiver RMS.
+
+        Raises
+        ------
+        MemoryError
+            If the arrays are too large to be held in memory.
+        """
         #if rms.shape != self.data.shape:
         #    abort('The rms array used to populate SIGMA, SIGMA_SPECTRUM, WEIGHT, and WEIGHT_SPECTRUM does not have the expected dimensions:\n'\
         #          'rms.shape = '+rms.shape+'. Expected dimensions: '+self.data.shape)
 
         if additional_noise_terms is not None:
             try:
-              for tind in range(self.nchunks):
-                self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] = np.sqrt(np.power(self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize], 2) + np.power(additional_noise_terms[tind*self.chunksize:(tind+1)*self.chunksize], 2))
+                for tind in range(self.nchunks):
+                    self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] = np.sqrt(np.power(self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize], 2) + np.power(additional_noise_terms[tind*self.chunksize:(tind+1)*self.chunksize], 2))
             except MemoryError:
-              abort("Arrays too large to be held in memory. Aborting execution.")
+                abort("Arrays too large to be held in memory. Aborting execution.")
 
-        tab = pt.table(self.msname, readonly=False,ack=False)
+        tab = pt.table(self.msname, readonly=False, ack=False)
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
         if 'SIGMA_SPECTRUM' in tab.colnames():
             tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
@@ -259,7 +299,19 @@ class SimCoordinator():
 
 
     def add_receiver_noise(self, load=None):
-        """ baseline dependent thermal noise only. Calculated from SEFDs, tint, dnu """
+        """
+        Adds baseline dependent thermal noise to the data.
+
+        Parameters
+        ----------
+        load : (bool, optional)
+            If True, loads the thermal noise from a file. Defaults to None.
+
+        Raises
+        ------
+        MemoryError
+            If the arrays are too large to be held in memory.
+        """
         if load:
             self.thermal_noise = np.load(II('$OUTDIR')+'/receiver_noise.npy')
         else:
@@ -274,19 +326,46 @@ class SimCoordinator():
 
             np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
         try:
-          info('Applying thermal noise to data...')
-          for tind in range(self.nchunks):
-            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.thermal_noise[tind*self.chunksize:(tind+1)*self.chunksize]
-          self.save_data()
+            info('Applying thermal noise to data...')
+            for tind in range(self.nchunks):
+                self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.thermal_noise[tind*self.chunksize:(tind+1)*self.chunksize]
+            self.save_data()
         except MemoryError:
-          abort("Arrays too large to be held in memory. Aborting execution.")
+            abort("Arrays too large to be held in memory. Aborting execution.")
 
         
     def make_baseline_dictionary(self):
+        """
+        Creates and returns a dictionary of baselines for the current instance.
+
+        Returns
+        -------
+        dict
+            A dictionary with all baselines present in the observation.
+
+        Raises
+        ------
+        Exception
+            If the baseline dictionary cannot be created for any reason.
+        """
+
         return dict([((x, y), np.where((self.A0 == x) & (self.A1 == y))[0])
                     for x in self.ant_unique for y in self.ant_unique if y > x])
 
     def parallactic_angle_calc(self):
+        """
+        Calculates and returns the parallactic angle.
+
+        Returns
+        -------
+        parang_matrix : ndarray
+            The computed parallactic angle matrix for each antenna during the course of the observation.
+
+        Raises
+        ------
+        Exception
+            If the parallactic angle cannot be computed for any reason.
+        """    
         measure = pm.measures()
         ra = qa.quantity(self.direction[0], 'rad'); dec = qa.quantity(self.direction[1], 'rad')
         pointing = measure.direction('j2000', ra, dec)
@@ -315,6 +394,19 @@ class SimCoordinator():
         return parang_matrix
     
     def elevation_calc(self):
+        """
+        Calculates and returns the elevation angle.
+
+        Returns
+        -------
+        elevation_ant_matrix : ndarray
+            The computed elevation angle matrix for each antenna during the course of the observation.
+
+        Raises
+        ------
+        Exception
+            If the elevation angle cannot be computed for any reason.
+        """ 
         measure = pm.measures()
         ra = qa.quantity(self.direction[0], 'rad'); dec = qa.quantity(self.direction[1], 'rad')
         pointing = measure.direction('j2000', ra, dec)
@@ -344,6 +436,10 @@ class SimCoordinator():
 
 
     def calc_ant_rise_set_times(self):
+        """
+        Calculates the rise and set times for each antenna during the course of the observation.
+        These are used to mask out pointing offsets for stowed antennas.
+        """
         self.mjd_ant_rise = np.zeros(self.Nant)
         self.mjd_ant_set = np.zeros(self.Nant)
         for ant in range(self.Nant):
@@ -355,6 +451,9 @@ class SimCoordinator():
                 self.mjd_ant_set[ant] = -np.inf
 
     def calculate_baseline_min_elevation(self):
+        """
+        Calculates the minimum elevation for each baseline. Used in plotting uv-coverage.
+        """
         self.baseline_min_elevation = np.zeros(len(self.uvw[:,0]))
         temp_elevation = self.elevation.copy()
         temp_elevation[np.isnan(temp_elevation)] = 1000. # set nan's high. Flags used in plotting
@@ -367,6 +466,9 @@ class SimCoordinator():
 
 
     def calculate_baseline_mean_elevation(self):
+        """
+        Calculates the mean elevation for each baseline. Used in plotting uv-coverage.
+        """
         self.baseline_mean_elevation = np.zeros(len(self.uvw[:,0]))
         temp_elevation = self.elevation.copy()
         temp_elevation[np.isnan(temp_elevation)] = 1000. # set nan's high. Flags used in plotting
@@ -379,7 +481,9 @@ class SimCoordinator():
 
     
     def write_flag(self, elevation_limit):
-        """ flag data if below user-specified elevation limit """
+        """ 
+        flag data if below user-specified elevation limit
+        """
         for a0 in range(self.Nant):
             for a1 in range(self.Nant):
                 if a1 > a0:
@@ -394,6 +498,9 @@ class SimCoordinator():
 
 
     def trop_opacity_attenuate(self):
+        """
+        Calculates attenuation due to tropospheric opacity and applies to data.
+        """
         transmission_matrix = np.exp(-1 * self.opacity / np.sin(self.elevation_tropshape))
         np.save(II('$OUTDIR')+'/transmission_timestamp_%d'%(self.timestamp), transmission_matrix)
 
@@ -410,7 +517,16 @@ class SimCoordinator():
 
 
     def trop_return_opacity_sky_temp(self):
-        """ as it says on the tin """
+        """
+        Calculates and returns opacity and sky temperature using the external program AATM.
+
+        Returns
+        -------
+        opacity : ndarray
+            The array containing the wet (and optionally, dry) components of the tropospheric opacity.
+        sky_temp : ndarray
+            The array containing the sky temperature returned by AATM.
+        """
         opacity, sky_temp = np.zeros((2, 1, self.chan_freq.shape[0], self.Nant))
 
         for ant in range(self.Nant):
@@ -494,6 +610,18 @@ class SimCoordinator():
         
 
     def trop_generate_turbulence_phase_errors(self):
+        """
+        Generates phase offsets/errors due to tropospheric turbulence and save to file.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception
+            If the turbulence phase errors cannot be generated for any reason.
+        """
         turb_phase_errors = np.zeros((self.time_unique.shape[0], self.chan_freq.shape[0], self.Nant))
         beta = 5/3. # power law index
 
@@ -531,7 +659,14 @@ class SimCoordinator():
 
     
     def trop_ATM_dispersion(self):
-        """ calculate extra path length per frequency channel """
+        """
+        Calculates extra path length due to mean wet and dry troposphere per frequency channel.
+
+        Returns
+        -------
+        extra_path_length : ndarray
+            The calculated extra path length due to mean wet and dry troposphere per frequency channel.
+        """
         extra_path_length = np.zeros((self.chan_freq.shape[0], self.Nant))
 
         for ant in range(self.Nant):
@@ -564,20 +699,21 @@ class SimCoordinator():
             np.save(II('$OUTDIR')+'/atm_output/delay_norm_ant%i_timestamp_%d'%(ant, self.timestamp), extra_path_length[:,ant] / speed_of_light)
 
         np.save(II('$OUTDIR')+'/atm_output/delay_norm_timestamp_%d'%(self.timestamp), extra_path_length / speed_of_light)
-
-            
+       
         return extra_path_length
     
 
     def trop_calc_mean_delays(self):
-        """ insert mean delays (i.e. non-turbulent) due to dry and wet components"""
+        """ 
+        Insert mean delays (i.e. non-turbulent) due to mean dry and wet troposphere.
+        """
         delay = self.trop_ATM_dispersion() / speed_of_light
         self.delay_alltimes = delay / np.sin(self.elevation_tropshape)
         phasedelay_alltimes = 2*np.pi * delay / np.sin(self.elevation_tropshape) * self.chan_freq.reshape((1, self.chan_freq.shape[0], 1))
         np.save(II('$OUTDIR')+'/atm_output/phasedelay_alltimes_timestamp_%d'%(self.timestamp), phasedelay_alltimes)
         np.save(II('$OUTDIR')+'/atm_output/delay_alltimes_timestamp_%d'%(self.timestamp), self.delay_alltimes)
 
-        self.phasedelay_alltimes = phasedelay_alltimes 
+        self.phasedelay_alltimes = phasedelay_alltimes
 
 
     def trop_phase_corrupt(self, normalise=True, percentage_turbulence=100, load=None):
@@ -610,6 +746,14 @@ class SimCoordinator():
 
 
     def apply_phase_errors(self,combined_phase_errors):
+        """
+        Apply phase errors that have been generated in previous steps to data and save.
+
+        Parameters
+        ----------
+        combined_phase_errors : ndarray
+            The array containing the combined phase errors.
+        """
         for a0 in range(self.Nant):
             for a1 in range(self.Nant):
                 if a1 > a0:
@@ -624,6 +768,9 @@ class SimCoordinator():
 
         
     def trop_plots(self):
+        """
+        Generate plots for tropospheric quantities.
+        """
 
         ### plot zenith opacity vs frequency (subplots)
         '''fig,axes = pl.subplots(self.Nant,1,figsize=(10,16))
@@ -751,8 +898,23 @@ class SimCoordinator():
         ################################
 
     def pointing_constant_offset(self,pointing_rms, pointing_timescale,PB_FWHM230):
-            """this will change the pointing error for each antenna every pointing_timescale
-            which one of could essentially think of as a scan length (e.g. 10 minutes)"""
+            """
+            Compute pointing amplitude offsets.
+
+            Parameters
+            ----------
+            pointing_rms : ndarray
+                The array containing the pointing RMS for each antenna.
+            pointing_timescale : ndarray
+                The timescale over which pointing errors are applied for each antenna.
+            PB_FWHM230 : ndarray
+                The primary beam FWHM at 230 GHz for each antenna.
+
+            Notes
+            -----
+            Changes the pointing error for each antenna every pointing_timescale
+            which one of could essentially think of as a scan length (e.g. 10 minutes).
+            """
             self.PB_FWHM = PB_FWHM230 / (self.chan_freq.mean() / 230e9) # convert 230 GHz PB to current obs frequency
             self.num_mispoint_epochs = max(1, int(round(self.obslength / (pointing_timescale * 60.), 0))) # could be number of scans, for example
             self.mjd_per_ptg_epoch = (self.mjd_obs_end - self.mjd_obs_start) / self.num_mispoint_epochs
@@ -784,6 +946,9 @@ class SimCoordinator():
 
 
     def apply_pointing_amp_error(self):
+            """
+            Apply pointing amplitude errors to data and save.
+            """
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
@@ -805,6 +970,9 @@ class SimCoordinator():
 
 
     def plot_pointing_errors(self):
+        """
+        Generate pointing error plots.
+        """
 
         ### plot antenna offset vs pointing epoch
         pl.figure(figsize=(10,6.8))
@@ -855,8 +1023,10 @@ class SimCoordinator():
     ################################
 
     def add_bjones_manual(self):
-        """Read in the bandpass info from an ASCII table, interpolate (spline) MS frequencies,
-           and apply to data"""
+        """
+        Read in the bandpass info from an ASCII table, interpolate (spline) MS frequencies,
+        and apply to data
+        """
         info("Applying scalar B-Jones amplitudes")
         # Read in the file
         bjones_inp = np.loadtxt(self.bandpass_table,dtype=str)
@@ -901,7 +1071,9 @@ class SimCoordinator():
 
 
     def make_bandpass_plots(self):
-        ''' Make plots of bandpass amplitudes and phases vs frequency'''
+        """
+        Generate plots of bandpass amplitudes and phases vs frequency.
+        """
         fig, ax1 = pl.subplots()
         #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
         for i in range(self.Nant):
@@ -942,7 +1114,10 @@ class SimCoordinator():
     # POLARIZATION LEAKAGE FUNCTIONS #
     ##################################
     def add_pol_leakage_manual(self):
-      """ Add constant station-based polarization leakage (D-Jones term) """
+      """
+      Add constant-in-time station-based polarization leakage (D-Jones term) that varies with frequency to data.
+      These can be generated in either antenna frame or sky frame.
+      """
 
       if self.parang_corrected == False:
         # INI: Do not remove parallactic angle rotation effect (vis in antenna plane). Hence, perform 2*field_angle rotation (Leppanen, 1995)
@@ -1031,6 +1206,9 @@ class SimCoordinator():
 
 
     def make_pol_plots(self):
+        """
+        Generate polarization leakage plots.
+        """
         ### parang vs time ###
         pl.figure(figsize=(10,6.8))
         for ant in range(self.Nant):
@@ -1065,7 +1243,9 @@ class SimCoordinator():
     ##################################
 
     def add_gjones_manual(self):
-        """ Add station-based complex gains """
+        """
+        Add time-varying station-based complex gains.
+        """
 
         self.gain_mat = np.zeros((self.Nant,self.time_unique.shape[0],2,2),dtype=complex)
         for ant in range(self.Nant):
@@ -1091,7 +1271,15 @@ class SimCoordinator():
     ##################################
     # Add noise components
     def add_noise(self, tropnoise, thermalnoise):
-        """ Add sky and receiver noise components to the visibilities and populate weight columns"""
+        """Add sky and receiver noise components to the visibilities and populate weight columns.
+
+        Parameters
+        ----------
+        tropnoise : bool
+            If True, include tropospheric noise.
+        thermalnoise : bool
+            If True, include receiver noise.
+        """
 
         # compute receiver rms noise
         for a0 in range(self.Nant):
