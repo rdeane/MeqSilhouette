@@ -32,7 +32,7 @@ from cycler import cycler
 
 class SimCoordinator():
 
-    def __init__(self, msname, output_column, input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, \
+    def __init__(self, msname, output_column, input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, T_rx, \
                  corr_eff, predict_oversampling, predict_seed, atm_seed, aperture_eff, elevation_limit, trop_enabled, trop_wetonly, pwv, \
                  gpress, gtemp, coherence_time, fixdelay_max_picosec, uvjones_g_on, uvjones_d_on, parang_corrected, gR_mean, \
                  gR_std, gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle, thermal_noise_enabled):
@@ -91,12 +91,13 @@ class SimCoordinator():
         self.output_column = output_column
 
         ### thermal noise relevant calculations ###
-        self.SEFD = sefd
+        self.T_rx = T_rx
         self.dish_diameter = pt.table(pt.table(msname).getkeyword('ANTENNA'),ack=False).getcol('DISH_DIAMETER')
         if np.any(self.dish_diameter == 0):
             abort("One of the dish diameters in the ANTENNA table is zero. Aborting execution.")
-        self.dish_area = aperture_eff * np.pi * np.power((self.dish_diameter / 2.), 2)
-        self.receiver_temp = (self.SEFD * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
+        self.dish_area = aperture_eff * np.pi * np.power((self.dish_diameter / 2.), 2) # effective dish area
+        #self.receiver_temp = (self.SEFD_rx * self.dish_area / (2 * Boltzmann)) / 1e26 # not used, but compare with real values
+        self.SEFD_rx = (2 * Boltzmann * self.T_rx / self.dish_area ) * 1e26 # System Equivalent Flux Density
         self.corr_eff = corr_eff
 
         ### INI: Oversampling factor to use for visibility prediction
@@ -260,7 +261,7 @@ class SimCoordinator():
         for a0 in range(self.Nant):
             for a1 in range(self.Nant):
                 if a1 > a0:
-                    self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * self.SEFD[a1] / float(2 * self.tint * self.chan_width))
+                    self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD_rx[a0] * self.SEFD_rx[a1] / float(2 * self.tint * self.chan_width))
 
 
     def add_weights(self, additional_noise_terms=None):
@@ -1280,17 +1281,38 @@ class SimCoordinator():
         thermalnoise : bool
             If True, include receiver noise.
         """
+        self.additive_noise = np.zeros(self.data.shape, dtype='complex')
 
         # compute receiver rms noise
-        for a0 in range(self.Nant):
-            for a1 in range(self.Nant):
-                if a1 > a0:
-                    self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD[a0] * \
-                                                                        self.SEFD[a1] / float(2 * self.tint * self.chan_width))
+        if thermalnoise and not tropnoise:
+            for a0 in range(self.Nant):
+                for a1 in range(self.Nant):
+                    if a1 > a0:
+                        self.receiver_rms[self.baseline_dict[(a0,a1)]] = (1/self.corr_eff) * np.sqrt(self.SEFD_rx[a0] * \
+                                                                          self.SEFD_rx[a1] / float(2 * self.tint * self.chan_width))
+                    
+            # use the receiver rms to realise thermal noise
+            info('Generating thermal noise...')
+            self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
+            size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
+            for a0 in range(self.Nant):
+                for a1 in range(self.Nant):
+                    if a1 > a0:
+                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]]
+                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = self.rng_predict.normal(0.0, rms, size=size) + 1j * self.rng_predict.normal(0.0, rms, size=size)
+
+            np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise) 
+
+            self.additive_noise += self.thermal_noise # add receiver noise to the full noise array
 
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
-            sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape))))
+            if thermalnoise:
+                info('Generating atmospheric (tropospheric) +thermal noise...')
+                sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.T_rx + self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
+            else:
+                info('Generating atmospheric (tropospheric) noise...')
+                sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
             sky_sigma_estimator = np.zeros(self.data.shape)
 
@@ -1301,9 +1323,14 @@ class SimCoordinator():
                         self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
+                        sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms # sky noise rms
+
+                        # compute sky noise and add to additive noies
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = self.rng_atm.normal(0.0, rms) + 1j * self.rng_atm.normal(0.0, rms)
-                        sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms
+                        
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
+
+            self.additive_noise += self.sky_noise # add sky noise generated from sky sigma estimator to the full noise array
 
             # add sky noise rms to receiver rms if tropnoise is set
             try:
@@ -1313,37 +1340,30 @@ class SimCoordinator():
             except MemoryError:
               abort("Arrays too large to be held in memory. Aborting execution.")
 
-        # use the receiver rms to realise thermal noise
-        if thermalnoise:
-            info('Realise thermal noise from receiver rms...')
-            self.thermal_noise = np.zeros(self.data.shape, dtype='complex')
-            size = (self.time_unique.shape[0], self.chan_freq.shape[0], 4)
-            for a0 in range(self.Nant):
-                for a1 in range(self.Nant):
-                    if a1 > a0:
-                        rms = self.receiver_rms[self.baseline_dict[(a0,a1)]]
-                        self.thermal_noise[self.baseline_dict[(a0, a1)]] = self.rng_predict.normal(0.0, rms, size=size) + 1j * self.rng_predict.normal(0.0, rms, size=size)
-
-            np.save(II('$OUTDIR')+'/receiver_noise_timestamp_%d'%(self.timestamp), self.thermal_noise)
-
         # add both the noise components to the data
         try:
-          info('Applying thermal noise to data...')
+          info('Applying additive noise to data...')
           for tind in range(self.nchunks):
-            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.thermal_noise[tind*self.chunksize:(tind+1)*self.chunksize] + \
-                                                                        self.sky_noise[tind*self.chunksize:(tind+1)*self.chunksize]
+            self.data[tind*self.chunksize:(tind+1)*self.chunksize] += self.additive_noise[tind*self.chunksize:(tind+1)*self.chunksize]
           self.save_data()
         except MemoryError:
           abort("Arrays too large to be held in memory. Aborting execution.")
 
         # populate MS weight and sigma columns using the receiver rms (with or without sky noise)
         tab = pt.table(self.msname, readonly=False,ack=False)
+
         tab.putcol("SIGMA", self.receiver_rms[:,0,:])
         if 'SIGMA_SPECTRUM' in tab.colnames():
             tab.putcol("SIGMA_SPECTRUM", self.receiver_rms)
-        tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
-        if 'WEIGHT_SPECTRUM' in tab.colnames():
-            tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
+
+        if not tropnoise and not thermalnoise:
+            tab.putcol("WEIGHT", self.receiver_rms[:,0,:]+1)
+            if 'WEIGHT_SPECTRUM' in tab.colnames():
+                tab.putcol("WEIGHT_SPECTRUM", self.receiver_rms+1)
+        else:
+            tab.putcol("WEIGHT", 1/self.receiver_rms[:,0,:]**2)
+            if 'WEIGHT_SPECTRUM' in tab.colnames():
+                tab.putcol("WEIGHT_SPECTRUM", 1/self.receiver_rms**2)
         tab.close()
 
     #############################
