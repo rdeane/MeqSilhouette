@@ -114,6 +114,7 @@ class SimCoordinator():
         ### INI: populate WEIGHT and SIGMA columns
         self.thermal_noise_enabled = thermal_noise_enabled
         self.receiver_rms = np.zeros(self.data.shape, dtype='float')
+        self.sky_sigma_estimator = np.zeros(self.data.shape, dtype='float')
 
         tab.close() # close main MS table
 
@@ -1314,21 +1315,20 @@ class SimCoordinator():
                 info('Generating tropospheric noise...')
                 sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
-            sky_sigma_estimator = np.zeros(self.data.shape)
 
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
                         rms = (1/self.corr_eff) * np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / (float(2 * self.tint * self.chan_width)))
-                        self.temp_rms = rms
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
-                        sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms # sky noise rms
+                        self.sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms # sky noise rms
 
                         # compute sky noise and add to additive noies
                         self.sky_noise[self.baseline_dict[(a0, a1)]] = self.rng_atm.normal(0.0, rms) + 1j * self.rng_atm.normal(0.0, rms)
                         
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
+            np.save(II('$OUTDIR')+'/atm_output/sky_sigma_estimator_timestamp_%d'%(self.timestamp), self.sky_sigma_estimator)
 
             self.additive_noise += self.sky_noise # add sky noise generated from sky sigma estimator to the full noise array
 
@@ -1336,7 +1336,7 @@ class SimCoordinator():
             try:
               for tind in range(self.nchunks):
                 self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize] = np.sqrt(np.power(self.receiver_rms[tind*self.chunksize:(tind+1)*self.chunksize], 2) + \
-                                                                               np.power(sky_sigma_estimator[tind*self.chunksize:(tind+1)*self.chunksize], 2))
+                                                                               np.power(self.sky_sigma_estimator[tind*self.chunksize:(tind+1)*self.chunksize], 2))
             except MemoryError:
               abort("Arrays too large to be held in memory. Aborting execution.")
 
@@ -1348,6 +1348,9 @@ class SimCoordinator():
           self.save_data()
         except MemoryError:
           abort("Arrays too large to be held in memory. Aborting execution.")
+
+        # save receiver_rms (which may or may not have been populated based on noise flags)
+        np.save(II('$OUTDIR')+'/receiver_rms_timestamp_%d'%(self.timestamp), self.receiver_rms)
 
         # populate MS weight and sigma columns using the receiver rms (with or without sky noise)
         tab = pt.table(self.msname, readonly=False,ack=False)
