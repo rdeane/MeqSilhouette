@@ -1308,10 +1308,10 @@ class SimCoordinator():
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
             if thermalnoise:
-                info('Generating atmospheric (tropospheric) +thermal noise...')
+                info('Generating tropospheric + thermal noise...')
                 sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.T_rx + self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
             else:
-                info('Generating atmospheric (tropospheric) noise...')
+                info('Generating tropospheric noise...')
                 sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
             sky_sigma_estimator = np.zeros(self.data.shape)
@@ -1514,10 +1514,10 @@ class SimCoordinator():
             #stdbins[b] = np.nanstd(abs(self.data[mask, :, :])[:, :, corrs]) / Nvisperbin[b]**0.5  # rms of that bin
 
             if (self.trop_enabled) and (self.thermal_noise_enabled):
-                stdbins[b] = np.nanmean(abs(np.add(self.thermal_noise[mask, :, :][:, :, corrs], \
+                stdbins[b] = np.nanmean(abs(np.add(self.additive_noise[mask, :, :][:, :, corrs], \
                                                    self.sky_noise[mask, :, :][:, :, corrs]))) / Nvisperbin[b] ** 0.5
             elif (not self.trop_enabled) and (self.thermal_noise_enabled):
-                stdbins[b] = np.nanmean(abs(self.thermal_noise[mask, :, :][:, :, corrs])) \
+                stdbins[b] = np.nanmean(abs(self.additive_noise[mask, :, :][:, :, corrs])) \
                                         / Nvisperbin[b] ** 0.5
             elif (self.trop_enabled) and (not self.thermal_noise_enabled):
                 if self.sky_noise is not None:

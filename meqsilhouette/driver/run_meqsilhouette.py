@@ -278,7 +278,11 @@ def run_meqsilhouette(config=None):
             sim_coord.make_bandpass_plots()
 
     ### Add all noise components and fill in the weight columns
-    sim_coord.add_noise(parameters['trop_noise'], parameters['add_thermal_noise'])
+    if parameters['trop_enabled']:
+        sim_coord.add_noise(parameters['trop_noise'], parameters['add_thermal_noise'])
+    elif parameters['add_thermal_noise']:
+        # do not add trop_noise regardless of its value since trop_enabled is False
+        sim_coord.add_noise(parameters['trop_enabled'], parameters['add_thermal_noise'])
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
