@@ -119,12 +119,12 @@ def run_meqsilhouette(config=None):
         info('Print to log file by setting <output_to_logfile> parameter in input configuration file.')
 
     info('Loading station info table %s'%parameters['station_info'])
-    sefd, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gR_mean, gR_std,\
+    T_rx, pwv, gpress, gtemp, coherence_time, pointing_rms, PB_FWHM230, aperture_eff, gR_mean, gR_std,\
     gL_mean, gL_std, dR_mean, dR_std, dL_mean, dL_std, feed_angle = \
     np.swapaxes(np.loadtxt(parameters['station_info'],\
     skiprows=1, usecols=[1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], dtype=np.complex128), 0, 1)
     # extract real parts
-    sefd = sefd.real
+    T_rx = T_rx.real
     pwv = pwv.real
     gpress = gpress.real
     gtemp = gtemp.real
@@ -192,7 +192,7 @@ def run_meqsilhouette(config=None):
     tab.close()
 
     info('Simulating sky model into %s column in %s'%(ms_dict['datacolumn'],MS))
-    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, sefd, corr_eff, parameters['predict_oversampling'], \
+    sim_coord = SimCoordinator(MS,ms_dict["datacolumn"],input_fitsimage, input_fitspol, input_changroups, bandpass_table, bandpass_freq_interp_order, T_rx, corr_eff, parameters['predict_oversampling'], \
                                parameters["predict_seed"], parameters["atm_seed"], aperture_eff,\
                                parameters["elevation_limit"], parameters['trop_enabled'], parameters['trop_wetonly'], pwv, gpress, gtemp, \
                                coherence_time, parameters['trop_fixdelay_max_picosec'], parameters['uvjones_g_on'], parameters['uvjones_d_on'], parameters['parang_corrected'],\
@@ -278,8 +278,11 @@ def run_meqsilhouette(config=None):
             sim_coord.make_bandpass_plots()
 
     ### Add all noise components and fill in the weight columns
-    # TODO must do the job of trop_add_sky_noise(), add_weights(additive_noises), add_receiver_noise() here
-    sim_coord.add_noise(parameters['trop_noise'], parameters['add_thermal_noise'])
+    if parameters['trop_enabled']:
+        sim_coord.add_noise(parameters['trop_noise'], parameters['add_thermal_noise'])
+    elif parameters['add_thermal_noise']:
+        # do not add trop_noise regardless of its value since trop_enabled is False
+        sim_coord.add_noise(parameters['trop_enabled'], parameters['add_thermal_noise'])
 
     ### IMAGING, PLOTTING, DATA EXPORT ###        
     if parameters['make_image']:
