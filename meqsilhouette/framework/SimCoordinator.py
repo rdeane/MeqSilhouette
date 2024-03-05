@@ -127,9 +127,7 @@ class SimCoordinator():
         self.coherence_time = coherence_time
         self.fixdelay_max_picosec = fixdelay_max_picosec
         self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
-        self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
-        np.save(II('$OUTDIR')+'/atm_output/opacity', self.opacity)
-        np.save(II('$OUTDIR')+'/atm_output/sky_temp', self.sky_temp)
+        self.opacity, self.emissivity = self.trop_return_opacity_emissivity()
         self.transmission = np.exp(-1*self.opacity)
 
         # Set some optional arrays to None. These will be filled later depending upon the user request.
@@ -520,7 +518,7 @@ class SimCoordinator():
         self.save_data()
 
 
-    def trop_return_opacity_sky_temp(self):
+    def trop_return_opacity_emissivity(self):
         """
         Calculates and returns opacity and sky temperature using the external program AATM.
 
@@ -528,10 +526,10 @@ class SimCoordinator():
         -------
         opacity : ndarray
             The array containing the wet (and optionally, dry) components of the tropospheric opacity.
-        sky_temp : ndarray
-            The array containing the sky temperature returned by AATM.
+        emissivity : ndarray
+            The array containing the emissivity returned by AATM.
         """
-        opacity, sky_temp = np.zeros((2, 1, self.chan_freq.shape[0], self.Nant))
+        opacity, emissivity = np.zeros((2, 1, self.chan_freq.shape[0], self.Nant))
 
         for ant in range(self.Nant):
             if not os.path.exists(II('$OUTDIR')+'/atm_output/'):
@@ -554,9 +552,9 @@ class SimCoordinator():
                 atm_abs.write(output)
 
             if self.num_chan == 1:
-                freq_atm, dry, wet, temp_atm = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), axis=0), 0, 1)
+                freq_atm, dry, wet, emissivity_per_ant = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), axis=0), 0, 1)
             else:
-                freq_atm,dry, wet, temp_atm = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), 0, 1)
+                freq_atm,dry, wet, emissivity_per_ant = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), 0, 1)
             # the following catch is due to a bug in the ATM package
             # which results in an incorrect number of channels returned.
             # The following section just checks and corrects for that. 
@@ -576,8 +574,8 @@ class SimCoordinator():
             else:
                 opacity[:,:,ant] = dry + wet
 
-            sky_temp[:, :, ant] = temp_atm
-        return opacity, sky_temp
+            emissivity[:, :, ant] = emissivity_per_ant
+        return opacity, emissivity
 
 
     def trop_add_sky_noise(self, load=None):
@@ -589,7 +587,7 @@ class SimCoordinator():
 
         else:
 
-            sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape))))
+            sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*self.emissivity * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape))))
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
             sky_sigma_estimator = np.zeros(self.data.shape)
 
@@ -830,7 +828,7 @@ class SimCoordinator():
             pl.figure(figsize=(10,6.8))
             #color.cycle_cmap(self.Nant, cmap=cmap) # INI: deprecated
             for i in range(self.Nant):
-                pl.plot(self.chan_freq/1e9,self.sky_temp[0,:,i],label=self.station_names[i])
+                pl.plot(self.chan_freq/1e9,self.emissivity[0,:,i],label=self.station_names[i])
             pl.xlabel('Frequency / GHz', fontsize=FSIZE)
             pl.ylabel('Zenith sky temperature / K', fontsize=FSIZE)
             pl.xticks(fontsize=18)
@@ -1313,12 +1311,14 @@ class SimCoordinator():
 
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
+            skytemp_from_emissivity = self.emissivity/(1.-np.exp(-1.0*self.opacity))
             if thermalnoise:
                 info('Generating tropospheric + thermal noise...')
-                sefd_matrix = (2 * Boltzmann * (self.T_rx + self.sky_temp * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
+                sefd_matrix = (2 * Boltzmann * (self.T_rx + skytemp_from_emissivity * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
+                
             else:
                 info('Generating tropospheric noise...')
-                sefd_matrix = (2 * Boltzmann * self.sky_temp*(1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape))) / self.dish_area) * 1e26
+                sefd_matrix = (2 * Boltzmann * (skytemp_from_emissivity * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
 
             np.save(II('$OUTDIR')+'/elevation_tropshape_timestamp_%d'%(self.timestamp), self.elevation_tropshape) 
             np.save(II('$OUTDIR')+'/dish_area_timestamp_%d'%(self.timestamp), self.dish_area) 
