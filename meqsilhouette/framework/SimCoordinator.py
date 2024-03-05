@@ -128,6 +128,8 @@ class SimCoordinator():
         self.fixdelay_max_picosec = fixdelay_max_picosec
         self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
         self.opacity, self.sky_temp = self.trop_return_opacity_sky_temp()
+        np.save(II('$OUTDIR')+'/atm_output/opacity', self.opacity)
+        np.save(II('$OUTDIR')+'/atm_output/sky_temp', self.sky_temp)
         self.transmission = np.exp(-1*self.opacity)
 
         # Set some optional arrays to None. These will be filled later depending upon the user request.
@@ -1306,20 +1308,28 @@ class SimCoordinator():
 
             self.additive_noise += self.thermal_noise # add receiver noise to the full noise array
 
+        np.save(II('$OUTDIR')+'/T_rx_timestamp_%d'%(self.timestamp), self.T_rx) 
+        np.save(II('$OUTDIR')+'/sefd_rx_timestamp_%d'%(self.timestamp), self.SEFD_rx) 
+
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
             if thermalnoise:
                 info('Generating tropospheric + thermal noise...')
-                sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.T_rx + self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
+                sefd_matrix = (2 * Boltzmann * (self.T_rx + self.sky_temp * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
             else:
                 info('Generating tropospheric noise...')
-                sefd_matrix = 2 * Boltzmann / self.dish_area * (1e26*(self.sky_temp * (1. - np.exp(-1.0 * self.opacity / np.sin(self.elevation_tropshape)))))
+                sefd_matrix = (2 * Boltzmann * self.sky_temp*(1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape))) / self.dish_area) * 1e26
+
+            np.save(II('$OUTDIR')+'/elevation_tropshape_timestamp_%d'%(self.timestamp), self.elevation_tropshape) 
+            np.save(II('$OUTDIR')+'/dish_area_timestamp_%d'%(self.timestamp), self.dish_area) 
+            np.save(II('$OUTDIR')+'/atm_output/sefd_matrix_timestamp_%d'%(self.timestamp), sefd_matrix)
+
             self.sky_noise = np.zeros(self.data.shape, dtype='complex')
 
             for a0 in range(self.Nant):
                 for a1 in range(self.Nant):
                     if a1 > a0:
-                        rms = (1/self.corr_eff) * np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / (float(2 * self.tint * self.chan_width)))
+                        rms = (1/self.corr_eff) * np.sqrt(sefd_matrix[:, :, a0] * sefd_matrix[:, :, a1] / float(2*self.tint*self.chan_width))
                         rms = np.expand_dims(rms, 2)
                         rms = rms * np.ones((1, 1, 4))
                         self.sky_sigma_estimator[self.baseline_dict[(a0, a1)]] = rms # sky noise rms
@@ -1330,7 +1340,12 @@ class SimCoordinator():
             np.save(II('$OUTDIR')+'/atm_output/sky_noise_timestamp_%d'%(self.timestamp), self.sky_noise)
             np.save(II('$OUTDIR')+'/atm_output/sky_sigma_estimator_timestamp_%d'%(self.timestamp), self.sky_sigma_estimator)
 
-            self.additive_noise += self.sky_noise # add sky noise generated from sky sigma estimator to the full noise array
+            # add sky noise generated from sky sigma estimator to the full noise array
+            try:
+              for tind in range(self.nchunks):
+                self.additive_noise[tind*self.chunksize:(tind+1)*self.chunksize] += self.sky_noise[tind*self.chunksize:(tind+1)*self.chunksize]
+            except MemoryError:
+              abort("Arrays too large to be held in memory. Aborting execution.")
 
             # add sky noise rms to receiver rms if tropnoise is set
             try:
