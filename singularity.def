@@ -66,7 +66,7 @@ https://meqsilhouette.readthedocs.io/en/master/requirements.html§
     # download and install MeqSilhouette from master
     cd
     cd /opt
-    git clone --branch focalpy38 --depth 1 https://github.com/rdeane/MeqSilhouette.git
+    git clone --depth 1 https://github.com/rdeane/MeqSilhouette.git
     cd MeqSilhouette && pip install .
     cd
     
