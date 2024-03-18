@@ -129,6 +129,9 @@ class SimCoordinator():
         self.elevation_tropshape = np.expand_dims(np.swapaxes(self.elevation, 0, 1), 1) # reshaped for troposphere operations
         self.opacity, self.emissivity = self.trop_return_opacity_emissivity()
         self.transmission = np.exp(-1*self.opacity)
+        np.save(II('$OUTDIR')+'opacity', self.opacity)
+        np.save(II('$OUTDIR')+'emissivity', self.emissivity)
+        np.save(II('$OUTDIR')+'transmission', self.transmission)
 
         # Set some optional arrays to None. These will be filled later depending upon the user request.
         self.transmission_matrix = None
@@ -1311,7 +1314,10 @@ class SimCoordinator():
 
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
-            skytemp_from_emissivity = self.emissivity/(1.-np.exp(-1.0*self.opacity))
+            # remove the effect of CMB, T_cmb = 2.7 K
+            T_cmb = 2.726 # K
+            info('Removing the effect of T_cmb = %f from emissivity'%(T_cmb))
+            skytemp_from_emissivity = (self.emissivity - T_cmb*np.exp(-1.0*self.opacity)) / (1.-np.exp(-1.0*self.opacity))
             if thermalnoise:
                 info('Generating tropospheric + thermal noise...')
                 sefd_matrix = (2 * Boltzmann * (self.T_rx + skytemp_from_emissivity * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
@@ -1320,6 +1326,7 @@ class SimCoordinator():
                 info('Generating tropospheric noise...')
                 sefd_matrix = (2 * Boltzmann * (skytemp_from_emissivity * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
 
+            np.save(II('$OUTDIR')+'/skytemp_from_emissivity_timestamp_%d'%(self.timestamp), skytemp_from_emissivity)
             np.save(II('$OUTDIR')+'/elevation_tropshape_timestamp_%d'%(self.timestamp), self.elevation_tropshape) 
             np.save(II('$OUTDIR')+'/dish_area_timestamp_%d'%(self.timestamp), self.dish_area) 
             np.save(II('$OUTDIR')+'/atm_output/sefd_matrix_timestamp_%d'%(self.timestamp), sefd_matrix)
