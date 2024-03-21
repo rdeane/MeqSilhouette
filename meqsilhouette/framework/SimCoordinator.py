@@ -1314,10 +1314,7 @@ class SimCoordinator():
 
         # compute sky sigma estimator (i.e. sky rms noise) and realise sky noise
         if tropnoise:
-            # remove the effect of CMB, T_cmb = 2.7 K
-            T_cmb = 2.726 # K
-            info('Removing the effect of T_cmb = %f from emissivity'%(T_cmb))
-            skytemp_from_emissivity = (self.emissivity - T_cmb*np.exp(-1.0*self.opacity)) / (1.-np.exp(-1.0*self.opacity))
+            skytemp_from_emissivity = self.emissivity/(1.-np.exp(-1.0*self.opacity))
             if thermalnoise:
                 info('Generating tropospheric + thermal noise...')
                 sefd_matrix = (2 * Boltzmann * (self.T_rx + skytemp_from_emissivity * (1.-np.exp(-1.0*self.opacity/np.sin(self.elevation_tropshape)))) / self.dish_area) * 1e26
