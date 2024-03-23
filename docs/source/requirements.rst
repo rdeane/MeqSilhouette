@@ -33,7 +33,7 @@ Optionally, install Latex (for creating paper-quality plots)::
 
   $ sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng cm-super
 
-*AATM v0.5* can be obtained from `here <http://www.mrao.cam.ac.uk/~bn204/soft/aatm-0.5.tar.gz>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 20.04 install *libboost-program-options-dev* using apt-get. Once this is installed, proceed as follows::
+*AATM v0.5* can be obtained from `here <https://launchpad.net/aatm>`_. AATM cannot create the executables necessary for running MeqSilhouette without the *boost* libraries. In Ubuntu 20.04 install *libboost-program-options-dev* using apt-get. Once this is installed, proceed as follows::
 
    $ cd /path/to/aatm-source-code
    $ ./configure --prefix=/path/to/aatm-installation
