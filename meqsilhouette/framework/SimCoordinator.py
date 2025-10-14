@@ -555,9 +555,9 @@ class SimCoordinator():
                 atm_abs.write(output)
 
             if self.num_chan == 1:
-                freq_atm, dry, wet, emissivity_per_ant = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), axis=0), 0, 1)
+                freq_atm, dry, wet, emissivity_per_ant = np.swapaxes(np.expand_dims(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=','), axis=0), 0, 1)
             else:
-                freq_atm,dry, wet, emissivity_per_ant = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=', \t'), 0, 1)
+                freq_atm,dry, wet, emissivity_per_ant = np.swapaxes(np.loadtxt(II('$OUTDIR')+'/atm_output/%satm_abs.txt'%ant, skiprows=1, usecols=[0, 1, 2, 3], delimiter=','), 0, 1)
             # the following catch is due to a bug in the ATM package
             # which results in an incorrect number of channels returned.
             # The following section just checks and corrects for that. 
